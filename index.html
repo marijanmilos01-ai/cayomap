@@ -5,179 +5,155 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cayo Perico Interactive Map</title>
 <style>
-html, body {
-  margin: 0;
-  padding: 0;
-  user-select: none;
-  overflow: hidden;
-  font-family: Arial, sans-serif;
-}
-#map-container {
-  position: relative;
-  width: 100vw;
-  height: 100vh;
-  background: url('compound_map.png') no-repeat center center;
-  background-size: cover;
-}
-.zone {
-  position: absolute;
-  border: 2px solid #ccc;
-  background-color: rgba(200,200,200,0.3);
-  cursor: pointer;
-  box-sizing: border-box;
-  transition: border-color 0.2s, background-color 0.2s;
-  border-radius: 8px;
-}
-.zone:hover {
-  border-color: #ddd;
-  background-color: rgba(220,220,220,0.4);
-}
-.symbol {
-  position: absolute;
-  width: 30%;
-  height: 45%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  cursor: pointer;
-  transition: transform 0.2s;
-  border-radius: 50%;
-}
-.symbol:hover {
-  transform: scale(1.1);
-}
-.panel {
-  position: absolute;
-  background: rgba(30,30,30,0.9);
-  color: #fff;
-  padding: 10px;
-  border-radius: 8px;
-  display: none;
-  z-index: 10;
-  min-width: 120px;
-}
-.panel button {
-  margin: 5px;
-  padding: 5px 10px;
-  cursor: pointer;
-  border: none;
-  border-radius: 6px;
-  background-color: rgba(60,60,60,0.8);
-  color: #fff;
-  transition: background-color 0.2s, transform 0.2s;
-}
-.panel button:hover {
-  background-color: rgba(100,100,100,0.9);
-  transform: scale(1.05);
-}
-.panel h3 {
-  margin: 0 0 5px 0;
-  font-size: 1em;
-  font-weight: bold;
-}
-
-/* Info Panel */
-#info-panel {
-  position:absolute;
-  top:0; left:0;
-  width:300px;
-  height:100vh;
-  background: rgba(30,30,30,0.95);
-  border-radius:0 8px 8px 0;
-  overflow:auto;
-  z-index:20;
-  color: #fff;
-}
-#info-header {
-  padding:10px;
-  background: rgba(50,50,50,0.95);
-  cursor:pointer;
-  font-weight:bold;
-  border-bottom:1px solid rgba(100,100,100,0.3);
-}
-#info-content {
-  padding:8px;
-}
-#notes-container div {
-  padding: 4px 6px;
-  margin-bottom: 4px;
-  background: rgba(100,100,100,0.5);
-  border-radius: 4px;
-  cursor: pointer;
-  color: #fff;
-}
-#note-input {
-  width:100%;
-  box-sizing:border-box;
-  margin-top:5px;
-  padding:5px;
-  border-radius:4px;
-  border:1px solid #555;
-  background: rgba(60,60,60,0.7);
-  color: #fff;
-}
-table {
-  width:100%;
-  border-collapse:collapse;
-  margin-bottom:15px;
-}
-th, td {
-  padding:4px;
-  text-align:right;
-  border-bottom:1px solid rgba(200,200,200,0.5);
-}
-th:first-child, td:first-child {
-  text-align:left;
-}
-h3 {
-  margin:10px 0 5px 0;
-}
+  html, body {
+    margin: 0;
+    padding: 0;
+    user-select: none;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+  }
+  #map-container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    background: url('compound_map.png') no-repeat center center;
+    background-size: cover;
+  }
+  .zone {
+    position: absolute;
+    border: 2px solid #ccc;
+    background-color: rgba(200,200,200,0.3);
+    cursor: pointer;
+    box-sizing: border-box;
+    transition: border-color 0.2s, background-color 0.2s;
+    border-radius: 8px;
+  }
+  .zone:hover {
+    border-color: #ddd;
+    background-color: rgba(220,220,220,0.4);
+  }
+  .symbol {
+    position: absolute;
+    width: 30%;
+    height: 45%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: transform 0.2s;
+    background-color: rgba(255,255,255,0.4);
+    border-radius: 50%;
+  }
+  .symbol:hover {
+    transform: scale(1.1);
+    background-color: rgba(255,255,255,0.6);
+  }
+  .panel {
+    position: absolute;
+    background: rgba(30,30,30,0.9);
+    color: #fff;
+    padding: 10px;
+    border-radius: 8px;
+    display: none;
+    z-index: 10;
+    min-width: 120px;
+  }
+  .panel button {
+    margin: 5px;
+    padding: 5px 10px;
+    cursor: pointer;
+    border: none;
+    border-radius: 6px;
+    background-color: rgba(60,60,60,0.8);
+    color: #fff;
+    transition: background-color 0.2s, transform 0.2s;
+  }
+  .panel button:hover {
+    background-color: rgba(100,100,100,0.9);
+    transform: scale(1.05);
+  }
+  .panel h3 {
+    margin: 0 0 5px 0;
+    font-size: 1em;
+    font-weight: bold;
+  }
+  /* Info Panel */
+  #info-panel {
+    position:absolute; top:0; left:0;
+    width:300px; height:100%;
+    background: rgba(30,30,30,0.95);
+    border-radius:0 8px 8px 0;
+    overflow:auto;
+    z-index:20;
+    color: #fff;
+  }
+  #info-header {
+    padding:8px;
+    background: rgba(50,50,50,0.95);
+    font-weight:bold;
+    border-bottom:1px solid rgba(100,100,100,0.3);
+  }
+  #info-content {
+    padding:8px;
+  }
+  table {
+    width:100%;
+    border-collapse: collapse;
+    margin-bottom: 10px;
+  }
+  th, td {
+    border:1px solid rgba(100,100,100,0.3);
+    padding:4px 6px;
+    text-align:left;
+  }
+  th {
+    background: rgba(50,50,50,0.7);
+  }
+  #notes-container div {
+    padding: 4px 6px;
+    margin-bottom: 4px;
+    background: rgba(100,100,100,0.5);
+    border-radius: 4px;
+    cursor: pointer;
+    color: #fff;
+  }
+  #note-input {
+    width:100%;
+    box-sizing:border-box;
+    margin-top:5px;
+    padding:5px;
+    border-radius:4px;
+    border:1px solid #555;
+    background: rgba(60,60,60,0.7);
+    color: #fff;
+  }
 </style>
 </head>
 <body>
 
 <!-- Info Panel -->
 <div id="info-panel">
-  <div id="info-header">Info Panel &#9650;</div>
+  <div id="info-header">Info Panel</div>
   <div id="info-content">
-    <!-- Permanent Loot Table -->
-    <h3>Main Loot</h3>
+    <h4>Loot Table</h4>
     <table>
-      <thead>
-        <tr>
-          <th>Loot</th>
-          <th>Normal</th>
-          <th>Hard</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr><td>Tequila</td><td>630k</td><td>693k</td></tr>
-        <tr><td>Ruby</td><td>700k</td><td>770k</td></tr>
-        <tr><td>Bonds</td><td>770k</td><td>847k</td></tr>
-        <tr><td>Diamond</td><td>1,3mil</td><td>1,43mil</td></tr>
-        <tr><td>Panther</td><td>1,9mil</td><td>2,09mil</td></tr>
-      </tbody>
+      <tr><th>Loot</th><th>Normal</th><th>Hard</th></tr>
+      <tr><td>Tequila</td><td>630k</td><td>693k</td></tr>
+      <tr><td>Ruby</td><td>700k</td><td>770k</td></tr>
+      <tr><td>Bonds</td><td>770k</td><td>847k</td></tr>
+      <tr><td>Diamond</td><td>1,3mil</td><td>1,43mil</td></tr>
+      <tr><td>Panther</td><td>1,9mil</td><td>2,09mil</td></tr>
     </table>
-
-    <h3>Secondary Loot</h3>
+    <h4>Loot %Bag & Value Stack</h4>
     <table>
-      <thead>
-        <tr>
-          <th>Loot</th>
-          <th>% Bag</th>
-          <th>Value Stack</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr><td>Cash</td><td>25%</td><td>$78,480-$89,420</td></tr>
-        <tr><td>Painting</td><td>50%</td><td>$176,200-$199,700</td></tr>
-        <tr><td>Gold</td><td>66,7%</td><td>$328,584-$333,192</td></tr>
-        <tr><td>Weed</td><td>37,5%</td><td>$145,980-$149,265</td></tr>
-        <tr><td>Coke</td><td>50%</td><td>$220,500-$225,000</td></tr>
-      </tbody>
+      <tr><th>Loot</th><th>%Bag</th><th>Value Stack</th></tr>
+      <tr><td>Cash</td><td>25%</td><td>$78,480-$89,420</td></tr>
+      <tr><td>Painting</td><td>50%</td><td>$176,200-$199,700</td></tr>
+      <tr><td>Gold</td><td>66,7%</td><td>$328,584-$333,192</td></tr>
+      <tr><td>Weed</td><td>37,5%</td><td>$145,980-$149,265</td></tr>
+      <tr><td>Coke</td><td>50%</td><td>$220,500-$225,000</td></tr>
     </table>
-
-    <!-- Notes -->
+    <h4>Notes</h4>
     <div id="notes-container"></div>
     <input type="text" id="note-input" placeholder="Add a note...">
   </div>
@@ -198,102 +174,181 @@ h3 {
   <button data-symbol="Painting">Painting</button>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-// Zones and panel
 const zones = document.querySelectorAll('.zone');
 const panel = document.getElementById('panel');
 const panelTitle = document.getElementById('panel-title');
+const notesContainer = document.getElementById('notes-container');
+const noteInput = document.getElementById('note-input');
 let activeZone = null;
 
-// Show panel
+// Supabase config
+const SUPABASE_URL = 'https://qanrnafvvnmimewtxrxv.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_8F3cI7ZKCgpxv6UfaRJn7A_r1s17TmC';
+const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const renderedSymbols = new Set();
+const renderedNotes = new Set();
+
+// Panel logic
 zones.forEach(zone => {
-  zone.addEventListener('click', (e) => {
+  zone.addEventListener('click', e=>{
     e.stopPropagation();
     activeZone = zone;
     panelTitle.textContent = zone.dataset.name;
     const rect = zone.getBoundingClientRect();
     const panelHeight = 100;
-    panel.style.top = (rect.top > window.innerHeight/2 ? rect.top - panelHeight - 10 : rect.bottom + 10) + 'px';
-    panel.style.left = rect.left + 'px';
+    panel.style.top = (rect.top > window.innerHeight/2 ? rect.top - panelHeight -10 : rect.bottom + 10)+'px';
+    panel.style.left = rect.left+'px';
     panel.style.display = 'block';
   });
 });
-
-// Hide panel on outside click
-document.addEventListener('click', (e) => {
-  if(!panel.contains(e.target) && !e.target.classList.contains('zone')) {
-    panel.style.display = 'none';
-    activeZone = null;
+document.addEventListener('click', e=>{
+  if(!panel.contains(e.target) && !e.target.classList.contains('zone')){
+    panel.style.display='none';
+    activeZone=null;
   }
 });
 
 // Add symbol
-function addSymbolToZone(zone, type) {
+async function addSymbolToZone(zone, type, skipInsert=false){
   const existing = zone.querySelectorAll('.symbol');
-  if(existing.length >= 6) return;
+  if(existing.length>=6) return;
   const idx = existing.length;
-  const row = idx < 3 ? 0 : 1;
-  const col = idx % 3;
+  const row = idx<3?0:1;
+  const col = idx%3;
   const symbol = document.createElement('div');
   symbol.classList.add('symbol');
-  symbol.style.top = `${row*50 + 2}%`;
-  symbol.style.left = `${col*33 + 1}%`;
-
-  let svg = '';
+  symbol.style.top = `${row*50+2}%`;
+  symbol.style.left = `${col*33+1}%`;
+  let svg='';
   switch(type){
     case 'Gold': svg=`<img src="https://www.svgrepo.com/show/323883/gold-bar.svg" width="100%" height="100%">`; break;
     case 'Cash': svg=`<img src="https://www.svgrepo.com/show/507663/dollar-circle.svg" width="100%" height="100%">`; break;
     case 'Painting': svg=`<img src="https://www.svgrepo.com/show/535548/painting.svg" width="100%" height="100%">`; break;
   }
-  symbol.innerHTML = svg;
+  symbol.innerHTML=svg;
 
-  symbol.addEventListener('click', (e) => {
+  symbol.addEventListener('click', async e=>{
     e.stopPropagation();
+    const region = zone.dataset.name;
+    const symbolType = type;
+    const idToDelete = Array.from(renderedSymbols).find(k=>k.startsWith(`${region}-${symbolType}`));
+    if(idToDelete){
+      renderedSymbols.delete(idToDelete);
+      const idParts = idToDelete.split('-');
+      const symbolId = idParts[2];
+      await supabase.from('symbols').delete().eq('id', symbolId);
+    }
     symbol.remove();
   });
-
   zone.appendChild(symbol);
+
+  if(!skipInsert){
+    const region = zone.dataset.name;
+    const {data} = await supabase.from('symbols').insert({region, symbol:type}).select();
+    if(data && data[0]) renderedSymbols.add(`${region}-${type}-${data[0].id}`);
+  }
 }
 
 // Panel buttons
-panel.querySelectorAll('button').forEach(btn => {
-  btn.addEventListener('click', () => {
+panel.querySelectorAll('button').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
     if(!activeZone) return;
     addSymbolToZone(activeZone, btn.dataset.symbol);
   });
 });
 
-// Info panel notes
-const noteInput = document.getElementById('note-input');
-const notesContainer = document.getElementById('notes-container');
-
-noteInput.addEventListener('keydown', (e) => {
+// Notes
+noteInput.addEventListener('keydown', async e=>{
   if(e.key==='Enter' && noteInput.value.trim()!==''){
-    const noteText = noteInput.value.trim();
-    const noteDiv = document.createElement('div');
-    noteDiv.textContent = noteText;
-    noteDiv.addEventListener('click', () => { noteDiv.remove(); });
-    notesContainer.appendChild(noteDiv);
-    noteInput.value='';
+    const content = noteInput.value.trim();
+    const {data} = await supabase.from('notes').insert({content}).select();
+    if(data && data[0]){
+      const noteDiv = document.createElement('div');
+      noteDiv.textContent = content;
+      noteDiv.dataset.id = data[0].id;
+      noteDiv.addEventListener('click', async ()=>{
+        await supabase.from('notes').delete().eq('id', data[0].id);
+        noteDiv.remove();
+        renderedNotes.delete(data[0].id);
+      });
+      notesContainer.appendChild(noteDiv);
+      renderedNotes.add(data[0].id);
+      noteInput.value='';
+    }
   }
 });
 
-// Collapsible info panel (optional)
-const infoHeader = document.getElementById('info-header');
-const infoContent = document.getElementById('info-content');
-let collapsed=false;
-infoHeader.addEventListener('click', () => {
-  if(collapsed){
-    infoContent.style.display='block';
-    collapsed=false;
-    infoHeader.innerHTML="Info Panel &#9650;";
-  } else {
-    infoContent.style.display='block'; // always visible
-    collapsed=true;
-    infoHeader.innerHTML="Info Panel &#9650;";
-  }
-});
+// Load existing data
+async function loadData(){
+  const {data: symbols} = await supabase.from('symbols').select('*');
+  symbols.forEach(s=>{
+    const key = `${s.region}-${s.symbol}-${s.id}`;
+    if(renderedSymbols.has(key)) return;
+    renderedSymbols.add(key);
+    const zoneEl = document.querySelector(`.zone[data-name="${s.region}"]`);
+    if(zoneEl) addSymbolToZone(zoneEl, s.symbol, true);
+  });
+  const {data: notes} = await supabase.from('notes').select('*');
+  notes.forEach(n=>{
+    if(renderedNotes.has(n.id)) return;
+    renderedNotes.add(n.id);
+    const noteDiv = document.createElement('div');
+    noteDiv.textContent = n.content;
+    noteDiv.dataset.id = n.id;
+    noteDiv.addEventListener('click', async ()=>{
+      await supabase.from('notes').delete().eq('id', n.id);
+      noteDiv.remove();
+      renderedNotes.delete(n.id);
+    });
+    notesContainer.appendChild(noteDiv);
+  });
+}
+loadData();
+
+// Realtime
+supabase.channel('public:symbols')
+  .on('postgres_changes',{event:'INSERT',schema:'public',table:'symbols'},payload=>{
+    const key=`${payload.new.region}-${payload.new.symbol}-${payload.new.id}`;
+    if(renderedSymbols.has(key)) return;
+    renderedSymbols.add(key);
+    const zoneEl=document.querySelector(`.zone[data-name="${payload.new.region}"]`);
+    if(zoneEl) addSymbolToZone(zoneEl,payload.new.symbol,true);
+  })
+  .on('postgres_changes',{event:'DELETE',schema:'public',table:'symbols'},payload=>{
+    const key=Array.from(renderedSymbols).find(k=>k.startsWith(`${payload.old.region}-${payload.old.symbol}`));
+    if(key) renderedSymbols.delete(key);
+    const zoneEl=document.querySelector(`.zone[data-name="${payload.old.region}"]`);
+    if(zoneEl){
+      const syms = Array.from(zoneEl.querySelectorAll('.symbol'));
+      syms.forEach(s=>{
+        const imgSrc = s.querySelector('img')?.src;
+        if(imgSrc && imgSrc.includes(payload.old.symbol.toLowerCase())) s.remove();
+      });
+    }
+  }).subscribe();
+
+supabase.channel('public:notes')
+  .on('postgres_changes',{event:'INSERT',schema:'public',table:'notes'},payload=>{
+    if(renderedNotes.has(payload.new.id)) return;
+    renderedNotes.add(payload.new.id);
+    const noteDiv = document.createElement('div');
+    noteDiv.textContent = payload.new.content;
+    noteDiv.dataset.id = payload.new.id;
+    noteDiv.addEventListener('click', async ()=>{
+      await supabase.from('notes').delete().eq('id', payload.new.id);
+      noteDiv.remove();
+      renderedNotes.delete(payload.new.id);
+    });
+    notesContainer.appendChild(noteDiv);
+  })
+  .on('postgres_changes',{event:'DELETE',schema:'public',table:'notes'},payload=>{
+    const noteDiv = Array.from(notesContainer.children).find(n=>n.dataset.id==payload.old.id);
+    if(noteDiv) noteDiv.remove();
+    renderedNotes.delete(payload.old.id);
+  }).subscribe();
 </script>
 </body>
 </html>
-
