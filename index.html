@@ -52,6 +52,7 @@ html, body {
   box-shadow: 0 0 10px rgba(255,255,255,0.7);
 }
 
+/* ===== SYMBOL PANEL ANIMATIONS ===== */
 .panel {
   position:absolute;
   background: rgba(40,40,40,0.95);
@@ -63,14 +64,25 @@ html, body {
   min-width:140px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.5);
   transform-origin: top center;
-  transition: transform 0.3s ease, opacity 0.3s ease;
+  transition: transform 0.25s cubic-bezier(0.4,0,0.2,1), opacity 0.25s ease;
+  transform: scale(0.9);
   opacity:0;
 }
 
 .panel.show {
   display:block;
-  transform: scaleY(1);
+  transform: scale(1);
   opacity:1;
+}
+
+.panel.show-pop {
+  animation: popIn 0.25s forwards;
+}
+
+@keyframes popIn {
+  0% { transform: scale(0.8); opacity:0; }
+  60% { transform: scale(1.05); opacity:1; }
+  100% { transform: scale(1); }
 }
 
 #panel button {
@@ -90,11 +102,11 @@ html, body {
   transform: translateY(-2px);
 }
 
-/* ===== INFO PANEL FIXED ===== */
+/* ===== INFO PANEL ===== */
 #info-panel {
   position:absolute;
   top:0; left:0;
-  width:320px; /* slightly wider for note input */
+  width:320px;
   background: rgba(30,30,30,0.95);
   border-radius:8px;
   overflow:hidden;
@@ -116,7 +128,6 @@ html, body {
   background: rgba(70,70,70,0.95);
 }
 
-/* COLLAPSED PANEL: only header visible */
 #info-panel.collapsed #info-content {
   max-height:0;
   padding:0 10px;
@@ -133,7 +144,7 @@ html, body {
 }
 
 #note-input {
-  width:calc(100% - 16px); /* ensure it fits inside padding */
+  width:calc(100% - 16px);
   padding:6px 8px;
   margin-top:6px;
   border-radius:6px;
@@ -271,13 +282,21 @@ document.addEventListener('DOMContentLoaded', () => {
       const r = zone.getBoundingClientRect();
       panel.style.left = r.left + 'px';
       panel.style.top = (r.bottom + 10) + 'px';
-      panel.classList.add('show');
+      
+      // show panel with animation
+      panel.classList.remove('show', 'show-pop'); 
+      panel.style.display = 'block';
+      requestAnimationFrame(() => {
+        panel.classList.add('show-pop');
+        panel.classList.add('show');
+      });
     });
   });
 
   document.addEventListener('click', e => {
     if (panel.contains(e.target) || infoPanel.contains(e.target)) return;
-    panel.classList.remove('show');
+    panel.classList.remove('show-pop', 'show');
+    setTimeout(() => { panel.style.display = 'none'; }, 250);
     activeZone = null;
   });
 
