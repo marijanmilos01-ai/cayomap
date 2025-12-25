@@ -59,8 +59,7 @@ const panel = document.getElementById('panel');
 const panelTitle = document.getElementById('panel-title');
 let activeZone = null;
 
-// Track rendered symbols
-const renderedSymbols = new Map(); // key -> element
+// --- TRACK RENDERED SYMBOLS ---
 const renderedIds = new Set();
 
 // --- SHOW PANEL ---
@@ -86,9 +85,7 @@ document.addEventListener('click', e=>{
 
 // --- ADD SYMBOL ---
 function addSymbolToZone(zone, type, id){
-  const key = id ? `${zone.dataset.name}_${type}_${id}` : `${zone.dataset.name}_${type}_local_${Date.now()}`;
-  if(renderedSymbols.has(key)) return;
-
+  if(id && renderedIds.has(id)) return; // prevent double
   const existing = zone.querySelectorAll('.symbol');
   if(existing.length>=6) return;
 
@@ -100,7 +97,7 @@ function addSymbolToZone(zone, type, id){
   symbol.classList.add('symbol');
   symbol.style.top = `${row*50+2}%`;
   symbol.style.left = `${col*33+1}%`;
-  symbol.dataset.key = key;
+  symbol.dataset.id = id || 'local_'+Date.now();
 
   let svg='';
   switch(type){
@@ -113,15 +110,13 @@ function addSymbolToZone(zone, type, id){
   symbol.addEventListener('click', e=>{
     e.stopPropagation();
     symbol.remove();
-    renderedSymbols.delete(key);
-    if(id) { 
+    if(id){
       renderedIds.delete(id);
       supabaseClient.from('symbols').delete().eq('id',id).then(()=>{});
     }
   });
 
   zone.appendChild(symbol);
-  renderedSymbols.set(key,symbol);
   if(id) renderedIds.add(id);
 }
 
@@ -129,13 +124,11 @@ function addSymbolToZone(zone, type, id){
 panel.querySelectorAll('button').forEach(btn=>{
   btn.addEventListener('click', async ()=>{
     if(!activeZone) return;
-    // insert to DB first
-    const { data, error } = await supabaseClient.from('symbols')
-      .insert({ region:activeZone.dataset.name, symbol:btn.dataset.symbol })
+    const {data,error} = await supabaseClient.from('symbols')
+      .insert({ region: activeZone.dataset.name, symbol: btn.dataset.symbol })
       .select();
     if(error || !data || !data[0]) return;
-    const inserted = data[0];
-    addSymbolToZone(activeZone, inserted.symbol, inserted.id);
+    addSymbolToZone(activeZone, data[0].symbol, data[0].id);
   });
 });
 
@@ -180,9 +173,7 @@ noteInput.addEventListener('keydown', e=>{
 async function loadData(){
   const {data:symbols} = await supabaseClient.from('symbols').select('*');
   symbols.forEach(s=>{
-    if(renderedIds.has(s.id)) return;
-    const zoneEl = document.querySelector(`.zone[data-name="${s.region}"]`);
-    if(zoneEl) addSymbolToZone(zoneEl,s.symbol,s.id);
+    addSymbolToZone(document.querySelector(`.zone[data-name="${s.region}"]`), s.symbol, s.id);
   });
 
   const {data:notes} = await supabaseClient.from('notes').select('*');
@@ -201,19 +192,19 @@ loadData();
 
 // --- REALTIME ---
 supabaseClient.channel('public:symbols')
-  .on('postgres_changes',{event:'INSERT',schema:'public',table:'symbols'}, payload=>{
-    if(renderedIds.has(payload.new.id)) return;
-    const zoneEl = document.querySelector(`.zone[data-name="${payload.new.region}"]`);
-    if(zoneEl) addSymbolToZone(zoneEl,payload.new.symbol,payload.new.id);
+  .on('postgres_changes', {event:'INSERT', schema:'public', table:'symbols'}, payload=>{
+    if(renderedIds.has(payload.new.id)) return; // skip duplicate
+    addSymbolToZone(document.querySelector(`.zone[data-name="${payload.new.region}"]`), payload.new.symbol, payload.new.id);
   })
-  .on('postgres_changes',{event:'DELETE',schema:'public',table:'symbols'}, payload=>{
-    const key = `${payload.old.region}_${payload.old.symbol}_${payload.old.id}`;
-    const el = renderedSymbols.get(key);
-    if(el){ el.remove(); renderedSymbols.delete(key); renderedIds.delete(payload.old.id); }
+  .on('postgres_changes', {event:'DELETE', schema:'public', table:'symbols'}, payload=>{
+    const zoneEl = document.querySelector(`.zone[data-name="${payload.old.region}"]`);
+    if(!zoneEl) return;
+    const symbolEl = Array.from(zoneEl.querySelectorAll('.symbol')).find(el=>el.dataset.id==payload.old.id);
+    if(symbolEl){ symbolEl.remove(); renderedIds.delete(payload.old.id); }
   }).subscribe();
 
 supabaseClient.channel('public:notes')
-  .on('postgres_changes',{event:'INSERT',schema:'public',table:'notes'}, payload=>{
+  .on('postgres_changes', {event:'INSERT', schema:'public', table:'notes'}, payload=>{
     const noteDiv=document.createElement('div');
     noteDiv.textContent = payload.new.content;
     noteDiv.addEventListener('click', ()=>{
@@ -222,7 +213,7 @@ supabaseClient.channel('public:notes')
     });
     notesContainer.appendChild(noteDiv);
   })
-  .on('postgres_changes',{event:'DELETE',schema:'public',table:'notes'}, payload=>{
+  .on('postgres_changes', {event:'DELETE', schema:'public', table:'notes'}, payload=>{
     loadData();
   }).subscribe();
 </script>
