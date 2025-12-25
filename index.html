@@ -217,14 +217,6 @@ html, body {
 #calculator label {
   margin-right: 4px;
 }
-#calculator input[type=number] {
-  width: 50px;
-  padding: 2px 4px;
-  margin-right: 6px;
-}
-#calculator .player-row {
-  margin-bottom: 4px;
-}
 #calculator .loot-result {
   margin-top: 6px;
   background: rgba(30,30,30,0.5);
@@ -240,7 +232,7 @@ html, body {
   margin-right: 6px;
 }
 
-/* ===== CALCULATOR UI (minimal + modern, matches panel buttons) ===== */
+/* ===== CALCULATOR UI (minimal + modern) ===== */
 #calculator .calc-title {
   margin-top: 10px;
   font-weight: 600;
@@ -287,13 +279,11 @@ html, body {
   transition: all 0.2s ease;
   font-weight: 500;
 }
-
 #calculator .calc-btn:hover {
   background: #555;
   box-shadow: 0 0 8px rgba(255,255,255,0.7);
   transform: translateY(-1px);
 }
-
 #calculator .calc-btn.danger {
   border-color: rgba(255,255,255,0.35);
   opacity: 0.9;
@@ -362,7 +352,6 @@ html, body {
       <tr><td>Fencing Fee</td><td>10%</td></tr>
     </table>
 
-    <!-- ===== CALCULATOR INTEGRATION ===== -->
     <div id="calculator">
       <div>
         <label>Difficulty:</label>
@@ -485,7 +474,7 @@ document.addEventListener('DOMContentLoaded', () => {
       panel.style.left = r.left + 'px';
       panel.style.top = (r.bottom + 10) + 'px';
 
-      panel.classList.remove('show', 'show-pop');
+      panel.classList.remove('show', 'show-pop'); 
       panel.style.display = 'block';
       requestAnimationFrame(() => {
         panel.classList.add('show-pop');
@@ -512,23 +501,28 @@ document.addEventListener('DOMContentLoaded', () => {
     if (zone.querySelector(`.symbol[data-id="${id}"]`)) return;
     const idx = zone.querySelectorAll('.symbol').length;
     if (idx >= 6) return;
+
     const symbol = document.createElement('div');
     symbol.className = 'symbol';
     symbol.dataset.id = id;
+
     const row = idx < 3 ? 0 : 1;
     const col = idx % 3;
     symbol.style.top = `${row * 50 + 2}%`;
     symbol.style.left = `${col * 33 + 1}%`;
+
     const icons = {
       Gold: 'https://www.svgrepo.com/show/323883/gold-bar.svg',
       Cash: 'https://www.svgrepo.com/show/59549/dollar-coin-symbol.svg',
       Painting: 'https://www.svgrepo.com/show/535548/painting.svg'
     };
     symbol.innerHTML = `<img src="${icons[type]}" width="100%" height="100%">`;
+
     symbol.onclick = async e => {
       e.stopPropagation();
       await sb.from('symbols').delete().eq('id', id);
     };
+
     zone.appendChild(symbol);
   }
 
@@ -536,9 +530,11 @@ document.addEventListener('DOMContentLoaded', () => {
     btn.addEventListener('click', async e => {
       e.stopPropagation();
       if (!activeZone) return;
+
       const region = activeZone.dataset.name;
       const { count } = await sb.from('symbols').select('*', { count: 'exact', head: true }).eq('region', region);
       if (count >= 6) return;
+
       const { data } = await sb.from('symbols').insert({ region, symbol: btn.dataset.symbol }).select().single();
       if (data) {
         localInsertedSymbols.add(data.id);
@@ -581,6 +577,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  function isCalculatorEditing() {
+    const el = document.activeElement;
+    if (!el) return false;
+    return !!el.closest('#calculator') && (el.tagName === 'INPUT' || el.tagName === 'SELECT' || el.isContentEditable);
+  }
+
   sb.channel('symbols')
     .on('postgres_changes', { event: 'INSERT', table: 'symbols' }, payload => {
       setMapSyncing(true);
@@ -597,16 +599,19 @@ document.addEventListener('DOMContentLoaded', () => {
         renderSecondaryControls();
         renderLootResult();
       }
+
       setMapSyncing(false);
     })
     .on('postgres_changes', { event: 'DELETE', table: 'symbols' }, payload => {
       setMapSyncing(true);
 
       document.querySelector(`.symbol[data-id="${payload.old.id}"]`)?.remove();
+
       if (calculatorState) {
         renderSecondaryControls();
         renderLootResult();
       }
+
       setMapSyncing(false);
     })
     .subscribe();
@@ -621,8 +626,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const secondaryLootDiv = document.getElementById('secondary-loot');
   const bagStatusDiv = document.getElementById('bag-status');
 
-  const BAG_CAPACITY = 300; // pooled bag capacity
-  const BAG_PER_STACK = { Cash: 25, Painting: 50, Gold: 66.7 };
+  // Deterministic bag math in "bag units" (1 unit = 0.1%)
+  // 300% => 3000 units
+  const BAG_CAPACITY_UNITS = 3000;
+  const BAG_PER_STACK_UNITS = { Cash: 250, Painting: 500, Gold: 667 };
 
   // always included, doesn't use bag space
   const WALL_SAFE_MIN = 20000;
@@ -642,8 +649,8 @@ document.addEventListener('DOMContentLoaded', () => {
   async function loadCalculator() {
     const { data } = await sb.from('calculator_state').select('*').limit(1).single();
     if (!data) return;
-    calculatorState = data;
 
+    calculatorState = data;
     calculatorState.players = calculatorState.players || [];
     calculatorState.secondary_take = calculatorState.secondary_take || { Cash: 0, Painting: 0, Gold: 0 };
     if (calculatorState.secondary_take.Cash == null) calculatorState.secondary_take.Cash = 0;
@@ -652,12 +659,50 @@ document.addEventListener('DOMContentLoaded', () => {
 
     difficultySelect.value = calculatorState.difficulty || 'normal';
     primaryLootSelect.value = calculatorState.primary_loot || '';
+
     renderPlayers();
     renderSecondaryControls();
     renderLootResult();
   }
 
-  // NEW: player name / cut commit helpers (Enter + blur)
+  async function updateCalculatorState(updates) {
+    setSyncing(true);
+
+    await sb.from('calculator_state')
+      .update(updates)
+      .eq('id', calculatorState.id);
+
+    Object.assign(calculatorState, updates);
+
+    setSyncing(false);
+  }
+
+  function enforceCutLimit() {
+    const totalCut = calculatorState.players.reduce((sum,p)=>sum+(parseFloat(p.cut)||0),0);
+    if (totalCut > 300 && totalCut > 0) {
+      const ratio = 300 / totalCut;
+      calculatorState.players.forEach(p => p.cut = Math.floor((parseFloat(p.cut)||0) * ratio));
+    }
+  }
+
+  function parseIntOnly(str) {
+    const cleaned = String(str ?? '').replace(/[^0-9]/g, '');
+    if (cleaned === '') return 0;
+    const n = parseInt(cleaned, 10);
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  function parseDecimalInput(str) {
+    if (str == null) return 0;
+    const cleaned = String(str)
+      .trim()
+      .replace(',', '.')
+      .replace(/[^0-9.]/g, '');
+    if (cleaned === '' || cleaned === '.') return 0;
+    const n = parseFloat(cleaned);
+    return Number.isFinite(n) ? n : 0;
+  }
+
   async function commitPlayerName(idx, raw) {
     const v = String(raw ?? '').trim();
     calculatorState.players[idx].name = v;
@@ -666,11 +711,12 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function commitPlayerCut(idx, raw) {
-    let v = parseFloat(raw);
-    if (Number.isNaN(v)) v = 0;
+    let v = parseIntOnly(raw);
     v = Math.min(100, Math.max(0, v));
+
     calculatorState.players[idx].cut = v;
     enforceCutLimit();
+
     await updateCalculatorState({ players: calculatorState.players });
     renderPlayers();
     renderLootResult();
@@ -688,8 +734,8 @@ document.addEventListener('DOMContentLoaded', () => {
         <input class="calc-input player-name" type="text" value="${(p.name ?? '')}" data-idx="${idx}"
                style="min-width:120px; flex: 1;">
         <span class="calc-meta">Cut %</span>
-        <input class="calc-input player-cut" type="number" min="0" max="100" value="${(p.cut ?? 0)}" data-idx="${idx}"
-               style="width:80px;">
+        <input class="calc-input player-cut" type="text" inputmode="numeric" autocomplete="off" spellcheck="false"
+               value="${(p.cut ?? 0)}" data-idx="${idx}" style="width:80px;">
         <button class="calc-btn danger remove-player" data-idx="${idx}">Remove</button>
         <span class="calc-meta">(Enter to sync)</span>
       `;
@@ -699,6 +745,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if ((calculatorState.players || []).length < 3) {
       const addRow = document.createElement('div');
       addRow.className = 'calc-row';
+
       const btn = document.createElement('button');
       btn.className = 'calc-btn';
       btn.textContent = 'Add Player';
@@ -710,11 +757,12 @@ document.addEventListener('DOMContentLoaded', () => {
         renderPlayers();
         renderLootResult();
       };
+
       addRow.appendChild(btn);
       playerCutsDiv.appendChild(addRow);
     }
 
-    // PLAYER NAME: sync on Enter or blur
+    // Player name: Enter/blur to sync
     playerCutsDiv.querySelectorAll('.player-name').forEach(inp => {
       inp.addEventListener('keydown', async e => {
         e.stopPropagation();
@@ -728,7 +776,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
 
-    // PLAYER CUT: sync on Enter or blur
+    // Player cut: Enter/blur to sync (no steppers)
     playerCutsDiv.querySelectorAll('.player-cut').forEach(inp => {
       inp.addEventListener('keydown', async e => {
         e.stopPropagation();
@@ -742,7 +790,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
 
-    // REMOVE: immediate sync
+    // Remove player: immediate sync
     playerCutsDiv.querySelectorAll('.remove-player').forEach(btn => {
       btn.addEventListener('click', async e => {
         e.stopPropagation();
@@ -770,23 +818,6 @@ document.addEventListener('DOMContentLoaded', () => {
     renderLootResult();
   });
 
-  function enforceCutLimit() {
-    const totalCut = calculatorState.players.reduce((sum,p)=>sum+(parseFloat(p.cut)||0),0);
-    if (totalCut > 300 && totalCut > 0) {
-      const ratio = 300 / totalCut;
-      calculatorState.players.forEach(p => p.cut = Math.floor((parseFloat(p.cut)||0) * ratio));
-    }
-  }
-
-  async function updateCalculatorState(updates) {
-    setSyncing(true);
-    await sb.from('calculator_state')
-      .update(updates)
-      .eq('id', calculatorState.id);
-    Object.assign(calculatorState, updates);
-    setSyncing(false);
-  }
-
   function getSymbolCounts() {
     const counts = { Cash:0, Painting:0, Gold:0 };
     document.querySelectorAll('.symbol').forEach(s => {
@@ -809,24 +840,30 @@ document.addEventListener('DOMContentLoaded', () => {
     calculatorState.secondary_take = take;
   }
 
-  function computeBagUsed(take) {
-    return (
-      (parseFloat(take.Cash)||0) * BAG_PER_STACK.Cash +
-      (parseFloat(take.Gold)||0) * BAG_PER_STACK.Gold +
-      (parseFloat(take.Painting)||0) * BAG_PER_STACK.Painting
-    );
+  function computeBagUsedUnits(take) {
+    const cash = (parseFloat(take.Cash) || 0);
+    const gold = (parseFloat(take.Gold) || 0);
+    const painting = (parseFloat(take.Painting) || 0);
+
+    const used =
+      Math.round(cash * BAG_PER_STACK_UNITS.Cash) +
+      Math.round(gold * BAG_PER_STACK_UNITS.Gold) +
+      Math.round(painting * BAG_PER_STACK_UNITS.Painting);
+
+    return Math.max(0, used);
   }
 
   function enforceBagCapacity(changedType) {
     const take = calculatorState.secondary_take || { Cash:0, Painting:0, Gold:0 };
-    let used = computeBagUsed(take);
-    if (used <= BAG_CAPACITY) return;
 
-    const per = BAG_PER_STACK[changedType];
-    if (!per) return;
+    let usedUnits = computeBagUsedUnits(take);
+    if (usedUnits <= BAG_CAPACITY_UNITS) return;
 
-    const excess = used - BAG_CAPACITY;
-    let reduceBy = excess / per;
+    const perUnits = BAG_PER_STACK_UNITS[changedType];
+    if (!perUnits) return;
+
+    const excessUnits = usedUnits - BAG_CAPACITY_UNITS;
+    let reduceBy = excessUnits / perUnits;
 
     let cur = parseFloat(take[changedType]) || 0;
     let next = cur - reduceBy;
@@ -834,23 +871,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (changedType === 'Painting') {
       next = Math.floor(next);
     } else {
-      next = Math.max(0, Math.round(next * 10) / 10);
+      next = Math.max(0, Math.round(next * 10) / 10); // 0.1 precision
     }
 
     take[changedType] = Math.max(0, next);
     calculatorState.secondary_take = take;
-  }
-
-  // parse decimals: accepts "." and ","; ignores other junk
-  function parseDecimalInput(str) {
-    if (str == null) return 0;
-    const cleaned = String(str)
-      .trim()
-      .replace(',', '.')
-      .replace(/[^0-9.]/g, '');
-    if (cleaned === '' || cleaned === '.') return 0;
-    const n = parseFloat(cleaned);
-    return Number.isFinite(n) ? n : 0;
   }
 
   function renderSecondaryControls() {
@@ -867,7 +892,7 @@ document.addEventListener('DOMContentLoaded', () => {
       <div class="calc-row">
         <span class="calc-meta">Cash</span>
         <span class="calc-meta">available: ${available.Cash}</span>
-        <span class="calc-meta">bag: ${BAG_PER_STACK.Cash}%</span>
+        <span class="calc-meta">bag: ${(BAG_PER_STACK_UNITS.Cash/10).toFixed(1)}%</span>
         <input id="take-cash" class="calc-input" type="text" inputmode="decimal" autocomplete="off" spellcheck="false"
                value="${take.Cash}" style="width:90px;">
         <span class="calc-meta">(Enter to sync)</span>
@@ -876,7 +901,7 @@ document.addEventListener('DOMContentLoaded', () => {
       <div class="calc-row">
         <span class="calc-meta">Gold</span>
         <span class="calc-meta">available: ${available.Gold}</span>
-        <span class="calc-meta">bag: ${BAG_PER_STACK.Gold}%</span>
+        <span class="calc-meta">bag: ${(BAG_PER_STACK_UNITS.Gold/10).toFixed(1)}%</span>
         <input id="take-gold" class="calc-input" type="text" inputmode="decimal" autocomplete="off" spellcheck="false"
                value="${take.Gold}" style="width:90px;">
         <span class="calc-meta">(Enter to sync)</span>
@@ -885,7 +910,7 @@ document.addEventListener('DOMContentLoaded', () => {
       <div class="calc-row">
         <span class="calc-meta">Paintings</span>
         <span class="calc-meta">available: ${available.Painting}</span>
-        <span class="calc-meta">bag: ${BAG_PER_STACK.Painting}%</span>
+        <span class="calc-meta">bag: ${(BAG_PER_STACK_UNITS.Painting/10).toFixed(0)}%</span>
         <input id="take-painting" class="calc-input" type="text" inputmode="numeric" autocomplete="off" spellcheck="false"
                value="${Math.floor(take.Painting||0)}" style="width:90px;">
         <span class="calc-meta">(Enter to sync)</span>
@@ -930,6 +955,7 @@ document.addEventListener('DOMContentLoaded', () => {
       renderLootResult();
     }
 
+    // Cash: Enter/blur to sync
     cashInp.addEventListener('keydown', async e => {
       e.stopPropagation();
       if (e.key !== 'Enter') return;
@@ -943,6 +969,7 @@ document.addEventListener('DOMContentLoaded', () => {
       await syncSecondaryTakeAndRefresh();
     });
 
+    // Gold: Enter/blur to sync
     goldInp.addEventListener('keydown', async e => {
       e.stopPropagation();
       if (e.key !== 'Enter') return;
@@ -956,6 +983,7 @@ document.addEventListener('DOMContentLoaded', () => {
       await syncSecondaryTakeAndRefresh();
     });
 
+    // Paintings: Enter/blur to sync (whole numbers)
     paintInp.addEventListener('keydown', async e => {
       e.stopPropagation();
       if (e.key !== 'Enter') return;
@@ -974,17 +1002,20 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!calculatorState) return;
 
     const take = calculatorState.secondary_take || { Cash:0, Painting:0, Gold:0 };
-    const used = computeBagUsed(take);
-    const eps = 0.05;
-    const bagsFull = used >= (BAG_CAPACITY - eps);
-    const left = Math.max(0, BAG_CAPACITY - used);
+
+    const usedUnits = computeBagUsedUnits(take);
+    const usedPct = usedUnits / 10;
+    const leftUnits = Math.max(0, BAG_CAPACITY_UNITS - usedUnits);
+    const leftPct = leftUnits / 10;
+    const bagsFull = usedUnits >= BAG_CAPACITY_UNITS;
 
     bagStatusDiv.innerHTML = bagsFull
-      ? `<strong>BAGS FULL</strong> — ${Math.min(BAG_CAPACITY, used).toFixed(1)}% / ${BAG_CAPACITY}%`
-      : `<strong>Bag</strong> — ${used.toFixed(1)}% / ${BAG_CAPACITY}% <span style="opacity:0.8;">(left: ${left.toFixed(1)}%)</span>`;
+      ? `<strong>BAGS FULL</strong> — ${Math.min(300, usedPct).toFixed(1)}% / 300%`
+      : `<strong>Bag</strong> — ${usedPct.toFixed(1)}% / 300% <span style="opacity:0.8;">(left: ${leftPct.toFixed(1)}%)</span>`;
 
-    const primaryLoot = calculatorState.primary_loot;
     const difficulty = calculatorState.difficulty || 'normal';
+    const primaryLoot = calculatorState.primary_loot;
+
     let primaryValue = 0;
     if (primaryLoot) primaryValue = primaryValues[difficulty]?.[primaryLoot] || 0;
 
@@ -997,27 +1028,29 @@ document.addEventListener('DOMContentLoaded', () => {
       totalSecondaryMax += qty * range[1];
     });
 
+    // Wall safe always included, no bag usage
     let totalMin = primaryValue + totalSecondaryMin + WALL_SAFE_MIN;
     let totalMax = primaryValue + totalSecondaryMax + WALL_SAFE_MAX;
 
+    // Fees (12% total)
     let grandTotalMin = totalMin * 0.88;
     let grandTotalMax = totalMax * 0.88;
 
     const players = calculatorState.players || [];
-    let html = `<strong>Potential Take:</strong><br>`;
+    let html = `<strong>Actual Take:</strong><br>`;
     html += `<span style="opacity:0.8;">(includes Wall Safe: $${WALL_SAFE_MIN.toLocaleString()}–$${WALL_SAFE_MAX.toLocaleString()})</span><br>`;
 
     players.forEach(p => {
       const cut = (parseFloat(p.cut) || 0) / 100;
       const minTake = Math.floor(grandTotalMin * cut);
       const maxTake = Math.floor(grandTotalMax * cut);
-      html += `${p.name}: $${minTake.toLocaleString()} → $${maxTake.toLocaleString()}<br>`;
+      html += `${p.name}: $${minTake.toLocaleString()} - $${maxTake.toLocaleString()}<br>`;
     });
 
     lootResultDiv.innerHTML = html;
   }
 
-  // realtime: apply updates from other devices
+  // REALTIME: apply updates from other devices
   sb.channel('calculator_state')
     .on('postgres_changes', { event: 'UPDATE', table: 'calculator_state' }, payload => {
       setSyncing(false);
@@ -1031,8 +1064,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
       difficultySelect.value = calculatorState.difficulty || 'normal';
       primaryLootSelect.value = calculatorState.primary_loot || '';
-      renderPlayers();
-      renderSecondaryControls();
+
+      if (!isCalculatorEditing()) {
+        renderPlayers();
+        renderSecondaryControls();
+      }
       renderLootResult();
     })
     .subscribe();
