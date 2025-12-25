@@ -59,8 +59,9 @@ const panel = document.getElementById('panel');
 const panelTitle = document.getElementById('panel-title');
 let activeZone = null;
 
-// --- TRACK RENDERED SYMBOLS ---
+// --- TRACK RENDERED SYMBOLS & NOTES ---
 const renderedIds = new Set();
+const renderedNotes = new Set();
 
 // --- SHOW PANEL ---
 zones.forEach(zone=>{
@@ -85,7 +86,7 @@ document.addEventListener('click', e=>{
 
 // --- ADD SYMBOL ---
 function addSymbolToZone(zone, type, id){
-  if(id && renderedIds.has(id)) return; // prevent double
+  if(id && renderedIds.has(id)) return;
   const existing = zone.querySelectorAll('.symbol');
   if(existing.length>=6) return;
 
@@ -154,17 +155,25 @@ infoHeader.addEventListener('click', ()=>{
 });
 
 // --- NOTES ---
-noteInput.addEventListener('keydown', e=>{
+noteInput.addEventListener('keydown', async e=>{
   if(e.key==='Enter' && noteInput.value.trim()!==''){
     const content = noteInput.value.trim();
-    const noteDiv = document.createElement('div');
-    noteDiv.textContent = content;
+    const { data, error } = await supabaseClient.from('notes').insert({content}).select();
+    if(error || !data || !data[0]) return;
+
+    const n = data[0];
+    if(renderedNotes.has(n.id)) return;
+    renderedNotes.add(n.id);
+
+    const noteDiv=document.createElement('div');
+    noteDiv.textContent = n.content;
+    noteDiv.dataset.id = n.id;
     noteDiv.addEventListener('click', ()=>{
       noteDiv.remove();
-      supabaseClient.from('notes').delete().eq('content',content).limit(1).then(()=>{});
+      renderedNotes.delete(n.id);
+      supabaseClient.from('notes').delete().eq('id',n.id).limit(1).then(()=>{});
     });
     notesContainer.appendChild(noteDiv);
-    supabaseClient.from('notes').insert({content}).then(()=>{});
     noteInput.value='';
   }
 });
@@ -178,12 +187,18 @@ async function loadData(){
 
   const {data:notes} = await supabaseClient.from('notes').select('*');
   notesContainer.innerHTML='';
+  renderedNotes.clear();
   notes.forEach(n=>{
+    if(renderedNotes.has(n.id)) return;
+    renderedNotes.add(n.id);
+
     const noteDiv=document.createElement('div');
-    noteDiv.textContent=n.content;
+    noteDiv.textContent = n.content;
+    noteDiv.dataset.id = n.id;
     noteDiv.addEventListener('click', ()=>{
       noteDiv.remove();
-      supabaseClient.from('notes').delete().eq('content',n.content).limit(1).then(()=>{});
+      renderedNotes.delete(n.id);
+      supabaseClient.from('notes').delete().eq('id',n.id).limit(1).then(()=>{});
     });
     notesContainer.appendChild(noteDiv);
   });
@@ -193,7 +208,7 @@ loadData();
 // --- REALTIME ---
 supabaseClient.channel('public:symbols')
   .on('postgres_changes', {event:'INSERT', schema:'public', table:'symbols'}, payload=>{
-    if(renderedIds.has(payload.new.id)) return; // skip duplicate
+    if(renderedIds.has(payload.new.id)) return;
     addSymbolToZone(document.querySelector(`.zone[data-name="${payload.new.region}"]`), payload.new.symbol, payload.new.id);
   })
   .on('postgres_changes', {event:'DELETE', schema:'public', table:'symbols'}, payload=>{
@@ -205,16 +220,22 @@ supabaseClient.channel('public:symbols')
 
 supabaseClient.channel('public:notes')
   .on('postgres_changes', {event:'INSERT', schema:'public', table:'notes'}, payload=>{
+    if(renderedNotes.has(payload.new.id)) return;
+    renderedNotes.add(payload.new.id);
+
     const noteDiv=document.createElement('div');
     noteDiv.textContent = payload.new.content;
+    noteDiv.dataset.id = payload.new.id;
     noteDiv.addEventListener('click', ()=>{
       noteDiv.remove();
-      supabaseClient.from('notes').delete().eq('content',payload.new.content).limit(1).then(()=>{});
+      renderedNotes.delete(payload.new.id);
+      supabaseClient.from('notes').delete().eq('id',payload.new.id).limit(1).then(()=>{});
     });
     notesContainer.appendChild(noteDiv);
   })
   .on('postgres_changes', {event:'DELETE', schema:'public', table:'notes'}, payload=>{
-    loadData();
+    const noteDiv = Array.from(notesContainer.children).find(d=>d.dataset.id==payload.old.id);
+    if(noteDiv){ noteDiv.remove(); renderedNotes.delete(payload.old.id); }
   }).subscribe();
 </script>
 </body>
