@@ -59,8 +59,9 @@ const panel = document.getElementById('panel');
 const panelTitle = document.getElementById('panel-title');
 let activeZone = null;
 
-// --- TRACK RENDERED SYMBOLS ---
+// Track rendered symbols
 const renderedSymbols = new Map(); // key -> element
+const renderedIds = new Set();
 
 // --- SHOW PANEL ---
 zones.forEach(zone=>{
@@ -84,10 +85,10 @@ document.addEventListener('click', e=>{
 });
 
 // --- ADD SYMBOL ---
-function addSymbolToZone(zone, type, id=null){
+function addSymbolToZone(zone, type, id){
   const key = id ? `${zone.dataset.name}_${type}_${id}` : `${zone.dataset.name}_${type}_local_${Date.now()}`;
   if(renderedSymbols.has(key)) return;
-  
+
   const existing = zone.querySelectorAll('.symbol');
   if(existing.length>=6) return;
 
@@ -107,36 +108,34 @@ function addSymbolToZone(zone, type, id=null){
     case 'Cash': svg=`<img src="https://www.svgrepo.com/show/507663/dollar-circle.svg" width="100%" height="100%">`; break;
     case 'Painting': svg=`<img src="https://www.svgrepo.com/show/535548/painting.svg" width="100%" height="100%">`; break;
   }
-  symbol.innerHTML=svg;
+  symbol.innerHTML = svg;
 
   symbol.addEventListener('click', e=>{
     e.stopPropagation();
     symbol.remove();
     renderedSymbols.delete(key);
-    if(id) supabaseClient.from('symbols').delete().eq('id',id).then(()=>{});
+    if(id) { 
+      renderedIds.delete(id);
+      supabaseClient.from('symbols').delete().eq('id',id).then(()=>{});
+    }
   });
 
   zone.appendChild(symbol);
   renderedSymbols.set(key,symbol);
-  return key;
+  if(id) renderedIds.add(id);
 }
 
 // --- PANEL BUTTONS ---
 panel.querySelectorAll('button').forEach(btn=>{
-  btn.addEventListener('click', ()=>{
+  btn.addEventListener('click', async ()=>{
     if(!activeZone) return;
-    const key = addSymbolToZone(activeZone, btn.dataset.symbol);
-    if(!key) return;
-    supabaseClient.from('symbols').insert({region:activeZone.dataset.name,symbol:btn.dataset.symbol})
-      .then(({data})=>{
-        if(data && data[0]){
-          const id = data[0].id;
-          const oldSymbol = renderedSymbols.get(key);
-          renderedSymbols.delete(key);
-          oldSymbol.dataset.key = `${activeZone.dataset.name}_${btn.dataset.symbol}_${id}`;
-          renderedSymbols.set(oldSymbol.dataset.key,oldSymbol);
-        }
-      });
+    // insert to DB first
+    const { data, error } = await supabaseClient.from('symbols')
+      .insert({ region:activeZone.dataset.name, symbol:btn.dataset.symbol })
+      .select();
+    if(error || !data || !data[0]) return;
+    const inserted = data[0];
+    addSymbolToZone(activeZone, inserted.symbol, inserted.id);
   });
 });
 
@@ -181,8 +180,7 @@ noteInput.addEventListener('keydown', e=>{
 async function loadData(){
   const {data:symbols} = await supabaseClient.from('symbols').select('*');
   symbols.forEach(s=>{
-    const key = `${s.region}_${s.symbol}_${s.id}`;
-    if(renderedSymbols.has(key)) return;
+    if(renderedIds.has(s.id)) return;
     const zoneEl = document.querySelector(`.zone[data-name="${s.region}"]`);
     if(zoneEl) addSymbolToZone(zoneEl,s.symbol,s.id);
   });
@@ -204,15 +202,14 @@ loadData();
 // --- REALTIME ---
 supabaseClient.channel('public:symbols')
   .on('postgres_changes',{event:'INSERT',schema:'public',table:'symbols'}, payload=>{
-    const key = `${payload.new.region}_${payload.new.symbol}_${payload.new.id}`;
-    if(renderedSymbols.has(key)) return;
+    if(renderedIds.has(payload.new.id)) return;
     const zoneEl = document.querySelector(`.zone[data-name="${payload.new.region}"]`);
     if(zoneEl) addSymbolToZone(zoneEl,payload.new.symbol,payload.new.id);
   })
   .on('postgres_changes',{event:'DELETE',schema:'public',table:'symbols'}, payload=>{
     const key = `${payload.old.region}_${payload.old.symbol}_${payload.old.id}`;
     const el = renderedSymbols.get(key);
-    if(el){ el.remove(); renderedSymbols.delete(key); }
+    if(el){ el.remove(); renderedSymbols.delete(key); renderedIds.delete(payload.old.id); }
   }).subscribe();
 
 supabaseClient.channel('public:notes')
@@ -228,7 +225,6 @@ supabaseClient.channel('public:notes')
   .on('postgres_changes',{event:'DELETE',schema:'public',table:'notes'}, payload=>{
     loadData();
   }).subscribe();
-
 </script>
 </body>
 </html>
