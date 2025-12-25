@@ -90,24 +90,19 @@ html, body {
   transform: translateY(-2px);
 }
 
+/* ===== INFO PANEL FIXED ===== */
 #info-panel {
   position:absolute;
   top:0; left:0;
-  width:300px;
-  max-height:100vh;
-  background: rgba(30,30,30,0.9);
+  width:320px; /* slightly wider for note input */
+  background: rgba(30,30,30,0.95);
   border-radius:8px;
   overflow:hidden;
   z-index:20;
   color:#fff;
   box-shadow: 2px 2px 12px rgba(0,0,0,0.7);
-  transition: transform 0.3s ease, opacity 0.3s ease;
-  transform: translateX(0);
-  opacity:1;
-}
-#info-panel.collapsed {
-  transform: translateX(-100%);
-  opacity:0;
+  transition: max-height 0.3s ease, opacity 0.3s ease;
+  max-height: 100vh;
 }
 
 #info-header {
@@ -121,6 +116,15 @@ html, body {
   background: rgba(70,70,70,0.95);
 }
 
+/* COLLAPSED PANEL: only header visible */
+#info-panel.collapsed #info-content {
+  max-height:0;
+  padding:0 10px;
+  opacity:0;
+  overflow:hidden;
+  transition: max-height 0.3s ease, opacity 0.3s ease, padding 0.3s ease;
+}
+
 #info-content {
   padding:10px;
   overflow-y:auto;
@@ -129,7 +133,7 @@ html, body {
 }
 
 #note-input {
-  width:100%;
+  width:calc(100% - 16px); /* ensure it fits inside padding */
   padding:6px 8px;
   margin-top:6px;
   border-radius:6px;
@@ -138,6 +142,7 @@ html, body {
   color:#fff;
   outline:none;
   transition: all 0.2s ease;
+  box-sizing:border-box;
 }
 #note-input:focus {
   border-color:#fff;
@@ -276,11 +281,12 @@ document.addEventListener('DOMContentLoaded', () => {
     activeZone = null;
   });
 
+  /* INFO PANEL COLLAPSE LOGIC */
   infoHeader.addEventListener('click', e => {
     e.stopPropagation();
     collapsed = !collapsed;
     infoPanel.classList.toggle('collapsed', collapsed);
-    infoHeader.innerHTML = collapsed ? 'Info Panel &#9660;' : 'Info Panel &#9650;';
+    infoHeader.innerHTML = collapsed ? 'Info Panel ▼' : 'Info Panel ▲';
   });
 
   function renderSymbol(zone, type, id) {
