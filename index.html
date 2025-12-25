@@ -170,10 +170,14 @@ noteInput.addEventListener('keydown', e=>{
 async function loadData(){
   const {data:symbols} = await supabaseClient.from('symbols').select('*');
   symbols.forEach(s=>{
+    const key = `${s.region}_${s.symbol}_${s.id}`;
+    if(renderedSymbols.has(key)) return; // skip duplicates
     const zoneEl=document.querySelector(`.zone[data-name="${s.region}"]`);
-    if(zoneEl) addSymbolToZone(zoneEl,s.symbol,`${s.region}_${s.symbol}_${s.id}`);
+    if(zoneEl) addSymbolToZone(zoneEl,s.symbol,key);
   });
 
+  // Clear and load notes
+  notesContainer.innerHTML='';
   const {data:notes} = await supabaseClient.from('notes').select('*');
   notes.forEach(n=>{
     const noteDiv=document.createElement('div');
@@ -187,16 +191,22 @@ async function loadData(){
 }
 loadData();
 
-// Realtime
+// Realtime symbols
 supabaseClient.channel('public:symbols')
   .on('postgres_changes',{event:'INSERT',schema:'public',table:'symbols'}, payload=>{
-    const zoneEl=document.querySelector(`.zone[data-name="${payload.new.region}"]`);
-    if(zoneEl) addSymbolToZone(zoneEl,payload.new.symbol,`${payload.new.region}_${payload.new.symbol}_${payload.new.id}`);
+    const key = `${payload.new.region}_${payload.new.symbol}_${payload.new.id}`;
+    if(renderedSymbols.has(key)) return;
+    const zoneEl = document.querySelector(`.zone[data-name="${payload.new.region}"]`);
+    if(zoneEl) addSymbolToZone(zoneEl,payload.new.symbol,key);
   })
   .on('postgres_changes',{event:'DELETE',schema:'public',table:'symbols'}, payload=>{
-    loadData();
+    const key = `${payload.old.region}_${payload.old.symbol}_${payload.old.id}`;
+    const symbolEl = document.querySelector(`.symbol[data-key="${key}"]`);
+    if(symbolEl) symbolEl.remove();
+    renderedSymbols.delete(key);
   }).subscribe();
 
+// Realtime notes
 supabaseClient.channel('public:notes')
   .on('postgres_changes',{event:'INSERT',schema:'public',table:'notes'}, payload=>{
     const noteDiv=document.createElement('div');
