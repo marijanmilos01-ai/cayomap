@@ -55,6 +55,7 @@ html, body {
   background-color: rgba(255, 255, 255, 1);
 }
 
+/* ===== SYMBOL PANEL ANIMATIONS ===== */
 .panel {
   position:absolute;
   background: rgba(40,40,40,0.6);
@@ -71,19 +72,23 @@ html, body {
   opacity:0;
   backdrop-filter: blur(4px);
 }
+
 .panel.show {
   display:block;
   transform: scale(1);
   opacity:1;
 }
+
 .panel.show-pop {
   animation: popIn 0.25s forwards;
 }
+
 @keyframes popIn {
   0% { transform: scale(0.8); opacity:0; }
   60% { transform: scale(1.05); opacity:1; }
   100% { transform: scale(1); }
 }
+
 #panel button {
   background: transparent;
   border: 1px solid #888;
@@ -101,6 +106,7 @@ html, body {
   transform: translateY(-2px);
 }
 
+/* ===== INFO PANEL ===== */
 #info-panel {
   position: absolute;
   top: 0px; 
@@ -116,11 +122,13 @@ html, body {
   max-height: 100vh;
   backdrop-filter: blur(4px);
 }
+
 #info-panel.collapsed {
   width: 175px; 
   top: 30px; 
   left: 30px;
 }
+
 #info-header {
   padding: 10px;
   background: rgba(10,10,10,0.6);
@@ -131,6 +139,7 @@ html, body {
 #info-header:hover {
   background: rgba(30,30,30,0.6);
 }
+
 #info-panel.collapsed #info-content {
   max-height: 0;
   padding: 0 10px;
@@ -138,12 +147,14 @@ html, body {
   overflow: hidden;
   transition: max-height 0.3s ease, opacity 0.3s ease, padding 0.3s ease;
 }
+
 #info-content {
   padding: 10px;
   overflow-y: auto;
   max-height: calc(100vh - 50px);
   transition: max-height 0.3s ease, opacity 0.3s ease;
 }
+
 #note-input {
   width: calc(100% - 16px);
   padding: 6px 8px;
@@ -161,6 +172,7 @@ html, body {
   background: rgba(60,60,60,1);
   box-shadow: 0 0 6px #fff;
 }
+
 .loot-table {
   width: 100%;
   border-collapse: collapse;
@@ -173,6 +185,7 @@ html, body {
   text-align: center;
 }
 
+/* ===== CALCULATOR STYLES ===== */
 #calculator {
   background: rgba(50,50,50,0.7);
   padding: 8px;
@@ -181,14 +194,25 @@ html, body {
   color: #fff;
   font-size: 0.9em;
 }
-#calculator label { margin-right: 4px; }
-#calculator input[type=number], #calculator input[type=text], #calculator select {
-  border-radius:4px;
-  border:1px solid #555;
+#calculator label {
+  margin-right: 4px;
+}
+#calculator input[type=number], #calculator input[type=text] {
+  width: 60px;
+  padding: 2px 4px;
+  margin-right: 6px;
+  border-radius: 4px;
+  border: 1px solid #555;
   background: rgba(60,60,60,0.8);
-  color:#fff;
-  padding:2px 4px;
-  margin-right:6px;
+  color: #fff;
+}
+#calculator select {
+  background: rgba(60,60,60,0.8);
+  color: #fff;
+  border: 1px solid #555;
+  border-radius: 4px;
+  padding: 2px 4px;
+  margin-right: 6px;
 }
 #calculator button {
   background: transparent;
@@ -199,9 +223,23 @@ html, body {
   margin-right:4px;
   cursor:pointer;
 }
-#calculator button:hover { background:#555; box-shadow:0 0 6px #fff; }
-#calculator .player-row { display:flex; align-items:center; margin-bottom:4px; gap:6px; }
-#calculator .loot-result { margin-top:6px; background: rgba(30,30,30,0.5); padding:4px; border-radius:6px; }
+#calculator button:hover {
+  background:#555;
+  box-shadow:0 0 6px #fff;
+}
+
+#calculator .player-row {
+  display:flex;
+  align-items:center;
+  margin-bottom:4px;
+}
+
+#calculator .loot-result {
+  margin-top: 6px;
+  background: rgba(30,30,30,0.5);
+  padding: 4px;
+  border-radius: 6px;
+}
 </style>
 </head>
 
@@ -211,7 +249,7 @@ html, body {
   <div id="info-header">Loot Panel ▼</div>
   <div id="info-content">
     <table class="loot-table">
-      <tr><th>Primary Loot</th><th>Normal</th><th>Hard</th><td>Rarity &lt;72H</td><td>Rarity &gt;72H</td></tr>
+      <tr><th>Primary Loot</th><th>Normal</th><th>Hard</th><td>Rarity <72H</td><td>Rarity >72H</td></tr>
       <tr><td>Tequila</td><td>$630k</td><td>$693k</td><td>47.6%</td><td>25%</td></tr>
       <tr><td>Ruby</td><td>$700k</td><td>$770k</td><td>19%</td><td>25%</td></tr>
       <tr><td>Bonds</td><td>$770k</td><td>$847k</td><td>28.6%</td><td>37.5%</td></tr>
@@ -277,118 +315,147 @@ html, body {
   <button data-symbol="Painting">Painting</button>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+// ===== CALCULATOR & SECONDARY LOOT LOGIC =====
 document.addEventListener('DOMContentLoaded', () => {
-  const sb = supabase.createClient(
-    'https://qanrnafvvnmimewtxrxv.supabase.co',
-    'sb_publishable_8F3cI7ZKCgpxv6UfaRJn7A_r1s17TmC'
-  );
-
-  const infoContent = document.getElementById('info-content');
+  const calculatorDiv = document.getElementById('calculator');
   const difficultySelect = document.getElementById('difficulty-select');
   const primaryLootSelect = document.getElementById('primary-loot-select');
   const playerCutsDiv = document.getElementById('player-cuts');
   const secondaryLootDiv = document.getElementById('secondary-loot-selection');
   const lootResultDiv = document.getElementById('loot-result');
 
-  let calculatorState = null;
-  const secondaryLootTypes = ['Cash','Painting','Gold'];
+  const secondaryLootTypes = ['Cash', 'Painting', 'Gold'];
   const secondaryRanges = {
     Cash:[78000,89000],
     Painting:[176000,199000],
     Gold:[328000,333000]
   };
-  const secondaryBagPerc = { Cash:0.25, Painting:0.5, Gold:0.667 };
+  const secondaryBagPerc = {
+    Cash:0.25,
+    Painting:0.5,
+    Gold:0.667
+  };
 
+  let calculatorState = null;
+
+  // ===== Load state from Supabase =====
   async function loadCalculator() {
     const { data } = await sb.from('calculator_state').select('*').limit(1).single();
-    if(!data) { 
-      calculatorState = {id:1, players:[], difficulty:'normal', primary_loot:''}; 
-      renderPlayers(); renderSecondaryLoot(); renderLootResult(); 
-      return;
-    }
+    if (!data) return;
     calculatorState = data;
     difficultySelect.value = calculatorState.difficulty || 'normal';
     primaryLootSelect.value = calculatorState.primary_loot || '';
-    renderPlayers(); renderSecondaryLoot(); renderLootResult();
+    renderPlayers();
+    renderSecondaryLoot();
+    renderLootResult();
   }
 
+  // ===== Player inputs =====
   function renderPlayers() {
     playerCutsDiv.innerHTML = '';
-    (calculatorState.players||[]).forEach((p, idx)=>{
+    (calculatorState.players || []).forEach((p, idx) => {
       const div = document.createElement('div');
       div.className = 'player-row';
+      div.style.cssText = `display:flex; align-items:center; gap:6px; margin-bottom:4px;`;
       div.innerHTML = `
-        <input type="text" value="${p.name}" data-idx="${idx}">
-        <input type="number" min="0" max="100" value="${p.cut}" data-idx="${idx}">
-        <button data-idx="${idx}">Remove</button>
+        <input type="text" value="${p.name}" data-idx="${idx}" style="flex:1; background: rgba(60,60,60,0.8); color:#fff; border:1px solid #555; border-radius:4px; padding:2px 4px;">
+        <input type="number" min="0" max="100" value="${p.cut}" data-idx="${idx}" style="width:50px; background: rgba(60,60,60,0.8); color:#fff; border:1px solid #555; border-radius:4px; padding:2px 4px;">
+        <button data-idx="${idx}" style="background:#333;color:#fff;border:none;border-radius:4px;padding:2px 6px;cursor:pointer;">Remove</button>
       `;
       playerCutsDiv.appendChild(div);
     });
-    if((calculatorState.players||[]).length<3){
-      const btn = document.createElement('button'); btn.textContent='Add Player';
-      btn.onclick = async()=>{
+
+    if ((calculatorState.players||[]).length < 3) {
+      const btn = document.createElement('button');
+      btn.textContent = 'Add Player';
+      btn.style.cssText = `background:#444;color:#fff;border:none;border-radius:4px;padding:2px 6px;cursor:pointer;margin-top:4px;`;
+      btn.onclick = async () => {
         calculatorState.players.push({name:'Player '+(calculatorState.players.length+1), cut:0});
-        await updateCalculatorState({players:calculatorState.players});
-        renderPlayers(); renderLootResult();
+        await updateCalculatorState({players: calculatorState.players});
+        renderPlayers();
+        renderLootResult();
       };
       playerCutsDiv.appendChild(btn);
     }
 
-    // Attach events
-    playerCutsDiv.querySelectorAll('input[type=text]').forEach(inp=>{
-      inp.addEventListener('input', async e=>{
-        calculatorState.players[e.target.dataset.idx].name=e.target.value;
-        await updateCalculatorState({players:calculatorState.players});
+    playerCutsDiv.querySelectorAll('input[type=text]').forEach(inp => {
+      inp.addEventListener('input', async e => {
+        const idx = e.target.dataset.idx;
+        calculatorState.players[idx].name = e.target.value;
+        await updateCalculatorState({players: calculatorState.players});
       });
     });
-    playerCutsDiv.querySelectorAll('input[type=number]').forEach(inp=>{
-      inp.addEventListener('input', async e=>{
-        calculatorState.players[e.target.dataset.idx].cut=Math.min(100,parseInt(e.target.value)||0);
+    playerCutsDiv.querySelectorAll('input[type=number]').forEach(inp => {
+      inp.addEventListener('input', async e => {
+        const idx = e.target.dataset.idx;
+        calculatorState.players[idx].cut = Math.min(100, parseInt(e.target.value)||0);
         enforceBagLimit();
-        await updateCalculatorState({players:calculatorState.players});
+        await updateCalculatorState({players: calculatorState.players});
         renderLootResult();
       });
     });
-    playerCutsDiv.querySelectorAll('button').forEach(btn=>{
-      btn.addEventListener('click', async e=>{
-        calculatorState.players.splice(btn.dataset.idx,1);
+    playerCutsDiv.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', async e => {
+        const idx = btn.dataset.idx;
+        calculatorState.players.splice(idx,1);
         enforceBagLimit();
-        await updateCalculatorState({players:calculatorState.players});
-        renderPlayers(); renderLootResult();
+        await updateCalculatorState({players: calculatorState.players});
+        renderPlayers();
+        renderLootResult();
       });
     });
   }
 
-  difficultySelect.addEventListener('change', async ()=> {
-    calculatorState.difficulty=difficultySelect.value;
-    await updateCalculatorState({difficulty:calculatorState.difficulty});
-    renderLootResult();
-  });
-  primaryLootSelect.addEventListener('change', async ()=>{
-    calculatorState.primary_loot=primaryLootSelect.value;
-    await updateCalculatorState({primary_loot:calculatorState.primary_loot});
+  // ===== Difficulty & Primary Loot =====
+  difficultySelect.addEventListener('change', async () => {
+    calculatorState.difficulty = difficultySelect.value;
+    await updateCalculatorState({difficulty: calculatorState.difficulty});
     renderLootResult();
   });
 
-  function enforceBagLimit(){
+  primaryLootSelect.addEventListener('change', async () => {
+    calculatorState.primary_loot = primaryLootSelect.value;
+    await updateCalculatorState({primary_loot: calculatorState.primary_loot});
+    renderLootResult();
+  });
+
+  // ===== Bag limit =====
+  function enforceBagLimit() {
     const total = calculatorState.players.reduce((sum,p)=>sum+p.cut,0);
     if(total>300){
       const ratio = 300/total;
-      calculatorState.players.forEach(p=>p.cut=Math.floor(p.cut*ratio));
+      calculatorState.players.forEach(p=>p.cut = Math.floor(p.cut*ratio));
     }
   }
 
+  // ===== Update state in Supabase =====
   async function updateCalculatorState(updates){
-    await sb.from('calculator_state').update(updates).eq('id',calculatorState.id);
-    Object.assign(calculatorState,updates);
+    await sb.from('calculator_state').update(updates).eq('id', calculatorState.id);
+    Object.assign(calculatorState, updates);
   }
 
-  function getSymbolCounts(){
-    const counts={cash:0,painting:0,gold:0};
+  // ===== Secondary Loot Rendering =====
+  function renderSecondaryLoot() {
+    secondaryLootDiv.innerHTML = '';
+    const counts = getSymbolCounts();
+    secondaryLootTypes.forEach(type => {
+      const available = counts[type.toLowerCase()] || 0;
+      const maxTake = (type === 'Painting') ? Math.floor(available*secondaryBagPerc[type]) : available*secondaryBagPerc[type];
+      const div = document.createElement('div');
+      div.style.cssText = `display:flex; align-items:center; gap:6px; margin-bottom:4px;`;
+      div.innerHTML = `
+        <label>${type} (available: ${available}):</label>
+        <input type="number" min="0" max="${maxTake}" value="0" step="${type==='Painting'?1:0.1}" data-type="${type}" style="width:50px; background: rgba(60,60,60,0.8); color:#fff; border:1px solid #555; border-radius:4px; padding:2px 4px;">
+      `;
+      secondaryLootDiv.appendChild(div);
+    });
+  }
+
+  function getSymbolCounts() {
+    const counts = {cash:0,painting:0,gold:0};
     document.querySelectorAll('.symbol').forEach(s=>{
-      const img=s.querySelector('img')?.src.toLowerCase();
+      const img = s.querySelector('img')?.src.toLowerCase();
       if(img?.includes('dollar')) counts.cash++;
       if(img?.includes('painting')) counts.painting++;
       if(img?.includes('gold')) counts.gold++;
@@ -396,54 +463,56 @@ document.addEventListener('DOMContentLoaded', () => {
     return counts;
   }
 
-  function renderSecondaryLoot(){
-    secondaryLootDiv.innerHTML='';
-    const counts=getSymbolCounts();
-    secondaryLootTypes.forEach(type=>{
-      const available=counts[type.toLowerCase()]||0;
-      const maxTake=Math.floor(available*secondaryBagPerc[type]);
-      const div=document.createElement('div');
-      div.style.marginBottom='4px'; div.style.display='flex'; div.style.alignItems='center'; div.style.gap='6px';
-      div.innerHTML=`<label>${type} (available:${available}):</label>
-      <input type="number" min="0" max="${maxTake}" value="0" data-type="${type}">`;
-      secondaryLootDiv.appendChild(div);
-    });
-  }
-
-  function renderLootResult(){
+  // ===== Compute loot =====
+  function renderLootResult() {
     const primaryValues = {
       normal: {Tequila:630000,Ruby:700000,Bonds:770000,Diamond:1300000,Panther:1900000},
-      hard: {Tequila:693000,Ruby:770000,Bonds:847000,Diamond:1430000,Panther:2090000}
+      hard:   {Tequila:693000,Ruby:770000,Bonds:847000,Diamond:1430000,Panther:2090000}
     };
-    let primaryValue=0;
-    if(calculatorState.primary_loot) primaryValue=primaryValues[calculatorState.difficulty][calculatorState.primary_loot]||0;
-    const secondaryInputs=secondaryLootDiv.querySelectorAll('input');
-    let secMin=0, secMax=0;
-    secondaryInputs.forEach(inp=>{
-      const type=inp.dataset.type; const val=parseInt(inp.value)||0;
-      const range=secondaryRanges[type]; secMin+=val*range[0]; secMax+=val*range[1];
+
+    let primaryValue = 0;
+    if(calculatorState.primary_loot)
+      primaryValue = primaryValues[calculatorState.difficulty][calculatorState.primary_loot]||0;
+
+    // Secondary
+    const secInputs = secondaryLootDiv.querySelectorAll('input');
+    let secMin = 0, secMax = 0;
+    secInputs.forEach(inp => {
+      const type = inp.dataset.type;
+      let val = parseFloat(inp.value)||0;
+      const range = secondaryRanges[type];
+      secMin += val*range[0];
+      secMax += val*range[1];
     });
-    let totalMin=(primaryValue+secMin)*0.88;
-    let totalMax=(primaryValue+secMax)*0.88;
-    let html='<strong>Potential Take:</strong><br>';
+
+    let totalMin = (primaryValue + secMin)*0.88;
+    let totalMax = (primaryValue + secMax)*0.88;
+
+    // Split per player
+    let html = `<strong>Potential Take:</strong><br>`;
     (calculatorState.players||[]).forEach(p=>{
-      const minTake=Math.floor(totalMin*(p.cut/100));
-      const maxTake=Math.floor(totalMax*(p.cut/100));
-      html+=`${p.name}: $${minTake.toLocaleString()} → $${maxTake.toLocaleString()}<br>`;
+      const minTake = totalMin*(p.cut/100);
+      const maxTake = totalMax*(p.cut/100);
+      html += `${p.name}: $${Math.floor(minTake).toLocaleString()} → $${Math.floor(maxTake).toLocaleString()}<br>`;
     });
-    lootResultDiv.innerHTML=html;
+    lootResultDiv.innerHTML = html;
   }
 
+  // ===== Update on secondary loot input =====
   secondaryLootDiv.addEventListener('input', renderLootResult);
 
+  // ===== Real-time sync =====
   sb.channel('calculator_state')
-    .on('postgres_changes', { event: 'UPDATE', table: 'calculator_state' }, payload=>{
-      calculatorState=payload.new;
-      difficultySelect.value=calculatorState.difficulty;
-      primaryLootSelect.value=calculatorState.primary_loot||'';
-      renderPlayers(); renderSecondaryLoot(); renderLootResult();
+    .on('postgres_changes', { event: 'UPDATE', table: 'calculator_state' }, payload => {
+      calculatorState = payload.new;
+      difficultySelect.value = calculatorState.difficulty;
+      primaryLootSelect.value = calculatorState.primary_loot||'';
+      renderPlayers();
+      renderSecondaryLoot();
+      renderLootResult();
     }).subscribe();
 
+  // ===== Initial load =====
   loadCalculator();
 });
 </script>
