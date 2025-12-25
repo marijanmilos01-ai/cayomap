@@ -13,7 +13,6 @@ html, body {
   font-family: Arial, sans-serif;
 }
 
-/* MAP (scaling preserved) */
 #map-container {
   position:relative;
   width:100vw;
@@ -22,7 +21,6 @@ html, body {
   background-size:cover;
 }
 
-/* Zones */
 .zone {
   position:absolute;
   border:2px solid #ccc;
@@ -36,7 +34,6 @@ html, body {
   background-color: rgba(220,220,220,0.4);
 }
 
-/* Symbols */
 .symbol {
   position:absolute;
   width:30%;
@@ -52,7 +49,6 @@ html, body {
   background-color: rgba(255,255,255,0.4);
 }
 
-/* Symbol panel */
 .panel {
   position:absolute;
   background: rgba(30,30,30,0.9);
@@ -64,7 +60,6 @@ html, body {
   min-width:120px;
 }
 
-/* Info panel */
 #info-panel {
   position:absolute;
   top:0; left:0;
@@ -86,7 +81,6 @@ html, body {
   padding:8px;
 }
 
-/* Loot tables */
 .loot-table {
   width:100%;
   border-collapse:collapse;
@@ -103,11 +97,9 @@ html, body {
 
 <body>
 
-<!-- INFO PANEL -->
 <div id="info-panel">
   <div id="info-header">Info Panel ▲</div>
   <div id="info-content">
-
     <table class="loot-table">
       <tr><th>Loot</th><th>Normal</th><th>Hard</th></tr>
       <tr><td>Tequila</td><td>630k</td><td>693k</td></tr>
@@ -131,7 +123,6 @@ html, body {
   </div>
 </div>
 
-<!-- MAP -->
 <div id="map-container">
   <div class="zone" style="left:47%;top:54%;width:6%;height:5%;" data-name="Podrum"></div>
   <div class="zone" style="left:45%;top:48%;width:6%;height:5%;" data-name="Office"></div>
@@ -140,7 +131,6 @@ html, body {
   <div class="zone" style="left:47%;top:65%;width:6%;height:5%;" data-name="South Storage"></div>
 </div>
 
-<!-- SYMBOL PANEL -->
 <div id="panel" class="panel">
   <h3 id="panel-title"></h3>
   <button data-symbol="Gold">Gold</button>
@@ -170,7 +160,6 @@ document.addEventListener('DOMContentLoaded', () => {
   let collapsed = false;
   const localInsertedSymbols = new Set();
 
-  /* ZONE CLICK */
   zones.forEach(zone => {
     zone.addEventListener('click', e => {
       e.stopPropagation();
@@ -183,14 +172,12 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  /* CLOSE PANEL */
   document.addEventListener('click', e => {
     if (panel.contains(e.target) || infoPanel.contains(e.target)) return;
     panel.style.display = 'none';
     activeZone = null;
   });
 
-  /* INFO PANEL TOGGLE */
   infoHeader.addEventListener('click', e => {
     e.stopPropagation();
     collapsed = !collapsed;
@@ -198,10 +185,8 @@ document.addEventListener('DOMContentLoaded', () => {
     infoHeader.innerHTML = collapsed ? 'Info Panel &#9660;' : 'Info Panel &#9650;';
   });
 
-  /* SYMBOL RENDER */
   function renderSymbol(zone, type, id) {
     if (zone.querySelector(`.symbol[data-id="${id}"]`)) return;
-
     const idx = zone.querySelectorAll('.symbol').length;
     if (idx >= 6) return;
 
@@ -230,26 +215,33 @@ document.addEventListener('DOMContentLoaded', () => {
     zone.appendChild(symbol);
   }
 
-  /* ADD SYMBOL */
   panel.querySelectorAll('button').forEach(btn => {
     btn.addEventListener('click', async e => {
       e.stopPropagation();
       if (!activeZone) return;
 
+      const region = activeZone.dataset.name;
+
+      const { count } = await sb
+        .from('symbols')
+        .select('*', { count: 'exact', head: true })
+        .eq('region', region);
+
+      if (count >= 6) return;
+
       const { data } = await sb
         .from('symbols')
-        .insert({
-          region: activeZone.dataset.name,
-          symbol: btn.dataset.symbol
-        })
+        .insert({ region, symbol: btn.dataset.symbol })
         .select()
         .single();
 
-      if (data) localInsertedSymbols.add(data.id);
+      if (data) {
+        localInsertedSymbols.add(data.id);
+        renderSymbol(activeZone, data.symbol, data.id);
+      }
     });
   });
 
-  /* LOAD SYMBOLS */
   async function loadSymbols() {
     const { data } = await sb.from('symbols').select('*');
     data?.forEach(s => {
@@ -274,7 +266,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   loadSymbols();
 
-  /* NOTES */
   noteInput.addEventListener('keydown', async e => {
     e.stopPropagation();
     if (e.key !== 'Enter' || !noteInput.value.trim()) return;
