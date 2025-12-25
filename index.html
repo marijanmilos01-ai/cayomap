@@ -5,143 +5,32 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cayo Perico Interactive Map</title>
 <style>
-html, body {
-  margin: 0;
-  padding: 0;
-  user-select: none;
-  overflow: hidden;
-  font-family: Arial, sans-serif;
-}
-#map-container {
-  position: relative;
-  width: 100vw;
-  height: 100vh;
-  background: url('compound_map.png') no-repeat center center;
-  background-size: cover;
-}
-.zone {
-  position: absolute;
-  border: 2px solid #ccc;
-  background-color: rgba(200,200,200,0.3);
-  cursor: pointer;
-  box-sizing: border-box;
-  transition: border-color 0.2s, background-color 0.2s;
-  border-radius: 8px;
-}
-.zone:hover {
-  border-color: #ddd;
-  background-color: rgba(220,220,220,0.4);
-}
-.symbol {
-  position: absolute;
-  width: 30%;
-  height: 45%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  cursor: pointer;
-  transition: transform 0.2s;
-  border-radius: 50%;
-  background-color: rgba(255,255,255,0.4);
-}
-.symbol:hover {
-  transform: scale(1.1);
-  background-color: rgba(255,255,255,0.6);
-}
-.panel {
-  position: absolute;
-  background: rgba(30,30,30,0.9);
-  color: #fff;
-  padding: 10px;
-  border-radius: 8px;
-  display: none;
-  z-index: 10;
-  min-width: 120px;
-}
-.panel button {
-  margin: 5px;
-  padding: 5px 10px;
-  cursor: pointer;
-  border: none;
-  border-radius: 6px;
-  background-color: rgba(60,60,60,0.8);
-  color: #fff;
-  transition: background-color 0.2s, transform 0.2s;
-}
-.panel button:hover {
-  background-color: rgba(100,100,100,0.9);
-  transform: scale(1.05);
-}
-.panel h3 {
-  margin: 0 0 5px 0;
-  font-size: 1em;
-  font-weight: bold;
-}
-/* Info Panel */
-#info-panel {
-  position:absolute; top:10px; left:0;
-  width:300px; max-height:500px;
-  background: rgba(30,30,30,0.95);
-  border-radius:8px;
-  overflow:hidden;
-  transition: max-height 0.3s ease;
-  z-index:20;
-  color: #fff;
-}
-#info-header {
-  padding:10px;
-  background: rgba(50,50,50,0.95);
-  cursor:pointer;
-  font-weight:bold;
-  border-bottom:1px solid rgba(100,100,100,0.3);
-}
-#info-content {
-  padding:10px;
-  display:block;
-  background: rgba(50,50,50,0.8);
-  font-size: 0.9em;
-}
-#notes-container div {
-  padding: 4px 6px;
-  margin-bottom: 4px;
-  background: rgba(100,100,100,0.5);
-  border-radius: 4px;
-  cursor: pointer;
-  color: #fff;
-}
-#note-input {
-  width:100%;
-  box-sizing:border-box;
-  margin-top:5px;
-  padding:5px;
-  border-radius:4px;
-  border:1px solid #555;
-  background: rgba(60,60,60,0.7);
-  color: #fff;
-}
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-bottom: 10px;
-}
-table th, table td {
-  border: 1px solid #888;
-  padding: 4px;
-  text-align: center;
-}
-table th {
-  background-color: rgba(80,80,80,0.8);
-}
+  html, body { margin: 0; padding: 0; user-select: none; overflow: hidden; font-family: Arial, sans-serif; }
+  #map-container { position: relative; width: 100vw; height: 100vh; background: url('compound_map.png') no-repeat center center; background-size: cover; }
+  .zone { position: absolute; border: 2px solid #ccc; background-color: rgba(200,200,200,0.3); cursor: pointer; box-sizing: border-box; transition: border-color 0.2s, background-color 0.2s; border-radius: 8px; }
+  .zone:hover { border-color: #ddd; background-color: rgba(220,220,220,0.4); }
+  .symbol { position: absolute; width: 30%; height: 45%; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: transform 0.2s; background-color: rgba(255,255,255,0.4); border-radius: 50%; }
+  .symbol:hover { transform: scale(1.1); background-color: rgba(255,255,255,0.6); }
+  .panel { position: absolute; background: rgba(30,30,30,0.9); color: #fff; padding: 10px; border-radius: 8px; display: none; z-index: 10; min-width: 120px; }
+  .panel button { margin: 5px; padding: 5px 10px; cursor: pointer; border: none; border-radius: 6px; background-color: rgba(60,60,60,0.8); color: #fff; transition: background-color 0.2s, transform 0.2s; }
+  .panel button:hover { background-color: rgba(100,100,100,0.9); transform: scale(1.05); }
+  .panel h3 { margin: 0 0 5px 0; font-size: 1em; font-weight: bold; }
+
+  /* Info Panel */
+  #info-panel { position:absolute; top:10px; left:0; width:300px; max-height:400px; background: rgba(30,30,30,0.9); border-radius:8px; overflow:hidden; transition: max-height 0.3s ease; z-index:20; color: #fff; }
+  #info-header { padding:8px; background: rgba(50,50,50,0.95); cursor:pointer; font-weight:bold; border-bottom:1px solid rgba(100,100,100,0.3); }
+  #info-content { padding:8px; display:block; background: rgba(50,50,50,0.7); }
+  #notes-container div { padding: 4px 6px; margin-bottom: 4px; background: rgba(100,100,100,0.5); border-radius: 4px; cursor: pointer; color: #fff; }
+  #note-input { width:100%; box-sizing:border-box; margin-top:5px; padding:5px; border-radius:4px; border:1px solid #555; background: rgba(60,60,60,0.7); color: #fff; }
 </style>
 </head>
 <body>
 
-<!-- Info Panel -->
 <div id="info-panel">
   <div id="info-header">Info Panel &#9650;</div>
   <div id="info-content">
-    <div id="permanent-info">
-      <table>
+    <div id="loot-table">
+      <table style="width:100%;color:#fff;border-collapse:collapse;">
         <tr><th>Loot</th><th>Normal</th><th>Hard</th></tr>
         <tr><td>Tequila</td><td>630k</td><td>693k</td></tr>
         <tr><td>Ruby</td><td>700k</td><td>770k</td></tr>
@@ -149,7 +38,8 @@ table th {
         <tr><td>Diamond</td><td>1,3mil</td><td>1,43mil</td></tr>
         <tr><td>Panther</td><td>1,9mil</td><td>2,09mil</td></tr>
       </table>
-      <table>
+      <br>
+      <table style="width:100%;color:#fff;border-collapse:collapse;">
         <tr><th>Loot</th><th>%Bag</th><th>Value Stack</th></tr>
         <tr><td>Cash</td><td>25%</td><td>$78,480-$89,420</td></tr>
         <tr><td>Painting</td><td>50%</td><td>$176,200-$199,700</td></tr>
@@ -178,19 +68,20 @@ table th {
   <button data-symbol="Painting">Painting</button>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- Supabase v1 -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@1.35.6/dist/supabase.min.js"></script>
 <script>
-const SUPABASE_URL = 'https://qanrnafvvnmimewtxrxv.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_8F3cI7ZKCgpxv6UfaRJn7A_r1s17TmC';
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
 document.addEventListener('DOMContentLoaded', () => {
+  const SUPABASE_URL = 'https://qanrnafvvnmimewtxrxv.supabase.co';
+  const SUPABASE_ANON_KEY = 'sb_publishable_8F3cI7ZKCgpxv6UfaRJn7A_r1s17TmC';
+  const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
   const zones = document.querySelectorAll('.zone');
   const panel = document.getElementById('panel');
   const panelTitle = document.getElementById('panel-title');
   let activeZone = null;
 
-  // Panels
+  // Show panel
   zones.forEach(zone => {
     zone.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -198,12 +89,13 @@ document.addEventListener('DOMContentLoaded', () => {
       panelTitle.textContent = zone.dataset.name;
       const rect = zone.getBoundingClientRect();
       const panelHeight = 100;
-      panel.style.top = rect.top > window.innerHeight/2 ? (rect.top - panelHeight - 10)+'px' : (rect.bottom+10)+'px';
-      panel.style.left = rect.left+'px';
+      panel.style.top = (rect.top > window.innerHeight/2 ? rect.top - panelHeight - 10 : rect.bottom + 10) + 'px';
+      panel.style.left = rect.left + 'px';
       panel.style.display = 'block';
     });
   });
 
+  // Hide panel only when clicking outside
   document.addEventListener('click', (e) => {
     if(!panel.contains(e.target) && !e.target.classList.contains('zone')) {
       panel.style.display = 'none';
@@ -211,93 +103,84 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Symbol adding
-  const symbolSet = new Set();
-  function addSymbolToZone(zone, type, skipInsert=false){
-    const key = zone.dataset.name+'-'+type;
-    if(symbolSet.has(key)) return;
-    symbolSet.add(key);
-
+  // Add symbol
+  async function addSymbolToZone(zone, type) {
     const existing = zone.querySelectorAll('.symbol');
-    if(existing.length>=6) return;
+    if(existing.length >= 6) return;
+
     const idx = existing.length;
-    const row = idx<3 ? 0 : 1;
-    const col = idx%3;
+    const row = idx < 3 ? 0 : 1;
+    const col = idx % 3;
 
     const symbol = document.createElement('div');
     symbol.classList.add('symbol');
     symbol.style.top = `${row*50 + 2}%`;
     symbol.style.left = `${col*33 + 1}%`;
-    let svg='';
+
+    let svg = '';
     switch(type){
-      case 'Gold': svg='<img src="https://www.svgrepo.com/show/323883/gold-bar.svg" width="100%" height="100%">'; break;
-      case 'Cash': svg='<img src="https://www.svgrepo.com/show/507663/dollar-circle.svg" width="100%" height="100%">'; break;
-      case 'Painting': svg='<img src="https://www.svgrepo.com/show/535548/painting.svg" width="100%" height="100%">'; break;
+      case 'Gold': svg=`<img src="https://www.svgrepo.com/show/323883/gold-bar.svg" width="100%" height="100%">`; break;
+      case 'Cash': svg=`<img src="https://www.svgrepo.com/show/507663/dollar-circle.svg" width="100%" height="100%">`; break;
+      case 'Painting': svg=`<img src="https://www.svgrepo.com/show/535548/painting.svg" width="100%" height="100%">`; break;
     }
     symbol.innerHTML = svg;
-    symbol.addEventListener('click', async (e)=>{
+
+    symbol.addEventListener('click', async (e) => {
       e.stopPropagation();
+      const region = zone.dataset.name;
+      const symbolType = type;
       symbol.remove();
-      symbolSet.delete(key);
-      if(!skipInsert) await supabase.from('symbols').delete().eq('region', zone.dataset.name).eq('symbol', type).limit(1);
+      await supabase.from('symbols').delete().eq('region', region).eq('symbol', symbolType).limit(1);
     });
+
     zone.appendChild(symbol);
 
-    if(!skipInsert){
-      await supabase.from('symbols').insert({region: zone.dataset.name, symbol: type});
-    }
+    // Insert into Supabase
+    const region = zone.dataset.name;
+    await supabase.from('symbols').insert({region: region, symbol: type});
   }
 
   // Panel buttons
-  panel.querySelectorAll('button').forEach(btn=>{
-    btn.addEventListener('click', ()=> {
+  panel.querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('click', () => {
       if(!activeZone) return;
       addSymbolToZone(activeZone, btn.dataset.symbol);
     });
   });
 
   // Notes
-  const notesContainer = document.getElementById('notes-container');
   const noteInput = document.getElementById('note-input');
-  const noteSet = new Set();
+  const notesContainer = document.getElementById('notes-container');
 
-  noteInput.addEventListener('keydown', async (e)=>{
+  noteInput.addEventListener('keydown', async (e) => {
     if(e.key==='Enter' && noteInput.value.trim()!==''){
       const content = noteInput.value.trim();
-      if(noteSet.has(content)) return;
-      noteSet.add(content);
-
       const noteDiv = document.createElement('div');
       noteDiv.textContent = content;
-      noteDiv.addEventListener('click', async ()=>{
+      noteDiv.addEventListener('click', async ()=> {
         noteDiv.remove();
-        noteSet.delete(content);
         await supabase.from('notes').delete().eq('content', content).limit(1);
       });
       notesContainer.appendChild(noteDiv);
-
       await supabase.from('notes').insert({content});
       noteInput.value='';
     }
   });
 
-  // Load existing data
-  async function loadData(){
-    const {data: symbols} = await supabase.from('symbols').select('*');
-    symbols.forEach(s=>{
+  // Load initial data
+  async function loadData() {
+    const {data:symbols} = await supabase.from('symbols').select('*');
+    symbols.forEach(s => {
       const zoneEl = document.querySelector(`.zone[data-name="${s.region}"]`);
-      if(zoneEl) addSymbolToZone(zoneEl, s.symbol, true);
+      if(zoneEl) addSymbolToZone(zoneEl, s.symbol); // only inserts if clicked again
     });
 
-    const {data: notes} = await supabase.from('notes').select('*');
-    notes.forEach(n=>{
-      if(noteSet.has(n.content)) return;
-      noteSet.add(n.content);
+    const {data:notes} = await supabase.from('notes').select('*');
+    notes.forEach(n => {
       const noteDiv = document.createElement('div');
       noteDiv.textContent = n.content;
       noteDiv.addEventListener('click', async ()=> {
         noteDiv.remove();
-        noteSet.delete(n.content);
         await supabase.from('notes').delete().eq('content', n.content).limit(1);
       });
       notesContainer.appendChild(noteDiv);
@@ -306,51 +189,41 @@ document.addEventListener('DOMContentLoaded', () => {
 
   loadData();
 
-  // Realtime subscriptions
-  supabase.channel('symbols')
-    .on('postgres_changes', {event:'INSERT', schema:'public', table:'symbols'}, payload=>{
-      const zoneEl = document.querySelector(`.zone[data-name="${payload.new.region}"]`);
-      if(zoneEl) addSymbolToZone(zoneEl, payload.new.symbol, true);
-    })
-    .on('postgres_changes', {event:'DELETE', schema:'public', table:'symbols'}, payload=>{
-      loadData();
-    }).subscribe();
+  // Realtime subscription
+  supabase.from('symbols').on('INSERT', payload=>{
+    const zoneEl = document.querySelector(`.zone[data-name="${payload.new.region}"]`);
+    if(zoneEl) addSymbolToZone(zoneEl, payload.new.symbol);
+  }).on('DELETE', payload=>{
+    loadData(); // remove deleted
+  }).subscribe();
 
-  supabase.channel('notes')
-    .on('postgres_changes', {event:'INSERT', schema:'public', table:'notes'}, payload=>{
-      if(noteSet.has(payload.new.content)) return;
-      noteSet.add(payload.new.content);
-      const noteDiv = document.createElement('div');
-      noteDiv.textContent = payload.new.content;
-      noteDiv.addEventListener('click', async ()=>{
-        noteDiv.remove();
-        noteSet.delete(payload.new.content);
-        await supabase.from('notes').delete().eq('content', payload.new.content).limit(1);
-      });
-      notesContainer.appendChild(noteDiv);
-    })
-    .on('postgres_changes', {event:'DELETE', schema:'public', table:'notes'}, payload=>{
-      loadData();
-    }).subscribe();
+  supabase.from('notes').on('INSERT', payload=>{
+    const noteDiv = document.createElement('div');
+    noteDiv.textContent = payload.new.content;
+    noteDiv.addEventListener('click', async ()=> {
+      noteDiv.remove();
+      await supabase.from('notes').delete().eq('content', payload.new.content).limit(1);
+    });
+    notesContainer.appendChild(noteDiv);
+  }).on('DELETE', payload=>{
+    loadData();
+  }).subscribe();
 
-  // Info panel collapse
+  // Collapsible info panel
+  const infoPanel = document.getElementById('info-panel');
   const infoHeader = document.getElementById('info-header');
-  const infoContent = document.getElementById('info-content');
   let collapsed = false;
-  infoHeader.addEventListener('click', ()=>{
+  infoHeader.addEventListener('click', () => {
     if(collapsed){
-      infoContent.style.display='block';
-      infoPanel.style.maxHeight='500px';
-      infoHeader.innerHTML="Info Panel &#9650;";
+      infoPanel.style.maxHeight = '400px';
+      infoHeader.innerHTML = "Info Panel &#9650;";
       collapsed=false;
     } else {
-      infoContent.style.display='none';
-      infoPanel.style.maxHeight='40px';
-      infoHeader.innerHTML="Info Panel &#9660;";
+      infoPanel.style.maxHeight = '40px';
+      infoHeader.innerHTML = "Info Panel &#9660;";
       collapsed=true;
     }
   });
-
 });
 </script>
 </body>
