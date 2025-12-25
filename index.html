@@ -391,15 +391,12 @@ html, body {
 
       <div class="loot-result" id="loot-result"></div>
 
-      <!-- NEW: sync line -->
       <div class="sync-line">
-        <div class="sync-text" id="sync-indicator">
-          <span class="sync-dot" id="sync-dot"></span>
-          Synced
+        <div class="sync-text">
+          <span class="sync-dot" id="sync-dot"></span><span id="sync-text">Synced</span>
         </div>
-        <div class="sync-text" id="sync-indicator-map">
-          <span class="sync-dot" id="sync-dot-map"></span>
-          Map synced
+        <div class="sync-text">
+          <span class="sync-dot" id="sync-dot-map"></span><span id="sync-text-map">Map synced</span>
         </div>
       </div>
     </div>
@@ -487,8 +484,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const r = zone.getBoundingClientRect();
       panel.style.left = r.left + 'px';
       panel.style.top = (r.bottom + 10) + 'px';
-      
-      panel.classList.remove('show', 'show-pop'); 
+
+      panel.classList.remove('show', 'show-pop');
       panel.style.display = 'block';
       requestAnimationFrame(() => {
         panel.classList.add('show-pop');
@@ -559,57 +556,28 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* ===== SYNC INDICATORS ===== */
-  const syncIndicator = document.getElementById('sync-indicator');
   const syncDot = document.getElementById('sync-dot');
-  const syncIndicatorMap = document.getElementById('sync-indicator-map');
+  const syncText = document.getElementById('sync-text');
   const syncDotMap = document.getElementById('sync-dot-map');
-
-  let syncTimer = null;
-  let mapSyncTimer = null;
+  const syncTextMap = document.getElementById('sync-text-map');
 
   function setSyncing(on) {
-    clearTimeout(syncTimer);
     if (on) {
       syncDot.classList.add('syncing');
-      syncIndicator.innerHTML = `<span class="sync-dot syncing" id="sync-dot"></span>Syncing...`;
-      // keep dot reference stable
-      // (rebind)
-      setTimeout(() => {
-        const d = document.getElementById('sync-dot');
-        if (d) syncDot.className = d.className;
-      }, 0);
+      syncText.textContent = 'Syncing...';
     } else {
       syncDot.classList.remove('syncing');
-      syncIndicator.innerHTML = `<span class="sync-dot" id="sync-dot"></span>Synced`;
-      setTimeout(() => {
-        const d = document.getElementById('sync-dot');
-        if (d) syncDot.className = d.className;
-      }, 0);
-      syncTimer = setTimeout(() => {
-        // leave as Synced; nothing else
-      }, 200);
+      syncText.textContent = 'Synced';
     }
   }
 
   function setMapSyncing(on) {
-    clearTimeout(mapSyncTimer);
     if (on) {
       syncDotMap.classList.add('syncing');
-      syncIndicatorMap.innerHTML = `<span class="sync-dot syncing" id="sync-dot-map"></span>Map syncing...`;
-      setTimeout(() => {
-        const d = document.getElementById('sync-dot-map');
-        if (d) syncDotMap.className = d.className;
-      }, 0);
+      syncTextMap.textContent = 'Map syncing...';
     } else {
       syncDotMap.classList.remove('syncing');
-      syncIndicatorMap.innerHTML = `<span class="sync-dot" id="sync-dot-map"></span>Map synced`;
-      setTimeout(() => {
-        const d = document.getElementById('sync-dot-map');
-        if (d) syncDotMap.className = d.className;
-      }, 0);
-      mapSyncTimer = setTimeout(() => {
-        // leave as Map synced
-      }, 200);
+      syncTextMap.textContent = 'Map synced';
     }
   }
 
@@ -656,7 +624,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const BAG_CAPACITY = 300; // pooled bag capacity
   const BAG_PER_STACK = { Cash: 25, Painting: 50, Gold: 66.7 };
 
-  // NEW: always included, doesn't use bag space
+  // always included, doesn't use bag space
   const WALL_SAFE_MIN = 20000;
   const WALL_SAFE_MAX = 99000;
 
@@ -782,13 +750,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function updateCalculatorState(updates) {
-    // NEW: syncing indicator
     setSyncing(true);
-
     await sb.from('calculator_state')
       .update(updates)
       .eq('id', calculatorState.id);
-
     Object.assign(calculatorState, updates);
     setSyncing(false);
   }
@@ -847,14 +812,14 @@ document.addEventListener('DOMContentLoaded', () => {
     calculatorState.secondary_take = take;
   }
 
-  // NEW: parse decimals that accept "." and "," and ignore other junk
+  // parse decimals: accepts "." and ","; ignores other junk
   function parseDecimalInput(str) {
     if (str == null) return 0;
     const cleaned = String(str)
       .trim()
       .replace(',', '.')
       .replace(/[^0-9.]/g, '');
-    if (cleaned === '') return 0;
+    if (cleaned === '' || cleaned === '.') return 0;
     const n = parseFloat(cleaned);
     return Number.isFinite(n) ? n : 0;
   }
@@ -867,6 +832,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const available = getSymbolCounts();
     const take = calculatorState.secondary_take || { Cash:0, Painting:0, Gold:0 };
 
+    // NOTE: using type="text" for ALL three removes the ugly / flickery number steppers
     secondaryLootDiv.innerHTML = `
       <div class="calc-title">Secondary Loot (select what you take)</div>
 
@@ -876,6 +842,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <span class="calc-meta">bag: ${BAG_PER_STACK.Cash}%</span>
         <input id="take-cash" class="calc-input" type="text" inputmode="decimal" autocomplete="off" spellcheck="false"
                value="${take.Cash}" style="width:90px;">
+        <span class="calc-meta">(Enter to sync)</span>
       </div>
 
       <div class="calc-row">
@@ -884,14 +851,16 @@ document.addEventListener('DOMContentLoaded', () => {
         <span class="calc-meta">bag: ${BAG_PER_STACK.Gold}%</span>
         <input id="take-gold" class="calc-input" type="text" inputmode="decimal" autocomplete="off" spellcheck="false"
                value="${take.Gold}" style="width:90px;">
+        <span class="calc-meta">(Enter to sync)</span>
       </div>
 
       <div class="calc-row">
         <span class="calc-meta">Paintings</span>
         <span class="calc-meta">available: ${available.Painting}</span>
         <span class="calc-meta">bag: ${BAG_PER_STACK.Painting}%</span>
-        <input id="take-painting" class="calc-input" type="number" min="0" step="1"
+        <input id="take-painting" class="calc-input" type="text" inputmode="numeric" autocomplete="off" spellcheck="false"
                value="${Math.floor(take.Painting||0)}" style="width:90px;">
+        <span class="calc-meta">(Enter to sync)</span>
       </div>
     `;
 
@@ -899,43 +868,82 @@ document.addEventListener('DOMContentLoaded', () => {
     const goldInp = document.getElementById('take-gold');
     const paintInp = document.getElementById('take-painting');
 
-    cashInp.addEventListener('input', async e => {
-      e.stopPropagation();
-      let v = parseDecimalInput(e.target.value);
-      v = Math.max(0, Math.min(available.Cash, v));
-      calculatorState.secondary_take.Cash = v;
-      enforceBagCapacity('Cash');
-      clampSecondaryToAvailable();
-      await updateCalculatorState({ secondary_take: calculatorState.secondary_take });
-      // keep what user typed aligned with clamped value
-      renderSecondaryControls();
-      renderLootResult();
-    });
+    function commitCashGold(which, rawValue) {
+      const maxAvail = which === 'Cash' ? available.Cash : available.Gold;
 
-    goldInp.addEventListener('input', async e => {
-      e.stopPropagation();
-      let v = parseDecimalInput(e.target.value);
-      v = Math.max(0, Math.min(available.Gold, v));
-      calculatorState.secondary_take.Gold = v;
-      enforceBagCapacity('Gold');
-      clampSecondaryToAvailable();
-      await updateCalculatorState({ secondary_take: calculatorState.secondary_take });
-      renderSecondaryControls();
-      renderLootResult();
-    });
+      let v = parseDecimalInput(rawValue);
+      v = Math.max(0, Math.min(maxAvail, v));
 
-    paintInp.addEventListener('input', async e => {
-      e.stopPropagation();
-      let v = parseFloat(e.target.value);
-      if (Number.isNaN(v)) v = 0;
-      v = Math.floor(v);
+      calculatorState.secondary_take[which] = v;
+
+      enforceBagCapacity(which);
+      clampSecondaryToAvailable();
+
+      return calculatorState.secondary_take[which];
+    }
+
+    function commitPaintings(rawValue) {
+      // integer only; keep digits only
+      const cleaned = String(rawValue).replace(/[^0-9]/g, '');
+      let v = cleaned === '' ? 0 : parseInt(cleaned, 10);
+      if (!Number.isFinite(v)) v = 0;
+
       v = Math.max(0, Math.min(available.Painting, v));
+
       calculatorState.secondary_take.Painting = v;
+
       enforceBagCapacity('Painting');
       clampSecondaryToAvailable();
+
+      return calculatorState.secondary_take.Painting;
+    }
+
+    async function syncSecondaryTakeAndRefresh() {
       await updateCalculatorState({ secondary_take: calculatorState.secondary_take });
       renderSecondaryControls();
       renderLootResult();
+    }
+
+    // CASH: commit only on Enter or blur
+    cashInp.addEventListener('keydown', async e => {
+      e.stopPropagation();
+      if (e.key !== 'Enter') return;
+      const finalVal = commitCashGold('Cash', cashInp.value);
+      cashInp.value = finalVal;
+      await syncSecondaryTakeAndRefresh();
+    });
+    cashInp.addEventListener('blur', async e => {
+      const finalVal = commitCashGold('Cash', cashInp.value);
+      cashInp.value = finalVal;
+      await syncSecondaryTakeAndRefresh();
+    });
+
+    // GOLD: commit only on Enter or blur
+    goldInp.addEventListener('keydown', async e => {
+      e.stopPropagation();
+      if (e.key !== 'Enter') return;
+      const finalVal = commitCashGold('Gold', goldInp.value);
+      goldInp.value = finalVal;
+      await syncSecondaryTakeAndRefresh();
+    });
+    goldInp.addEventListener('blur', async e => {
+      const finalVal = commitCashGold('Gold', goldInp.value);
+      goldInp.value = finalVal;
+      await syncSecondaryTakeAndRefresh();
+    });
+
+    // PAINTINGS: commit only on Enter or blur (no more flickering number steppers)
+    paintInp.addEventListener('keydown', async e => {
+      e.stopPropagation();
+      if (e.key !== 'Enter') return;
+      const finalVal = commitPaintings(paintInp.value);
+      paintInp.value = finalVal;
+      await syncSecondaryTakeAndRefresh();
+    });
+    paintInp.addEventListener('blur', async e => {
+      const finalVal = commitPaintings(paintInp.value);
+      paintInp.value = finalVal;
+      await syncSecondaryTakeAndRefresh();
     });
   }
 
@@ -957,7 +965,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let primaryValue = 0;
     if (primaryLoot) primaryValue = primaryValues[difficulty]?.[primaryLoot] || 0;
 
-    // Secondary based on chosen take
     let totalSecondaryMin = 0;
     let totalSecondaryMax = 0;
 
@@ -967,11 +974,11 @@ document.addEventListener('DOMContentLoaded', () => {
       totalSecondaryMax += qty * range[1];
     });
 
-    // NEW: always include wall safe money (no bag usage)
+    // always include wall safe money (no bag usage)
     let totalMin = primaryValue + totalSecondaryMin + WALL_SAFE_MIN;
     let totalMax = primaryValue + totalSecondaryMax + WALL_SAFE_MAX;
 
-    // Fees (12% total)
+    // fees (12%)
     let grandTotalMin = totalMin * 0.88;
     let grandTotalMax = totalMax * 0.88;
 
@@ -989,10 +996,9 @@ document.addEventListener('DOMContentLoaded', () => {
     lootResultDiv.innerHTML = html;
   }
 
-  // REALTIME: apply updates from other devices immediately
+  // realtime: apply updates from other devices
   sb.channel('calculator_state')
     .on('postgres_changes', { event: 'UPDATE', table: 'calculator_state' }, payload => {
-      // receiving updates = synced
       setSyncing(false);
 
       calculatorState = payload.new;
