@@ -117,7 +117,12 @@ html, body {
   z-index: 20;
   color: #fff;
   box-shadow: 2px 2px 12px rgba(0,0,0,0.7);
-  transition: max-height 0.3s ease, opacity 0.3s ease, width 0.3s ease; /* added width transition */
+  transition: 
+    max-height 0.3s ease, 
+    opacity 0.3s ease, 
+    width 0.3s ease, 
+    top 0.3s ease, 
+    left 0.3s ease; /* added top/left animation */
   max-height: 100vh;
 }
 
@@ -182,7 +187,7 @@ html, body {
   padding: 4px;
   text-align: center;
 }
-
+  
   /* ===== MISSION SCRIPT FONT ===== */
 @font-face {
   font-family: 'Mission Script';
@@ -195,7 +200,7 @@ html, body {
 #panel-title,
 #info-header {
   font-family: 'Mission Script', cursive;
-  font-size: 2,7em; /* adjust as needed */
+  font-size: 3em; /* adjust as needed */
 }
 
 </style>
@@ -400,6 +405,7 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
+
 
 
 
