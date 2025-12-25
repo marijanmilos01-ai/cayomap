@@ -6,8 +6,14 @@
 <title>Cayo Perico Interactive Map</title>
 
 <style>
+@font-face {
+  font-family: 'Mission Script';
+  src: url('Mission-Script.otf') format('opentype');
+}
+
 html, body {
-  margin:0; padding:0;
+  margin:0;
+  padding:0;
   user-select:none;
   overflow:hidden;
   font-family: Arial, sans-serif;
@@ -43,6 +49,7 @@ html, body {
   align-items:center;
   cursor:pointer;
   border-radius:50%;
+  transition: transform 0.15s ease;
 }
 .symbol:hover {
   transform: scale(1.1);
@@ -51,34 +58,86 @@ html, body {
 
 .panel {
   position:absolute;
-  background: rgba(30,30,30,0.6);
+  background: rgba(30,30,30,0.75);
   color:#fff;
   padding:10px;
   border-radius:8px;
   display:none;
   z-index:10;
-  min-width:120px;
+  min-width:140px;
+
+  opacity:0;
+  transform: translateY(-6px) scale(0.97);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.panel.show {
+  opacity:1;
+  transform: translateY(0) scale(1);
+}
+
+#panel button {
+  all: unset;
+  display:block;
+  margin:6px 0;
+  padding:8px 12px;
+  border-radius:6px;
+  background: rgba(255,255,255,0.12);
+  color:#fff;
+  font-weight:600;
+  cursor:pointer;
+  text-align:center;
+  transition: background 0.2s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+#panel button:hover {
+  background: rgba(255,255,255,0.25);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+#panel button:active {
+  transform: scale(0.97);
 }
 
 #info-panel {
   position:absolute;
-  top:0; left:0;
+  top:0;
+  left:0;
   width:300px;
   max-height:100vh;
-  background: rgba(30,30,30,0.6);
+  background: rgba(30,30,30,0.7);
   border-radius:8px;
   overflow:hidden;
   z-index:20;
   color:#fff;
 }
+
 #info-header {
   padding:8px;
   background: rgba(50,50,50,0.6);
   cursor:pointer;
   font-weight:bold;
+  font-family: 'Mission Script', cursive;
+  font-size:22px;
+  letter-spacing:1px;
 }
+
 #info-content {
   padding:8px;
+  transition: max-height 0.25s ease, opacity 0.2s ease, padding 0.2s ease;
+  max-height:1000px;
+  opacity:1;
+}
+#info-content.collapsed {
+  max-height:0;
+  opacity:0;
+  padding-top:0;
+  padding-bottom:0;
+}
+
+#panel-title {
+  font-family: 'Mission Script', cursive;
+  font-size:22px;
+  letter-spacing:1px;
+  margin:0 0 6px 0;
 }
 
 .loot-table {
@@ -161,7 +220,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let collapsed = false;
   const localInsertedSymbols = new Set();
 
-  /* ================= NOTES LOGIC (FIXED) ================= */
+  /* NOTES LOGIC */
 
   noteInput.addEventListener('keydown', async e => {
     e.stopPropagation();
@@ -172,37 +231,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function addNote(n) {
     if (notesContainer.querySelector(`[data-id="${n.id}"]`)) return;
-
     const div = document.createElement('div');
     div.textContent = n.content;
     div.dataset.id = n.id;
-
     div.onclick = async () => {
       await sb.from('notes').delete().eq('id', n.id);
     };
-
     notesContainer.appendChild(div);
   }
 
-  async function loadNotes() {
-    const { data } = await sb.from('notes').select('*');
-    data?.forEach(addNote);
-  }
-
   sb.channel('notes')
-    .on('postgres_changes', { event: 'INSERT', table: 'notes' }, payload => {
-      addNote(payload.new);
-    })
-    .on('postgres_changes', { event: 'DELETE', table: 'notes' }, payload => {
-      notesContainer
-        .querySelector(`[data-id="${payload.old.id}"]`)
-        ?.remove();
+    .on('postgres_changes', { event: 'INSERT', table: 'notes' }, p => addNote(p.new))
+    .on('postgres_changes', { event: 'DELETE', table: 'notes' }, p => {
+      notesContainer.querySelector(`[data-id="${p.old.id}"]`)?.remove();
     })
     .subscribe();
 
-  loadNotes();
+  sb.from('notes').select('*').then(({ data }) => data?.forEach(addNote));
 
-  /* ================= SYMBOLS LOGIC (UNCHANGED) ================= */
+  /* SYMBOLS LOGIC */
 
   zones.forEach(zone => {
     zone.addEventListener('click', e => {
@@ -213,11 +260,13 @@ document.addEventListener('DOMContentLoaded', () => {
       panel.style.left = r.left + 'px';
       panel.style.top = (r.bottom + 10) + 'px';
       panel.style.display = 'block';
+      requestAnimationFrame(() => panel.classList.add('show'));
     });
   });
 
   document.addEventListener('click', e => {
     if (panel.contains(e.target) || infoPanel.contains(e.target)) return;
+    panel.classList.remove('show');
     panel.style.display = 'none';
     activeZone = null;
   });
@@ -225,90 +274,9 @@ document.addEventListener('DOMContentLoaded', () => {
   infoHeader.addEventListener('click', e => {
     e.stopPropagation();
     collapsed = !collapsed;
-    infoContent.style.display = collapsed ? 'none' : 'block';
-    infoHeader.innerHTML = collapsed ? 'Info Panel &#9660;' : 'Info Panel &#9650;';
+    infoContent.classList.toggle('collapsed', collapsed);
+    infoHeader.innerHTML = collapsed ? 'Info Panel ▼' : 'Info Panel ▲';
   });
-
-  function renderSymbol(zone, type, id) {
-    if (zone.querySelector(`.symbol[data-id="${id}"]`)) return;
-    const idx = zone.querySelectorAll('.symbol').length;
-    if (idx >= 6) return;
-
-    const symbol = document.createElement('div');
-    symbol.className = 'symbol';
-    symbol.dataset.id = id;
-
-    const row = idx < 3 ? 0 : 1;
-    const col = idx % 3;
-    symbol.style.top = `${row * 50 + 2}%`;
-    symbol.style.left = `${col * 33 + 1}%`;
-
-    const icons = {
-      Gold: 'https://www.svgrepo.com/show/323883/gold-bar.svg',
-      Cash: 'https://www.svgrepo.com/show/59549/dollar-coin-symbol.svg',
-      Painting: 'https://www.svgrepo.com/show/535548/painting.svg'
-    };
-
-    symbol.innerHTML = `<img src="${icons[type]}" width="100%" height="100%">`;
-
-    symbol.onclick = async e => {
-      e.stopPropagation();
-      await sb.from('symbols').delete().eq('id', id);
-    };
-
-    zone.appendChild(symbol);
-  }
-
-  panel.querySelectorAll('button').forEach(btn => {
-    btn.addEventListener('click', async e => {
-      e.stopPropagation();
-      if (!activeZone) return;
-
-      const region = activeZone.dataset.name;
-
-      const { count } = await sb
-        .from('symbols')
-        .select('*', { count: 'exact', head: true })
-        .eq('region', region);
-
-      if (count >= 6) return;
-
-      const { data } = await sb
-        .from('symbols')
-        .insert({ region, symbol: btn.dataset.symbol })
-        .select()
-        .single();
-
-      if (data) {
-        localInsertedSymbols.add(data.id);
-        renderSymbol(activeZone, data.symbol, data.id);
-      }
-    });
-  });
-
-  async function loadSymbols() {
-    const { data } = await sb.from('symbols').select('*');
-    data?.forEach(s => {
-      const zone = document.querySelector(`.zone[data-name="${s.region}"]`);
-      if (zone) renderSymbol(zone, s.symbol, s.id);
-    });
-  }
-
-  sb.channel('symbols')
-    .on('postgres_changes', { event: 'INSERT', table: 'symbols' }, payload => {
-      if (localInsertedSymbols.has(payload.new.id)) {
-        localInsertedSymbols.delete(payload.new.id);
-        return;
-      }
-      const zone = document.querySelector(`.zone[data-name="${payload.new.region}"]`);
-      if (zone) renderSymbol(zone, payload.new.symbol, payload.new.id);
-    })
-    .on('postgres_changes', { event: 'DELETE', table: 'symbols' }, payload => {
-      document.querySelector(`.symbol[data-id="${payload.old.id}"]`)?.remove();
-    })
-    .subscribe();
-
-  loadSymbols();
 
 });
 </script>
