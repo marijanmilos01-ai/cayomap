@@ -45,11 +45,13 @@ html, body {
   align-items:center;
   cursor:pointer;
   border-radius:50%;
+  background-color: rgba(255, 255, 255, 0.5);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 .symbol:hover {
   transform: scale(1.2);
   box-shadow: 0 0 10px rgba(255,255,255,0.7);
+  background-color: rgba(255, 255, 255, 0.7);
 }
 
 /* ===== SYMBOL PANEL ANIMATIONS ===== */
@@ -182,11 +184,11 @@ html, body {
   <div id="info-content">
     <table class="loot-table">
       <tr><th>Loot</th><th>Normal</th><th>Hard</th></tr>
-      <tr><td>Tequila</td><td>630k</td><td>693k</td></tr>
-      <tr><td>Ruby</td><td>700k</td><td>770k</td></tr>
-      <tr><td>Bonds</td><td>770k</td><td>847k</td></tr>
-      <tr><td>Diamond</td><td>1.3mil</td><td>1.43mil</td></tr>
-      <tr><td>Panther</td><td>1.9mil</td><td>2.09mil</td></tr>
+      <tr><td>Tequila</td><td>$630k</td><td>$693k</td></tr>
+      <tr><td>Ruby</td><td>$700k</td><td>$770k</td></tr>
+      <tr><td>Bonds</td><td>$770k</td><td>$847k</td></tr>
+      <tr><td>Diamond</td><td>$1.3mil</td><td>$1.43mil</td></tr>
+      <tr><td>Panther</td><td>$1.9mil</td><td>$2.09mil</td></tr>
     </table>
 
     <table class="loot-table">
@@ -374,3 +376,4 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
+
