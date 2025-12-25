@@ -5,52 +5,52 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cayo Perico Interactive Map</title>
 <style>
-  html, body {
-    margin: 0;
-    padding: 0;
-    user-select: none;
-    overflow: hidden;
-    font-family: Arial, sans-serif;
-  }
-  #map-container {
-    position: relative;
-    width: 100vw;
-    height: 100vh;
-    background: url('compound_map.png') no-repeat center center;
-    background-size: cover;
-  }
-  .zone {
-    position: absolute;
-    border: 2px solid #ccc;
-    background-color: rgba(200,200,200,0.3);
-    cursor: pointer;
-    box-sizing: border-box;
-    transition: border-color 0.2s, background-color 0.2s;
-    border-radius: 8px;
-  }
-  .zone:hover {
-    border-color: #ddd;
-    background-color: rgba(220,220,220,0.4);
-  }
-  .symbol {
-    position: absolute;
-    width: 30%;
-    height: 45%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
-    transition: transform 0.2s;
-    background-color: rgba(255,255,255,0.4);
-    border-radius: 50%;
-  }
-  .symbol:hover {
-    transform: scale(1.1);
-    background-color: rgba(255,255,255,0.6);
-  }
+html, body {
+  margin: 0;
+  padding: 0;
+  user-select: none;
+  overflow: hidden;
+  font-family: Arial, sans-serif;
+}
+#map-container {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  background: url('compound_map.png') no-repeat center center;
+  background-size: cover;
+}
+.zone {
+  position: absolute;
+  border: 2px solid #ccc;
+  background-color: rgba(200,200,200,0.3);
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: border-color 0.2s, background-color 0.2s;
+  border-radius: 8px;
+}
+.zone:hover {
+  border-color: #ddd;
+  background-color: rgba(220,220,220,0.4);
+}
+.symbol {
+  position: absolute;
+  width: 30%;
+  height: 45%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: transform 0.2s;
+  background-color: rgba(255,255,255,0.4);
+  border-radius: 50%;
+}
+.symbol:hover {
+  transform: scale(1.1);
+  background-color: rgba(255,255,255,0.6);
+}
 .panel {
   position: absolute;
-  background: rgba(30,30,30,0.9); /* dark & translucent */
+  background: rgba(30,30,30,0.9);
   color: #fff;
   padding: 10px;
   border-radius: 8px;
@@ -58,54 +58,48 @@
   z-index: 10;
   min-width: 120px;
 }
-
 .panel button {
   margin: 5px;
   padding: 5px 10px;
   cursor: pointer;
   border: none;
-  border-radius: 6px; /* rounded edges */
-  background-color: rgba(60,60,60,0.8); /* dark button background */
+  border-radius: 6px;
+  background-color: rgba(60,60,60,0.8);
   color: #fff;
   transition: background-color 0.2s, transform 0.2s;
 }
-
 .panel button:hover {
-  background-color: rgba(100,100,100,0.9); /* lighter on hover */
+  background-color: rgba(100,100,100,0.9);
   transform: scale(1.05);
 }
-
 .panel h3 {
   margin: 0 0 5px 0;
   font-size: 1em;
   font-weight: bold;
 }
-  /* Info Panel Styles */
+/* Info Panel */
 #info-panel {
   position:absolute; top:10px; left:10px;
   width:250px; max-height:400px;
-  background: rgba(30,30,30,0.9); /* dark background */
+  background: rgba(30,30,30,0.9);
   border-radius:8px;
   overflow:hidden;
   transition: max-height 0.3s ease;
   z-index:20;
   color: #fff;
 }
-
 #info-header {
   padding:8px;
-  background: rgba(50,50,50,0.95); /* slightly lighter dark */
+  background: rgba(50,50,50,0.95);
   cursor:pointer;
   font-weight:bold;
   border-bottom:1px solid rgba(100,100,100,0.3);
 }
-
 #info-content {
   padding:8px;
   display:block;
-  background: rgba(50,50,50,0.7); /* translucent content */
+  background: rgba(50,50,50,0.7);
 }
-
 #notes-container div {
   padding: 4px 6px;
   margin-bottom: 4px;
@@ -114,7 +108,6 @@
   cursor: pointer;
   color: #fff;
 }
-
 #note-input {
   width:100%;
   box-sizing:border-box;
@@ -125,7 +118,6 @@
   background: rgba(60,60,60,0.7);
   color: #fff;
 }
-
 </style>
 </head>
 <body>
@@ -139,6 +131,7 @@
   </div>
 </div>
 
+<!-- Map Zones -->
 <div id="map-container">
   <div id="zone1" class="zone" style="left:47%;top:54%;width:6%;height:5%;" data-name="Podrum"></div>
   <div id="zone2" class="zone" style="left:45%;top:48%;width:6%;height:5%;" data-name="Office"></div>
@@ -147,6 +140,7 @@
   <div id="zone5" class="zone" style="left:47%;top:65%;width:6%;height:5%;" data-name="South Storage"></div>
 </div>
 
+<!-- Panel for Adding Symbols -->
 <div id="panel" class="panel">
   <h3 id="panel-title">Zone</h3>
   <button data-symbol="Gold">Gold</button>
@@ -154,7 +148,16 @@
   <button data-symbol="Painting">Painting</button>
 </div>
 
+<!-- Supabase JS -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+// --- Supabase client (working syntax!)
+const supabaseClient = supabase.createClient(
+  'https://qanrnafvvnmimewtxrxv.supabase.co',
+  'sb_publishable_8F3cI7ZKCgpxv6UfaRJn7A_r1s17TmC'
+);
+
+// --- Zones & panel ---
 const zones = document.querySelectorAll('.zone');
 const panel = document.getElementById('panel');
 const panelTitle = document.getElementById('panel-title');
@@ -166,14 +169,9 @@ zones.forEach(zone => {
     e.stopPropagation();
     activeZone = zone;
     panelTitle.textContent = zone.dataset.name;
-
     const rect = zone.getBoundingClientRect();
     const panelHeight = 100;
-    if (rect.top > window.innerHeight / 2) {
-      panel.style.top = (rect.top - panelHeight - 10) + 'px';
-    } else {
-      panel.style.top = (rect.bottom + 10) + 'px';
-    }
+    panel.style.top = rect.top > window.innerHeight/2 ? (rect.top - panelHeight - 10) + 'px' : (rect.bottom + 10) + 'px';
     panel.style.left = rect.left + 'px';
     panel.style.display = 'block';
   });
@@ -187,8 +185,8 @@ document.addEventListener('click', (e) => {
   }
 });
 
-// Add SVG symbol function
-function addSymbolToZone(zone, type) {
+// --- Add symbol ---
+function addSymbolToZone(zone, type, skipInsert=false){
   const existing = zone.querySelectorAll('.symbol');
   if(existing.length >= 6) return;
 
@@ -203,35 +201,36 @@ function addSymbolToZone(zone, type) {
 
   let svg = '';
   switch(type){
-    case 'Gold':
-      svg = `<img src="https://www.svgrepo.com/show/323883/gold-bar.svg" width="100%" height="100%">`;
-      break;
-    case 'Cash':
-      svg = `<img src="https://www.svgrepo.com/show/507663/dollar-circle.svg" width="100%" height="100%">`;
-      break;
-    case 'Painting':
-      svg = `<img src="https://www.svgrepo.com/show/535548/painting.svg" width="100%" height="100%">`;
-      break;
+    case 'Gold': svg=`<img src="https://www.svgrepo.com/show/323883/gold-bar.svg" width="100%" height="100%">`; break;
+    case 'Cash': svg=`<img src="https://www.svgrepo.com/show/507663/dollar-circle.svg" width="100%" height="100%">`; break;
+    case 'Painting': svg=`<img src="https://www.svgrepo.com/show/535548/painting.svg" width="100%" height="100%">`; break;
   }
   symbol.innerHTML = svg;
 
-  symbol.addEventListener('click', (e) => {
+  symbol.addEventListener('click', async (e)=>{
     e.stopPropagation();
     symbol.remove();
+    if(!skipInsert){
+      await supabaseClient.from('symbols').delete().eq('region', zone.dataset.name).eq('symbol', type).limit(1);
+    }
   });
 
   zone.appendChild(symbol);
+
+  if(!skipInsert){
+    await supabaseClient.from('symbols').insert({region: zone.dataset.name, symbol: type});
+  }
 }
 
-// Panel button click
+// Panel buttons
 panel.querySelectorAll('button').forEach(btn => {
-  btn.addEventListener('click', () => {
+  btn.addEventListener('click', ()=>{
     if(!activeZone) return;
     addSymbolToZone(activeZone, btn.dataset.symbol);
   });
 });
 
-// --- Info Panel Dynamic Notes ---
+// --- Info Panel Notes ---
 const infoPanel = document.getElementById('info-panel');
 const infoHeader = document.getElementById('info-header');
 const infoContent = document.getElementById('info-content');
@@ -239,35 +238,82 @@ const notesContainer = document.getElementById('notes-container');
 const noteInput = document.getElementById('note-input');
 
 let collapsed = false;
-
-infoHeader.addEventListener('click', () => {
+infoHeader.addEventListener('click', ()=>{
   if(collapsed){
-    infoContent.style.display = 'block';
-    infoPanel.style.maxHeight = '400px';
-    infoHeader.innerHTML = "Info Panel &#9650;";
-    collapsed = false;
+    infoContent.style.display='block';
+    infoPanel.style.maxHeight='400px';
+    infoHeader.innerHTML="Info Panel &#9650;";
+    collapsed=false;
   } else {
-    infoContent.style.display = 'none';
-    infoPanel.style.maxHeight = '40px';
-    infoHeader.innerHTML = "Info Panel &#9660;";
-    collapsed = true;
+    infoContent.style.display='none';
+    infoPanel.style.maxHeight='40px';
+    infoHeader.innerHTML="Info Panel &#9660;";
+    collapsed=true;
   }
 });
 
-noteInput.addEventListener('keydown', (e) => {
-  if(e.key === 'Enter' && noteInput.value.trim() !== '') {
-    const noteText = noteInput.value.trim();
-    const noteDiv = document.createElement('div');
-    noteDiv.textContent = noteText;
-
-    noteDiv.addEventListener('click', () => {
+// Add notes
+noteInput.addEventListener('keydown', async (e)=>{
+  if(e.key==='Enter' && noteInput.value.trim()!==''){
+    const content=noteInput.value.trim();
+    const noteDiv=document.createElement('div');
+    noteDiv.textContent=content;
+    noteDiv.addEventListener('click', async ()=>{
       noteDiv.remove();
+      await supabaseClient.from('notes').delete().eq('content', content).limit(1);
     });
-
     notesContainer.appendChild(noteDiv);
-    noteInput.value = '';
+    await supabaseClient.from('notes').insert({content});
+    noteInput.value='';
   }
 });
+
+// --- Load initial data ---
+async function loadData(){
+  const {data:symbols} = await supabaseClient.from('symbols').select('*');
+  symbols.forEach(s=>{
+    const zoneEl=document.querySelector(`.zone[data-name="${s.region}"]`);
+    if(zoneEl) addSymbolToZone(zoneEl, s.symbol, true);
+  });
+
+  const {data:notes} = await supabaseClient.from('notes').select('*');
+  notes.forEach(n=>{
+    const noteDiv=document.createElement('div');
+    noteDiv.textContent=n.content;
+    noteDiv.addEventListener('click', async ()=>{
+      noteDiv.remove();
+      await supabaseClient.from('notes').delete().eq('content', n.content).limit(1);
+    });
+    notesContainer.appendChild(noteDiv);
+  });
+}
+
+loadData();
+
+// --- Realtime subscriptions ---
+supabaseClient.channel('public:symbols')
+  .on('postgres_changes', {event:'INSERT', schema:'public', table:'symbols'}, payload=>{
+    const zoneEl=document.querySelector(`.zone[data-name="${payload.new.region}"]`);
+    if(zoneEl) addSymbolToZone(zoneEl, payload.new.symbol, true);
+  })
+  .on('postgres_changes', {event:'DELETE', schema:'public', table:'symbols'}, payload=>{
+    loadData();
+  }).subscribe();
+
+supabaseClient.channel('public:notes')
+  .on('postgres_changes', {event:'INSERT', schema:'public', table:'notes'}, payload=>{
+    const noteDiv=document.createElement('div');
+    noteDiv.textContent=payload.new.content;
+    noteDiv.addEventListener('click', async ()=>{
+      noteDiv.remove();
+      await supabaseClient.from('notes').delete().eq('content', payload.new.content).limit(1);
+    });
+    notesContainer.appendChild(noteDiv);
+  })
+  .on('postgres_changes', {event:'DELETE', schema:'public', table:'notes'}, payload=>{
+    loadData();
+  }).subscribe();
+
 </script>
 </body>
 </html>
