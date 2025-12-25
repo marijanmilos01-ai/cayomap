@@ -107,24 +107,31 @@ html, body {
 
 /* ===== INFO PANEL ===== */
 #info-panel {
-  position:absolute;
-  top:5; left:5;
-  width:320px;
+  position: absolute;
+  top: 30px; 
+  left: 30px;
+  width: 320px; /* full width when opened */
   background: rgba(30,30,30,0.8);
-  border-radius:8px;
-  overflow:hidden;
-  z-index:20;
-  color:#fff;
+  border-radius: 8px;
+  overflow: hidden;
+  z-index: 20;
+  color: #fff;
   box-shadow: 2px 2px 12px rgba(0,0,0,0.7);
-  transition: max-height 0.3s ease, opacity 0.3s ease;
+  transition: max-height 0.3s ease, opacity 0.3s ease, width 0.3s ease; /* added width transition */
   max-height: 100vh;
 }
 
+#info-panel.collapsed {
+  width: 150px; /* narrower width when collapsed */
+  top: 30px; 
+  left: 30px;
+}
+
 #info-header {
-  padding:10px;
+  padding: 10px;
   background: rgba(10,10,10,0.6);
-  cursor:pointer;
-  font-weight:normal;
+  cursor: pointer;
+  font-weight: normal;
   transition: background 0.2s ease;
 }
 #info-header:hover {
@@ -132,48 +139,48 @@ html, body {
 }
 
 #info-panel.collapsed #info-content {
-  max-height:0;
-  padding:0 10px;
-  opacity:0;
-  overflow:hidden;
+  max-height: 0;
+  padding: 0 10px;
+  opacity: 0;
+  overflow: hidden;
   transition: max-height 0.3s ease, opacity 0.3s ease, padding 0.3s ease;
 }
 
 #info-content {
-  padding:10px;
-  overflow-y:auto;
-  max-height:calc(100vh - 50px);
+  padding: 10px;
+  overflow-y: auto;
+  max-height: calc(100vh - 50px);
   transition: max-height 0.3s ease, opacity 0.3s ease;
 }
 
 #note-input {
-  width:calc(100% - 16px);
-  padding:6px 8px;
-  margin-top:6px;
-  border-radius:6px;
-  border:1px solid #555;
+  width: calc(100% - 16px);
+  padding: 6px 8px;
+  margin-top: 6px;
+  border-radius: 6px;
+  border: 1px solid #555;
   background: rgba(60,60,60,0.8);
-  color:#fff;
-  outline:none;
+  color: #fff;
+  outline: none;
   transition: all 0.2s ease;
-  box-sizing:border-box;
+  box-sizing: border-box;
 }
 #note-input:focus {
-  border-color:#fff;
+  border-color: #fff;
   background: rgba(60,60,60,1);
   box-shadow: 0 0 6px #fff;
 }
 
 .loot-table {
-  width:100%;
-  border-collapse:collapse;
-  margin-bottom:10px;
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 10px;
 }
 .loot-table th,
 .loot-table td {
-  border:1px solid rgba(255,255,255,0.2);
-  padding:4px;
-  text-align:center;
+  border: 1px solid rgba(255,255,255,0.2);
+  padding: 4px;
+  text-align: center;
 }
 
   /* ===== MISSION SCRIPT FONT ===== */
@@ -393,5 +400,6 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
+
 
 
