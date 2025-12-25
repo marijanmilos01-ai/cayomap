@@ -59,10 +59,10 @@ const panel = document.getElementById('panel');
 const panelTitle = document.getElementById('panel-title');
 let activeZone = null;
 
-// Track rendered symbols to avoid duplicates
-const renderedSymbols = new Set();
+// --- TRACK RENDERED SYMBOLS ---
+const renderedSymbols = new Map(); // key -> element
 
-// Show panel
+// --- SHOW PANEL ---
 zones.forEach(zone=>{
   zone.addEventListener('click', e=>{
     e.stopPropagation();
@@ -83,14 +83,13 @@ document.addEventListener('click', e=>{
   }
 });
 
-// Add symbol
-function addSymbolToZone(zone, type, key=null){
-  const symbolKey = key || `${zone.dataset.name}_${type}`;
-  if(renderedSymbols.has(symbolKey)) return;
-  renderedSymbols.add(symbolKey);
-
+// --- ADD SYMBOL ---
+function addSymbolToZone(zone, type, id=null){
+  const key = id ? `${zone.dataset.name}_${type}_${id}` : `${zone.dataset.name}_${type}_local_${Date.now()}`;
+  if(renderedSymbols.has(key)) return;
+  
   const existing = zone.querySelectorAll('.symbol');
-  if(existing.length >=6) return;
+  if(existing.length>=6) return;
 
   const idx = existing.length;
   const row = idx<3?0:1;
@@ -100,7 +99,7 @@ function addSymbolToZone(zone, type, key=null){
   symbol.classList.add('symbol');
   symbol.style.top = `${row*50+2}%`;
   symbol.style.left = `${col*33+1}%`;
-  symbol.dataset.key = symbolKey;
+  symbol.dataset.key = key;
 
   let svg='';
   switch(type){
@@ -113,29 +112,41 @@ function addSymbolToZone(zone, type, key=null){
   symbol.addEventListener('click', e=>{
     e.stopPropagation();
     symbol.remove();
-    renderedSymbols.delete(symbolKey);
-    supabaseClient.from('symbols').delete().eq('region',zone.dataset.name).eq('symbol',type).limit(1).then(()=>{});
+    renderedSymbols.delete(key);
+    if(id) supabaseClient.from('symbols').delete().eq('id',id).then(()=>{});
   });
 
   zone.appendChild(symbol);
-  return symbolKey;
+  renderedSymbols.set(key,symbol);
+  return key;
 }
 
-// Panel buttons
+// --- PANEL BUTTONS ---
 panel.querySelectorAll('button').forEach(btn=>{
   btn.addEventListener('click', ()=>{
     if(!activeZone) return;
     const key = addSymbolToZone(activeZone, btn.dataset.symbol);
-    if(key) supabaseClient.from('symbols').insert({region:activeZone.dataset.name,symbol:btn.dataset.symbol}).then(()=>{});
+    if(!key) return;
+    supabaseClient.from('symbols').insert({region:activeZone.dataset.name,symbol:btn.dataset.symbol})
+      .then(({data})=>{
+        if(data && data[0]){
+          const id = data[0].id;
+          const oldSymbol = renderedSymbols.get(key);
+          renderedSymbols.delete(key);
+          oldSymbol.dataset.key = `${activeZone.dataset.name}_${btn.dataset.symbol}_${id}`;
+          renderedSymbols.set(oldSymbol.dataset.key,oldSymbol);
+        }
+      });
   });
 });
 
-// Info panel
+// --- INFO PANEL ---
 const infoHeader = document.getElementById('info-header');
 const infoContent = document.getElementById('info-content');
 const notesContainer = document.getElementById('notes-container');
 const noteInput = document.getElementById('note-input');
 let collapsed=false;
+
 infoHeader.addEventListener('click', ()=>{
   if(collapsed){
     infoContent.style.display='block';
@@ -150,12 +161,12 @@ infoHeader.addEventListener('click', ()=>{
   }
 });
 
-// Notes
+// --- NOTES ---
 noteInput.addEventListener('keydown', e=>{
   if(e.key==='Enter' && noteInput.value.trim()!==''){
-    const content=noteInput.value.trim();
-    const noteDiv=document.createElement('div');
-    noteDiv.textContent=content;
+    const content = noteInput.value.trim();
+    const noteDiv = document.createElement('div');
+    noteDiv.textContent = content;
     noteDiv.addEventListener('click', ()=>{
       noteDiv.remove();
       supabaseClient.from('notes').delete().eq('content',content).limit(1).then(()=>{});
@@ -166,19 +177,18 @@ noteInput.addEventListener('keydown', e=>{
   }
 });
 
-// Load initial data
+// --- LOAD INITIAL DATA ---
 async function loadData(){
   const {data:symbols} = await supabaseClient.from('symbols').select('*');
   symbols.forEach(s=>{
     const key = `${s.region}_${s.symbol}_${s.id}`;
-    if(renderedSymbols.has(key)) return; // skip duplicates
-    const zoneEl=document.querySelector(`.zone[data-name="${s.region}"]`);
-    if(zoneEl) addSymbolToZone(zoneEl,s.symbol,key);
+    if(renderedSymbols.has(key)) return;
+    const zoneEl = document.querySelector(`.zone[data-name="${s.region}"]`);
+    if(zoneEl) addSymbolToZone(zoneEl,s.symbol,s.id);
   });
 
-  // Clear and load notes
-  notesContainer.innerHTML='';
   const {data:notes} = await supabaseClient.from('notes').select('*');
+  notesContainer.innerHTML='';
   notes.forEach(n=>{
     const noteDiv=document.createElement('div');
     noteDiv.textContent=n.content;
@@ -191,26 +201,24 @@ async function loadData(){
 }
 loadData();
 
-// Realtime symbols
+// --- REALTIME ---
 supabaseClient.channel('public:symbols')
   .on('postgres_changes',{event:'INSERT',schema:'public',table:'symbols'}, payload=>{
     const key = `${payload.new.region}_${payload.new.symbol}_${payload.new.id}`;
     if(renderedSymbols.has(key)) return;
     const zoneEl = document.querySelector(`.zone[data-name="${payload.new.region}"]`);
-    if(zoneEl) addSymbolToZone(zoneEl,payload.new.symbol,key);
+    if(zoneEl) addSymbolToZone(zoneEl,payload.new.symbol,payload.new.id);
   })
   .on('postgres_changes',{event:'DELETE',schema:'public',table:'symbols'}, payload=>{
     const key = `${payload.old.region}_${payload.old.symbol}_${payload.old.id}`;
-    const symbolEl = document.querySelector(`.symbol[data-key="${key}"]`);
-    if(symbolEl) symbolEl.remove();
-    renderedSymbols.delete(key);
+    const el = renderedSymbols.get(key);
+    if(el){ el.remove(); renderedSymbols.delete(key); }
   }).subscribe();
 
-// Realtime notes
 supabaseClient.channel('public:notes')
   .on('postgres_changes',{event:'INSERT',schema:'public',table:'notes'}, payload=>{
     const noteDiv=document.createElement('div');
-    noteDiv.textContent=payload.new.content;
+    noteDiv.textContent = payload.new.content;
     noteDiv.addEventListener('click', ()=>{
       noteDiv.remove();
       supabaseClient.from('notes').delete().eq('content',payload.new.content).limit(1).then(()=>{});
