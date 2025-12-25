@@ -55,7 +55,6 @@ html, body {
   background-color: rgba(255, 255, 255, 1);
 }
 
-/* ===== SYMBOL PANEL ANIMATIONS ===== */
 .panel {
   position:absolute;
   background: rgba(40,40,40,0.6);
@@ -72,23 +71,19 @@ html, body {
   opacity:0;
   backdrop-filter: blur(4px);
 }
-
 .panel.show {
   display:block;
   transform: scale(1);
   opacity:1;
 }
-
 .panel.show-pop {
   animation: popIn 0.25s forwards;
 }
-
 @keyframes popIn {
   0% { transform: scale(0.8); opacity:0; }
   60% { transform: scale(1.05); opacity:1; }
   100% { transform: scale(1); }
 }
-
 #panel button {
   background: transparent;
   border: 1px solid #888;
@@ -106,34 +101,26 @@ html, body {
   transform: translateY(-2px);
 }
 
-/* ===== INFO PANEL ===== */
 #info-panel {
   position: absolute;
   top: 0px; 
   left: 0px;
-  width: 25vw; /* full width when opened */
+  width: 25vw; 
   background: rgba(30,30,30,0.8);
   border-radius: 8px;
   overflow: hidden;
   z-index: 20;
   color: #fff;
   box-shadow: 2px 2px 12px rgba(0,0,0,0.7);
-  transition: 
-    max-height 0.3s ease, 
-    opacity 0.3s ease, 
-    width 0.3s ease, 
-    top 0.3s ease, 
-    left 0.3s ease;
+  transition: max-height 0.3s ease, opacity 0.3s ease, width 0.3s ease, top 0.3s ease, left 0.3s ease;
   max-height: 100vh;
   backdrop-filter: blur(4px);
 }
-
 #info-panel.collapsed {
-  width: 175px; /* narrower width when collapsed */
+  width: 175px; 
   top: 30px; 
   left: 30px;
 }
-
 #info-header {
   padding: 10px;
   background: rgba(10,10,10,0.6);
@@ -144,7 +131,6 @@ html, body {
 #info-header:hover {
   background: rgba(30,30,30,0.6);
 }
-
 #info-panel.collapsed #info-content {
   max-height: 0;
   padding: 0 10px;
@@ -152,14 +138,12 @@ html, body {
   overflow: hidden;
   transition: max-height 0.3s ease, opacity 0.3s ease, padding 0.3s ease;
 }
-
 #info-content {
   padding: 10px;
   overflow-y: auto;
   max-height: calc(100vh - 50px);
   transition: max-height 0.3s ease, opacity 0.3s ease;
 }
-
 #note-input {
   width: calc(100% - 16px);
   padding: 6px 8px;
@@ -177,7 +161,6 @@ html, body {
   background: rgba(60,60,60,1);
   box-shadow: 0 0 6px #fff;
 }
-
 .loot-table {
   width: 100%;
   border-collapse: collapse;
@@ -190,22 +173,6 @@ html, body {
   text-align: center;
 }
 
-/* ===== MISSION SCRIPT FONT ===== */
-@font-face {
-  font-family: 'Mission Script';
-  src: url('Mission-Script.otf') format('opentype');
-  font-weight: normal;
-  font-style: normal;
-}
-
-/* Apply to headers */
-#panel-title,
-#info-header {
-  font-family: 'Mission Script', cursive;
-  font-size: 2em;
-}
-
-/* ===== CALCULATOR STYLES ===== */
 #calculator {
   background: rgba(50,50,50,0.7);
   padding: 8px;
@@ -214,31 +181,27 @@ html, body {
   color: #fff;
   font-size: 0.9em;
 }
-#calculator label {
-  margin-right: 4px;
-}
-#calculator input[type=number] {
-  width: 50px;
-  padding: 2px 4px;
-  margin-right: 6px;
-}
-#calculator .player-row {
-  margin-bottom: 4px;
-}
-#calculator .loot-result {
-  margin-top: 6px;
-  background: rgba(30,30,30,0.5);
-  padding: 4px;
-  border-radius: 6px;
-}
-#calculator select {
+#calculator label { margin-right: 4px; }
+#calculator input[type=number], #calculator input[type=text], #calculator select {
+  border-radius:4px;
+  border:1px solid #555;
   background: rgba(60,60,60,0.8);
-  color: #fff;
-  border: 1px solid #555;
-  border-radius: 4px;
-  padding: 2px 4px;
-  margin-right: 6px;
+  color:#fff;
+  padding:2px 4px;
+  margin-right:6px;
 }
+#calculator button {
+  background: transparent;
+  border: 1px solid #888;
+  border-radius:4px;
+  color:#fff;
+  padding:2px 6px;
+  margin-right:4px;
+  cursor:pointer;
+}
+#calculator button:hover { background:#555; box-shadow:0 0 6px #fff; }
+#calculator .player-row { display:flex; align-items:center; margin-bottom:4px; gap:6px; }
+#calculator .loot-result { margin-top:6px; background: rgba(30,30,30,0.5); padding:4px; border-radius:6px; }
 </style>
 </head>
 
@@ -248,7 +211,7 @@ html, body {
   <div id="info-header">Loot Panel ▼</div>
   <div id="info-content">
     <table class="loot-table">
-      <tr><th>Primary Loot</th><th>Normal</th><th>Hard</th><td>Rarity <72H</td><td>Rarity >72H</td></tr>
+      <tr><th>Primary Loot</th><th>Normal</th><th>Hard</th><td>Rarity &lt;72H</td><td>Rarity &gt;72H</td></tr>
       <tr><td>Tequila</td><td>$630k</td><td>$693k</td><td>47.6%</td><td>25%</td></tr>
       <tr><td>Ruby</td><td>$700k</td><td>$770k</td><td>19%</td><td>25%</td></tr>
       <tr><td>Bonds</td><td>$770k</td><td>$847k</td><td>28.6%</td><td>37.5%</td></tr>
@@ -270,7 +233,6 @@ html, body {
       <tr><td>Fencing Fee</td><td>10%</td></tr>
     </table>
 
-    <!-- ===== CALCULATOR INTEGRATION ===== -->
     <div id="calculator">
       <div>
         <label>Difficulty:</label>
@@ -279,7 +241,6 @@ html, body {
           <option value="hard">Hard</option>
         </select>
       </div>
-
       <div>
         <label>Primary Loot:</label>
         <select id="primary-loot-select">
@@ -291,8 +252,8 @@ html, body {
           <option value="Panther">Panther</option>
         </select>
       </div>
-
       <div id="player-cuts"></div>
+      <div id="secondary-loot-selection"></div>
       <div class="loot-result" id="loot-result"></div>
     </div>
 
@@ -324,313 +285,164 @@ document.addEventListener('DOMContentLoaded', () => {
     'sb_publishable_8F3cI7ZKCgpxv6UfaRJn7A_r1s17TmC'
   );
 
-  const zones = document.querySelectorAll('.zone');
-  const panel = document.getElementById('panel');
-  const panelTitle = document.getElementById('panel-title');
-  const infoPanel = document.getElementById('info-panel');
-  const infoHeader = document.getElementById('info-header');
   const infoContent = document.getElementById('info-content');
-  const notesContainer = document.getElementById('notes-container');
-  const noteInput = document.getElementById('note-input');
-
-  let activeZone = null;
-  let collapsed = false;
-  const localInsertedSymbols = new Set();
-  let calculatorState = null;
-
-  /* ================= NOTES LOGIC ================= */
-  noteInput.addEventListener('keydown', async e => {
-    e.stopPropagation();
-    if (e.key !== 'Enter' || !noteInput.value.trim()) return;
-    await sb.from('notes').insert({ content: noteInput.value.trim() });
-    noteInput.value = '';
-  });
-
-  function addNote(n) {
-    if (notesContainer.querySelector(`[data-id="${n.id}"]`)) return;
-    const div = document.createElement('div');
-    div.textContent = n.content;
-    div.dataset.id = n.id;
-    div.onclick = async () => {
-      await sb.from('notes').delete().eq('id', n.id);
-    };
-    notesContainer.appendChild(div);
-  }
-
-  async function loadNotes() {
-    const { data } = await sb.from('notes').select('*');
-    data?.forEach(addNote);
-  }
-
-  sb.channel('notes')
-    .on('postgres_changes', { event: 'INSERT', table: 'notes' }, payload => addNote(payload.new))
-    .on('postgres_changes', { event: 'DELETE', table: 'notes' }, payload => {
-      notesContainer.querySelector(`[data-id="${payload.old.id}"]`)?.remove();
-    })
-    .subscribe();
-
-  loadNotes();
-
-  /* ================= SYMBOLS LOGIC ================= */
-  zones.forEach(zone => {
-    zone.addEventListener('click', e => {
-      e.stopPropagation();
-      activeZone = zone;
-      panelTitle.textContent = zone.dataset.name;
-      const r = zone.getBoundingClientRect();
-      panel.style.left = r.left + 'px';
-      panel.style.top = (r.bottom + 10) + 'px';
-      
-      // show panel with animation
-      panel.classList.remove('show', 'show-pop'); 
-      panel.style.display = 'block';
-      requestAnimationFrame(() => {
-        panel.classList.add('show-pop');
-        panel.classList.add('show');
-      });
-    });
-  });
-
-  document.addEventListener('click', e => {
-    if (panel.contains(e.target) || infoPanel.contains(e.target)) return;
-    panel.classList.remove('show-pop', 'show');
-    setTimeout(() => { panel.style.display = 'none'; }, 250);
-    activeZone = null;
-  });
-
-  /* INFO PANEL COLLAPSE LOGIC */
-  infoHeader.addEventListener('click', e => {
-    e.stopPropagation();
-    collapsed = !collapsed;
-    infoPanel.classList.toggle('collapsed', collapsed);
-    infoHeader.innerHTML = collapsed ? 'Loot Panel ▼' : 'Loot Panel ▲';
-  });
-
-  function renderSymbol(zone, type, id) {
-    if (zone.querySelector(`.symbol[data-id="${id}"]`)) return;
-    const idx = zone.querySelectorAll('.symbol').length;
-    if (idx >= 6) return;
-    const symbol = document.createElement('div');
-    symbol.className = 'symbol';
-    symbol.dataset.id = id;
-    const row = idx < 3 ? 0 : 1;
-    const col = idx % 3;
-    symbol.style.top = `${row * 50 + 2}%`;
-    symbol.style.left = `${col * 33 + 1}%`;
-    const icons = {
-      Gold: 'https://www.svgrepo.com/show/323883/gold-bar.svg',
-      Cash: 'https://www.svgrepo.com/show/59549/dollar-coin-symbol.svg',
-      Painting: 'https://www.svgrepo.com/show/535548/painting.svg'
-    };
-    symbol.innerHTML = `<img src="${icons[type]}" width="100%" height="100%">`;
-    symbol.onclick = async e => {
-      e.stopPropagation();
-      await sb.from('symbols').delete().eq('id', id);
-    };
-    zone.appendChild(symbol);
-  }
-
-  panel.querySelectorAll('button').forEach(btn => {
-    btn.addEventListener('click', async e => {
-      e.stopPropagation();
-      if (!activeZone) return;
-      const region = activeZone.dataset.name;
-      const { count } = await sb.from('symbols').select('*', { count: 'exact', head: true }).eq('region', region);
-      if (count >= 6) return;
-      const { data } = await sb.from('symbols').insert({ region, symbol: btn.dataset.symbol }).select().single();
-      if (data) {
-        localInsertedSymbols.add(data.id);
-        renderSymbol(activeZone, data.symbol, data.id);
-      }
-    });
-  });
-
-  async function loadSymbols() {
-    const { data } = await sb.from('symbols').select('*');
-    data?.forEach(s => {
-      const zone = document.querySelector(`.zone[data-name="${s.region}"]`);
-      if (zone) renderSymbol(zone, s.symbol, s.id);
-    });
-  }
-
-  sb.channel('symbols')
-    .on('postgres_changes', { event: 'INSERT', table: 'symbols' }, payload => {
-      if (localInsertedSymbols.has(payload.new.id)) {
-        localInsertedSymbols.delete(payload.new.id);
-        return;
-      }
-      const zone = document.querySelector(`.zone[data-name="${payload.new.region}"]`);
-      if (zone) renderSymbol(zone, payload.new.symbol, payload.new.id);
-    })
-    .on('postgres_changes', { event: 'DELETE', table: 'symbols' }, payload => {
-      document.querySelector(`.symbol[data-id="${payload.old.id}"]`)?.remove();
-    })
-    .subscribe();
-
-  loadSymbols();
-
-  /* ================= CALCULATOR LOGIC ================= */
   const difficultySelect = document.getElementById('difficulty-select');
   const primaryLootSelect = document.getElementById('primary-loot-select');
   const playerCutsDiv = document.getElementById('player-cuts');
+  const secondaryLootDiv = document.getElementById('secondary-loot-selection');
   const lootResultDiv = document.getElementById('loot-result');
+
+  let calculatorState = null;
+  const secondaryLootTypes = ['Cash','Painting','Gold'];
+  const secondaryRanges = {
+    Cash:[78000,89000],
+    Painting:[176000,199000],
+    Gold:[328000,333000]
+  };
+  const secondaryBagPerc = { Cash:0.25, Painting:0.5, Gold:0.667 };
 
   async function loadCalculator() {
     const { data } = await sb.from('calculator_state').select('*').limit(1).single();
-    if (!data) return;
+    if(!data) { 
+      calculatorState = {id:1, players:[], difficulty:'normal', primary_loot:''}; 
+      renderPlayers(); renderSecondaryLoot(); renderLootResult(); 
+      return;
+    }
     calculatorState = data;
-
     difficultySelect.value = calculatorState.difficulty || 'normal';
     primaryLootSelect.value = calculatorState.primary_loot || '';
-    renderPlayers();
-    renderLootResult();
+    renderPlayers(); renderSecondaryLoot(); renderLootResult();
   }
 
   function renderPlayers() {
     playerCutsDiv.innerHTML = '';
-    (calculatorState.players || []).forEach((p, idx) => {
+    (calculatorState.players||[]).forEach((p, idx)=>{
       const div = document.createElement('div');
       div.className = 'player-row';
       div.innerHTML = `
-        <label>Player ${idx+1}:</label>
-        <input type="text" value="${p.name}" data-idx="${idx}" class="player-name">
-        Cut %: <input type="number" min="0" max="100" value="${p.cut}" data-idx="${idx}" class="player-cut">
-        <button data-idx="${idx}" class="remove-player">Remove</button>
+        <input type="text" value="${p.name}" data-idx="${idx}">
+        <input type="number" min="0" max="100" value="${p.cut}" data-idx="${idx}">
+        <button data-idx="${idx}">Remove</button>
       `;
       playerCutsDiv.appendChild(div);
     });
-
-    if ((calculatorState.players || []).length < 3) {
-      const btn = document.createElement('button');
-      btn.textContent = 'Add Player';
-      btn.onclick = async () => {
-        calculatorState.players.push({name:'Player ' + (calculatorState.players.length+1), cut: 0});
-        await updateCalculatorState({players: calculatorState.players});
-        renderPlayers();
-        renderLootResult();
+    if((calculatorState.players||[]).length<3){
+      const btn = document.createElement('button'); btn.textContent='Add Player';
+      btn.onclick = async()=>{
+        calculatorState.players.push({name:'Player '+(calculatorState.players.length+1), cut:0});
+        await updateCalculatorState({players:calculatorState.players});
+        renderPlayers(); renderLootResult();
       };
       playerCutsDiv.appendChild(btn);
     }
 
-    playerCutsDiv.querySelectorAll('.player-name').forEach(inp => {
-      inp.addEventListener('input', async e => {
-        const idx = e.target.dataset.idx;
-        calculatorState.players[idx].name = e.target.value;
-        await updateCalculatorState({players: calculatorState.players});
+    // Attach events
+    playerCutsDiv.querySelectorAll('input[type=text]').forEach(inp=>{
+      inp.addEventListener('input', async e=>{
+        calculatorState.players[e.target.dataset.idx].name=e.target.value;
+        await updateCalculatorState({players:calculatorState.players});
       });
     });
-    playerCutsDiv.querySelectorAll('.player-cut').forEach(inp => {
-      inp.addEventListener('input', async e => {
-        const idx = e.target.dataset.idx;
-        let val = parseInt(e.target.value)||0;
-        calculatorState.players[idx].cut = Math.min(100,val);
+    playerCutsDiv.querySelectorAll('input[type=number]').forEach(inp=>{
+      inp.addEventListener('input', async e=>{
+        calculatorState.players[e.target.dataset.idx].cut=Math.min(100,parseInt(e.target.value)||0);
         enforceBagLimit();
-        await updateCalculatorState({players: calculatorState.players});
+        await updateCalculatorState({players:calculatorState.players});
         renderLootResult();
       });
     });
-    playerCutsDiv.querySelectorAll('.remove-player').forEach(btn => {
-      btn.addEventListener('click', async e => {
-        const idx = btn.dataset.idx;
-        calculatorState.players.splice(idx,1);
+    playerCutsDiv.querySelectorAll('button').forEach(btn=>{
+      btn.addEventListener('click', async e=>{
+        calculatorState.players.splice(btn.dataset.idx,1);
         enforceBagLimit();
-        await updateCalculatorState({players: calculatorState.players});
-        renderPlayers();
-        renderLootResult();
+        await updateCalculatorState({players:calculatorState.players});
+        renderPlayers(); renderLootResult();
       });
     });
   }
 
-  difficultySelect.addEventListener('change', async e => {
-    calculatorState.difficulty = e.target.value;
-    await updateCalculatorState({difficulty: e.target.value});
+  difficultySelect.addEventListener('change', async ()=> {
+    calculatorState.difficulty=difficultySelect.value;
+    await updateCalculatorState({difficulty:calculatorState.difficulty});
+    renderLootResult();
+  });
+  primaryLootSelect.addEventListener('change', async ()=>{
+    calculatorState.primary_loot=primaryLootSelect.value;
+    await updateCalculatorState({primary_loot:calculatorState.primary_loot});
     renderLootResult();
   });
 
-  primaryLootSelect.addEventListener('change', async e => {
-    calculatorState.primary_loot = e.target.value;
-    await updateCalculatorState({primary_loot: e.target.value});
-    renderLootResult();
-  });
-
-  function enforceBagLimit() {
-    const totalCut = calculatorState.players.reduce((sum,p)=>sum+p.cut,0);
-    if (totalCut > 300) {
-      const ratio = 300 / totalCut;
-      calculatorState.players.forEach(p=>p.cut = Math.floor(p.cut*ratio));
+  function enforceBagLimit(){
+    const total = calculatorState.players.reduce((sum,p)=>sum+p.cut,0);
+    if(total>300){
+      const ratio = 300/total;
+      calculatorState.players.forEach(p=>p.cut=Math.floor(p.cut*ratio));
     }
   }
 
-  async function updateCalculatorState(updates) {
-    await sb.from('calculator_state')
-      .update(updates)
-      .eq('id', calculatorState.id);
-    Object.assign(calculatorState, updates);
+  async function updateCalculatorState(updates){
+    await sb.from('calculator_state').update(updates).eq('id',calculatorState.id);
+    Object.assign(calculatorState,updates);
   }
 
-  function getSymbolCounts() {
-    const counts = {cash:0, painting:0, gold:0};
-    document.querySelectorAll('.symbol').forEach(s => {
-      const img = s.querySelector('img')?.src.toLowerCase();
-      if (img?.includes('dollar')) counts.cash++;
-      if (img?.includes('painting')) counts.painting++;
-      if (img?.includes('gold')) counts.gold++;
+  function getSymbolCounts(){
+    const counts={cash:0,painting:0,gold:0};
+    document.querySelectorAll('.symbol').forEach(s=>{
+      const img=s.querySelector('img')?.src.toLowerCase();
+      if(img?.includes('dollar')) counts.cash++;
+      if(img?.includes('painting')) counts.painting++;
+      if(img?.includes('gold')) counts.gold++;
     });
     return counts;
   }
 
-  function renderLootResult() {
-    const primaryValues = {
-      normal: {Tequila:630000, Ruby:700000, Bonds:770000, Diamond:1300000, Panther:1900000},
-      hard:   {Tequila:693000, Ruby:770000, Bonds:847000, Diamond:1430000, Panther:2090000}
-    };
-    const secondaryRanges = {
-      Cash:[78000,89000],
-      Painting:[176000,199000],
-      Gold:[328000,333000]
-    };
-    const counts = getSymbolCounts();
-    const players = calculatorState.players || [];
-    let totalSecondaryMin = 0;
-    let totalSecondaryMax = 0;
-
-    Object.entries(counts).forEach(([type,num])=>{
-      const range = secondaryRanges[type.charAt(0).toUpperCase() + type.slice(1)];
-      if (range) {
-        totalSecondaryMin += num * range[0];
-        totalSecondaryMax += num * range[1];
-      }
+  function renderSecondaryLoot(){
+    secondaryLootDiv.innerHTML='';
+    const counts=getSymbolCounts();
+    secondaryLootTypes.forEach(type=>{
+      const available=counts[type.toLowerCase()]||0;
+      const maxTake=Math.floor(available*secondaryBagPerc[type]);
+      const div=document.createElement('div');
+      div.style.marginBottom='4px'; div.style.display='flex'; div.style.alignItems='center'; div.style.gap='6px';
+      div.innerHTML=`<label>${type} (available:${available}):</label>
+      <input type="number" min="0" max="${maxTake}" value="0" data-type="${type}">`;
+      secondaryLootDiv.appendChild(div);
     });
-
-    const primaryLoot = calculatorState.primary_loot;
-    let primaryValue = 0;
-    if (primaryLoot) primaryValue = primaryValues[calculatorState.difficulty][primaryLoot] || 0;
-
-    let grandTotalMin = primaryValue + totalSecondaryMin;
-    let grandTotalMax = primaryValue + totalSecondaryMax;
-
-    grandTotalMin *= 0.88;
-    grandTotalMax *= 0.88;
-
-    let html = `<strong>Potential Take:</strong><br>`;
-    players.forEach(p=>{
-      const minTake = Math.floor(grandTotalMin * (p.cut/100));
-      const maxTake = Math.floor(grandTotalMax * (p.cut/100));
-      html += `${p.name}: $${minTake.toLocaleString()} → $${maxTake.toLocaleString()}<br>`;
-    });
-
-    lootResultDiv.innerHTML = html;
   }
 
+  function renderLootResult(){
+    const primaryValues = {
+      normal: {Tequila:630000,Ruby:700000,Bonds:770000,Diamond:1300000,Panther:1900000},
+      hard: {Tequila:693000,Ruby:770000,Bonds:847000,Diamond:1430000,Panther:2090000}
+    };
+    let primaryValue=0;
+    if(calculatorState.primary_loot) primaryValue=primaryValues[calculatorState.difficulty][calculatorState.primary_loot]||0;
+    const secondaryInputs=secondaryLootDiv.querySelectorAll('input');
+    let secMin=0, secMax=0;
+    secondaryInputs.forEach(inp=>{
+      const type=inp.dataset.type; const val=parseInt(inp.value)||0;
+      const range=secondaryRanges[type]; secMin+=val*range[0]; secMax+=val*range[1];
+    });
+    let totalMin=(primaryValue+secMin)*0.88;
+    let totalMax=(primaryValue+secMax)*0.88;
+    let html='<strong>Potential Take:</strong><br>';
+    (calculatorState.players||[]).forEach(p=>{
+      const minTake=Math.floor(totalMin*(p.cut/100));
+      const maxTake=Math.floor(totalMax*(p.cut/100));
+      html+=`${p.name}: $${minTake.toLocaleString()} → $${maxTake.toLocaleString()}<br>`;
+    });
+    lootResultDiv.innerHTML=html;
+  }
+
+  secondaryLootDiv.addEventListener('input', renderLootResult);
+
   sb.channel('calculator_state')
-    .on('postgres_changes', { event: 'UPDATE', table: 'calculator_state' }, payload => {
-      calculatorState = payload.new;
-      difficultySelect.value = calculatorState.difficulty;
-      primaryLootSelect.value = calculatorState.primary_loot || '';
-      renderPlayers();
-      renderLootResult();
-    })
-    .subscribe();
+    .on('postgres_changes', { event: 'UPDATE', table: 'calculator_state' }, payload=>{
+      calculatorState=payload.new;
+      difficultySelect.value=calculatorState.difficulty;
+      primaryLootSelect.value=calculatorState.primary_loot||'';
+      renderPlayers(); renderSecondaryLoot(); renderLootResult();
+    }).subscribe();
 
   loadCalculator();
 });
