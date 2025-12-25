@@ -298,6 +298,39 @@ html, body {
   border-color: rgba(255,255,255,0.35);
   opacity: 0.9;
 }
+
+/* ===== Sync indicator (minimal) ===== */
+#calculator .sync-line {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(255,255,255,0.12);
+}
+#calculator .sync-text {
+  opacity: 0.75;
+  font-size: 0.88em;
+  white-space: nowrap;
+}
+#calculator .sync-dot {
+  display:inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.45);
+  margin-right: 6px;
+  vertical-align: middle;
+}
+#calculator .sync-dot.syncing {
+  animation: pulse 0.8s infinite ease-in-out;
+}
+@keyframes pulse {
+  0% { transform: scale(0.9); opacity: 0.35; }
+  50% { transform: scale(1.15); opacity: 0.95; }
+  100% { transform: scale(0.9); opacity: 0.35; }
+}
 </style>
 </head>
 
@@ -353,11 +386,22 @@ html, body {
 
       <div id="player-cuts"></div>
 
-      <!-- NEW: secondary selection + bag status -->
       <div id="secondary-loot"></div>
       <div class="loot-result" id="bag-status"></div>
 
       <div class="loot-result" id="loot-result"></div>
+
+      <!-- NEW: sync line -->
+      <div class="sync-line">
+        <div class="sync-text" id="sync-indicator">
+          <span class="sync-dot" id="sync-dot"></span>
+          Synced
+        </div>
+        <div class="sync-text" id="sync-indicator-map">
+          <span class="sync-dot" id="sync-dot-map"></span>
+          Map synced
+        </div>
+      </div>
     </div>
 
     <div id="notes-container"></div>
@@ -393,7 +437,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const panelTitle = document.getElementById('panel-title');
   const infoPanel = document.getElementById('info-panel');
   const infoHeader = document.getElementById('info-header');
-  const infoContent = document.getElementById('info-content');
   const notesContainer = document.getElementById('notes-container');
   const noteInput = document.getElementById('note-input');
 
@@ -445,7 +488,6 @@ document.addEventListener('DOMContentLoaded', () => {
       panel.style.left = r.left + 'px';
       panel.style.top = (r.bottom + 10) + 'px';
       
-      // show panel with animation
       panel.classList.remove('show', 'show-pop'); 
       panel.style.display = 'block';
       requestAnimationFrame(() => {
@@ -462,7 +504,6 @@ document.addEventListener('DOMContentLoaded', () => {
     activeZone = null;
   });
 
-  /* INFO PANEL COLLAPSE LOGIC */
   infoHeader.addEventListener('click', e => {
     e.stopPropagation();
     collapsed = !collapsed;
@@ -517,29 +558,88 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  /* ===== SYNC INDICATORS ===== */
+  const syncIndicator = document.getElementById('sync-indicator');
+  const syncDot = document.getElementById('sync-dot');
+  const syncIndicatorMap = document.getElementById('sync-indicator-map');
+  const syncDotMap = document.getElementById('sync-dot-map');
+
+  let syncTimer = null;
+  let mapSyncTimer = null;
+
+  function setSyncing(on) {
+    clearTimeout(syncTimer);
+    if (on) {
+      syncDot.classList.add('syncing');
+      syncIndicator.innerHTML = `<span class="sync-dot syncing" id="sync-dot"></span>Syncing...`;
+      // keep dot reference stable
+      // (rebind)
+      setTimeout(() => {
+        const d = document.getElementById('sync-dot');
+        if (d) syncDot.className = d.className;
+      }, 0);
+    } else {
+      syncDot.classList.remove('syncing');
+      syncIndicator.innerHTML = `<span class="sync-dot" id="sync-dot"></span>Synced`;
+      setTimeout(() => {
+        const d = document.getElementById('sync-dot');
+        if (d) syncDot.className = d.className;
+      }, 0);
+      syncTimer = setTimeout(() => {
+        // leave as Synced; nothing else
+      }, 200);
+    }
+  }
+
+  function setMapSyncing(on) {
+    clearTimeout(mapSyncTimer);
+    if (on) {
+      syncDotMap.classList.add('syncing');
+      syncIndicatorMap.innerHTML = `<span class="sync-dot syncing" id="sync-dot-map"></span>Map syncing...`;
+      setTimeout(() => {
+        const d = document.getElementById('sync-dot-map');
+        if (d) syncDotMap.className = d.className;
+      }, 0);
+    } else {
+      syncDotMap.classList.remove('syncing');
+      syncIndicatorMap.innerHTML = `<span class="sync-dot" id="sync-dot-map"></span>Map synced`;
+      setTimeout(() => {
+        const d = document.getElementById('sync-dot-map');
+        if (d) syncDotMap.className = d.className;
+      }, 0);
+      mapSyncTimer = setTimeout(() => {
+        // leave as Map synced
+      }, 200);
+    }
+  }
+
   sb.channel('symbols')
     .on('postgres_changes', { event: 'INSERT', table: 'symbols' }, payload => {
+      setMapSyncing(true);
+
       if (localInsertedSymbols.has(payload.new.id)) {
         localInsertedSymbols.delete(payload.new.id);
+        setMapSyncing(false);
         return;
       }
       const zone = document.querySelector(`.zone[data-name="${payload.new.region}"]`);
       if (zone) renderSymbol(zone, payload.new.symbol, payload.new.id);
 
-      // calculator needs live refresh when map loot changes
       if (calculatorState) {
         renderSecondaryControls();
         renderLootResult();
       }
+      setMapSyncing(false);
     })
     .on('postgres_changes', { event: 'DELETE', table: 'symbols' }, payload => {
-      document.querySelector(`.symbol[data-id="${payload.old.id}"]`)?.remove();
+      setMapSyncing(true);
 
-      // calculator needs live refresh when map loot changes
+      document.querySelector(`.symbol[data-id="${payload.old.id}"]`)?.remove();
       if (calculatorState) {
         renderSecondaryControls();
         renderLootResult();
       }
+      setMapSyncing(false);
     })
     .subscribe();
 
@@ -555,6 +655,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const BAG_CAPACITY = 300; // pooled bag capacity
   const BAG_PER_STACK = { Cash: 25, Painting: 50, Gold: 66.7 };
+
+  // NEW: always included, doesn't use bag space
+  const WALL_SAFE_MIN = 20000;
+  const WALL_SAFE_MAX = 99000;
 
   const primaryValues = {
     normal: {Tequila:630000, Ruby:700000, Bonds:770000, Diamond:1300000, Panther:1900000},
@@ -572,7 +676,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!data) return;
     calculatorState = data;
 
-    // ensure required fields exist (without "fucking with" anything else)
     calculatorState.players = calculatorState.players || [];
     calculatorState.secondary_take = calculatorState.secondary_take || { Cash: 0, Painting: 0, Gold: 0 };
     if (calculatorState.secondary_take.Cash == null) calculatorState.secondary_take.Cash = 0;
@@ -626,7 +729,7 @@ document.addEventListener('DOMContentLoaded', () => {
         e.stopPropagation();
         const idx = e.target.dataset.idx;
         calculatorState.players[idx].name = e.target.value;
-        await updateCalculatorState({players: calculatorState.players}); // live sync
+        await updateCalculatorState({players: calculatorState.players});
       });
     });
 
@@ -638,7 +741,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (Number.isNaN(val)) val = 0;
         calculatorState.players[idx].cut = Math.min(100, Math.max(0, val));
         enforceCutLimit();
-        await updateCalculatorState({players: calculatorState.players}); // live sync
+        await updateCalculatorState({players: calculatorState.players});
         renderLootResult();
       });
     });
@@ -649,7 +752,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const idx = parseInt(btn.dataset.idx, 10);
         calculatorState.players.splice(idx,1);
         enforceCutLimit();
-        await updateCalculatorState({players: calculatorState.players}); // live sync
+        await updateCalculatorState({players: calculatorState.players});
         renderPlayers();
         renderLootResult();
       });
@@ -659,14 +762,14 @@ document.addEventListener('DOMContentLoaded', () => {
   difficultySelect.addEventListener('change', async e => {
     e.stopPropagation();
     calculatorState.difficulty = e.target.value;
-    await updateCalculatorState({difficulty: e.target.value}); // live sync
+    await updateCalculatorState({difficulty: e.target.value});
     renderLootResult();
   });
 
   primaryLootSelect.addEventListener('change', async e => {
     e.stopPropagation();
     calculatorState.primary_loot = e.target.value;
-    await updateCalculatorState({primary_loot: e.target.value}); // live sync
+    await updateCalculatorState({primary_loot: e.target.value});
     renderLootResult();
   });
 
@@ -679,10 +782,15 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function updateCalculatorState(updates) {
+    // NEW: syncing indicator
+    setSyncing(true);
+
     await sb.from('calculator_state')
       .update(updates)
       .eq('id', calculatorState.id);
+
     Object.assign(calculatorState, updates);
+    setSyncing(false);
   }
 
   function getSymbolCounts() {
@@ -730,14 +838,25 @@ document.addEventListener('DOMContentLoaded', () => {
     let next = cur - reduceBy;
 
     if (changedType === 'Painting') {
-      next = Math.floor(next); // no fractional paintings
+      next = Math.floor(next);
     } else {
-      // allow fractional stacks, keep it tidy
       next = Math.max(0, Math.round(next * 10) / 10);
     }
 
     take[changedType] = Math.max(0, next);
     calculatorState.secondary_take = take;
+  }
+
+  // NEW: parse decimals that accept "." and "," and ignore other junk
+  function parseDecimalInput(str) {
+    if (str == null) return 0;
+    const cleaned = String(str)
+      .trim()
+      .replace(',', '.')
+      .replace(/[^0-9.]/g, '');
+    if (cleaned === '') return 0;
+    const n = parseFloat(cleaned);
+    return Number.isFinite(n) ? n : 0;
   }
 
   function renderSecondaryControls() {
@@ -755,21 +874,24 @@ document.addEventListener('DOMContentLoaded', () => {
         <span class="calc-meta">Cash</span>
         <span class="calc-meta">available: ${available.Cash}</span>
         <span class="calc-meta">bag: ${BAG_PER_STACK.Cash}%</span>
-        <input id="take-cash" class="calc-input" type="number" min="0" step="0.1" value="${take.Cash}" style="width:90px;">
+        <input id="take-cash" class="calc-input" type="text" inputmode="decimal" autocomplete="off" spellcheck="false"
+               value="${take.Cash}" style="width:90px;">
       </div>
 
       <div class="calc-row">
         <span class="calc-meta">Gold</span>
         <span class="calc-meta">available: ${available.Gold}</span>
         <span class="calc-meta">bag: ${BAG_PER_STACK.Gold}%</span>
-        <input id="take-gold" class="calc-input" type="number" min="0" step="0.1" value="${take.Gold}" style="width:90px;">
+        <input id="take-gold" class="calc-input" type="text" inputmode="decimal" autocomplete="off" spellcheck="false"
+               value="${take.Gold}" style="width:90px;">
       </div>
 
       <div class="calc-row">
         <span class="calc-meta">Paintings</span>
         <span class="calc-meta">available: ${available.Painting}</span>
         <span class="calc-meta">bag: ${BAG_PER_STACK.Painting}%</span>
-        <input id="take-painting" class="calc-input" type="number" min="0" step="1" value="${Math.floor(take.Painting||0)}" style="width:90px;">
+        <input id="take-painting" class="calc-input" type="number" min="0" step="1"
+               value="${Math.floor(take.Painting||0)}" style="width:90px;">
       </div>
     `;
 
@@ -779,26 +901,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
     cashInp.addEventListener('input', async e => {
       e.stopPropagation();
-      let v = parseFloat(e.target.value);
-      if (Number.isNaN(v)) v = 0;
+      let v = parseDecimalInput(e.target.value);
       v = Math.max(0, Math.min(available.Cash, v));
       calculatorState.secondary_take.Cash = v;
       enforceBagCapacity('Cash');
       clampSecondaryToAvailable();
-      await updateCalculatorState({ secondary_take: calculatorState.secondary_take }); // live sync
+      await updateCalculatorState({ secondary_take: calculatorState.secondary_take });
+      // keep what user typed aligned with clamped value
       renderSecondaryControls();
       renderLootResult();
     });
 
     goldInp.addEventListener('input', async e => {
       e.stopPropagation();
-      let v = parseFloat(e.target.value);
-      if (Number.isNaN(v)) v = 0;
+      let v = parseDecimalInput(e.target.value);
       v = Math.max(0, Math.min(available.Gold, v));
       calculatorState.secondary_take.Gold = v;
       enforceBagCapacity('Gold');
       clampSecondaryToAvailable();
-      await updateCalculatorState({ secondary_take: calculatorState.secondary_take }); // live sync
+      await updateCalculatorState({ secondary_take: calculatorState.secondary_take });
       renderSecondaryControls();
       renderLootResult();
     });
@@ -807,12 +928,12 @@ document.addEventListener('DOMContentLoaded', () => {
       e.stopPropagation();
       let v = parseFloat(e.target.value);
       if (Number.isNaN(v)) v = 0;
-      v = Math.floor(v); // paintings must be integer
+      v = Math.floor(v);
       v = Math.max(0, Math.min(available.Painting, v));
       calculatorState.secondary_take.Painting = v;
       enforceBagCapacity('Painting');
       clampSecondaryToAvailable();
-      await updateCalculatorState({ secondary_take: calculatorState.secondary_take }); // live sync
+      await updateCalculatorState({ secondary_take: calculatorState.secondary_take });
       renderSecondaryControls();
       renderLootResult();
     });
@@ -821,10 +942,9 @@ document.addEventListener('DOMContentLoaded', () => {
   function renderLootResult() {
     if (!calculatorState) return;
 
-    // Bag status (show "BAGS FULL" when full)
     const take = calculatorState.secondary_take || { Cash:0, Painting:0, Gold:0 };
     const used = computeBagUsed(take);
-    const eps = 0.05; // small tolerance for float math
+    const eps = 0.05;
     const bagsFull = used >= (BAG_CAPACITY - eps);
     const left = Math.max(0, BAG_CAPACITY - used);
 
@@ -832,13 +952,12 @@ document.addEventListener('DOMContentLoaded', () => {
       ? `<strong>BAGS FULL</strong> — ${Math.min(BAG_CAPACITY, used).toFixed(1)}% / ${BAG_CAPACITY}%`
       : `<strong>Bag</strong> — ${used.toFixed(1)}% / ${BAG_CAPACITY}% <span style="opacity:0.8;">(left: ${left.toFixed(1)}%)</span>`;
 
-    // Primary
     const primaryLoot = calculatorState.primary_loot;
     const difficulty = calculatorState.difficulty || 'normal';
     let primaryValue = 0;
     if (primaryLoot) primaryValue = primaryValues[difficulty]?.[primaryLoot] || 0;
 
-    // Secondary based on "take" selection (fractional for cash/gold, integer for paintings)
+    // Secondary based on chosen take
     let totalSecondaryMin = 0;
     let totalSecondaryMax = 0;
 
@@ -848,12 +967,18 @@ document.addEventListener('DOMContentLoaded', () => {
       totalSecondaryMax += qty * range[1];
     });
 
-    let grandTotalMin = (primaryValue + totalSecondaryMin) * 0.88;
-    let grandTotalMax = (primaryValue + totalSecondaryMax) * 0.88;
+    // NEW: always include wall safe money (no bag usage)
+    let totalMin = primaryValue + totalSecondaryMin + WALL_SAFE_MIN;
+    let totalMax = primaryValue + totalSecondaryMax + WALL_SAFE_MAX;
 
-    // Player payout (live)
+    // Fees (12% total)
+    let grandTotalMin = totalMin * 0.88;
+    let grandTotalMax = totalMax * 0.88;
+
     const players = calculatorState.players || [];
     let html = `<strong>Potential Take:</strong><br>`;
+    html += `<span style="opacity:0.8;">(includes Wall Safe: $${WALL_SAFE_MIN.toLocaleString()}–$${WALL_SAFE_MAX.toLocaleString()})</span><br>`;
+
     players.forEach(p => {
       const cut = (parseFloat(p.cut) || 0) / 100;
       const minTake = Math.floor(grandTotalMin * cut);
@@ -864,11 +989,13 @@ document.addEventListener('DOMContentLoaded', () => {
     lootResultDiv.innerHTML = html;
   }
 
+  // REALTIME: apply updates from other devices immediately
   sb.channel('calculator_state')
     .on('postgres_changes', { event: 'UPDATE', table: 'calculator_state' }, payload => {
-      calculatorState = payload.new;
+      // receiving updates = synced
+      setSyncing(false);
 
-      // keep compatible if older rows exist
+      calculatorState = payload.new;
       calculatorState.players = calculatorState.players || [];
       calculatorState.secondary_take = calculatorState.secondary_take || { Cash: 0, Painting: 0, Gold: 0 };
       if (calculatorState.secondary_take.Cash == null) calculatorState.secondary_take.Cash = 0;
