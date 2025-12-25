@@ -161,6 +161,49 @@ document.addEventListener('DOMContentLoaded', () => {
   let collapsed = false;
   const localInsertedSymbols = new Set();
 
+  /* ================= NOTES LOGIC (FIXED) ================= */
+
+  noteInput.addEventListener('keydown', async e => {
+    e.stopPropagation();
+    if (e.key !== 'Enter' || !noteInput.value.trim()) return;
+    await sb.from('notes').insert({ content: noteInput.value.trim() });
+    noteInput.value = '';
+  });
+
+  function addNote(n) {
+    if (notesContainer.querySelector(`[data-id="${n.id}"]`)) return;
+
+    const div = document.createElement('div');
+    div.textContent = n.content;
+    div.dataset.id = n.id;
+
+    div.onclick = async () => {
+      await sb.from('notes').delete().eq('id', n.id);
+    };
+
+    notesContainer.appendChild(div);
+  }
+
+  async function loadNotes() {
+    const { data } = await sb.from('notes').select('*');
+    data?.forEach(addNote);
+  }
+
+  sb.channel('notes')
+    .on('postgres_changes', { event: 'INSERT', table: 'notes' }, payload => {
+      addNote(payload.new);
+    })
+    .on('postgres_changes', { event: 'DELETE', table: 'notes' }, payload => {
+      notesContainer
+        .querySelector(`[data-id="${payload.old.id}"]`)
+        ?.remove();
+    })
+    .subscribe();
+
+  loadNotes();
+
+  /* ================= SYMBOLS LOGIC (UNCHANGED) ================= */
+
   zones.forEach(zone => {
     zone.addEventListener('click', e => {
       e.stopPropagation();
@@ -267,42 +310,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   loadSymbols();
 
-  noteInput.addEventListener('keydown', async e => {
-    e.stopPropagation();
-    if (e.key !== 'Enter' || !noteInput.value.trim()) return;
-    await sb.from('notes').insert({ content: noteInput.value.trim() });
-    noteInput.value = '';
-  });
-
-  function addNote(n) {
-    if ([...notesContainer.children].some(d => d.textContent === n.content)) return;
-    const div = document.createElement('div');
-    div.textContent = n.content;
-    div.onclick = async () => {
-      await sb.from('notes').delete().eq('id', n.id);
-    };
-    notesContainer.appendChild(div);
-  }
-
-  async function loadNotes() {
-    const { data } = await sb.from('notes').select('*');
-    data?.forEach(addNote);
-  }
-
-  sb.channel('notes')
-    .on('postgres_changes', { event: 'INSERT', table: 'notes' }, payload => addNote(payload.new))
-    .on('postgres_changes', { event: 'DELETE', table: 'notes' }, payload => {
-      [...notesContainer.children]
-        .find(d => d.textContent === payload.old.content)
-        ?.remove();
-    })
-    .subscribe();
-
-  loadNotes();
-
 });
 </script>
 </body>
 </html>
-
-
