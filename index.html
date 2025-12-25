@@ -59,7 +59,10 @@ const panel = document.getElementById('panel');
 const panelTitle = document.getElementById('panel-title');
 let activeZone = null;
 
-// show panel
+// Track rendered symbols to avoid duplicates
+const renderedSymbols = new Set();
+
+// Show panel
 zones.forEach(zone=>{
   zone.addEventListener('click', e=>{
     e.stopPropagation();
@@ -80,17 +83,24 @@ document.addEventListener('click', e=>{
   }
 });
 
-// Add symbol function
-function addSymbolToZone(zone,type,skipInsert=false){
+// Add symbol
+function addSymbolToZone(zone, type, key=null){
+  const symbolKey = key || `${zone.dataset.name}_${type}`;
+  if(renderedSymbols.has(symbolKey)) return;
+  renderedSymbols.add(symbolKey);
+
   const existing = zone.querySelectorAll('.symbol');
-  if(existing.length>=6) return;
+  if(existing.length >=6) return;
+
   const idx = existing.length;
   const row = idx<3?0:1;
   const col = idx%3;
+
   const symbol = document.createElement('div');
   symbol.classList.add('symbol');
   symbol.style.top = `${row*50+2}%`;
   symbol.style.left = `${col*33+1}%`;
+  symbol.dataset.key = symbolKey;
 
   let svg='';
   switch(type){
@@ -103,27 +113,24 @@ function addSymbolToZone(zone,type,skipInsert=false){
   symbol.addEventListener('click', e=>{
     e.stopPropagation();
     symbol.remove();
-    if(!skipInsert){
-      supabaseClient.from('symbols').delete().eq('region',zone.dataset.name).eq('symbol',type).limit(1).then(()=>{});
-    }
+    renderedSymbols.delete(symbolKey);
+    supabaseClient.from('symbols').delete().eq('region',zone.dataset.name).eq('symbol',type).limit(1).then(()=>{});
   });
 
   zone.appendChild(symbol);
-
-  if(!skipInsert){
-    supabaseClient.from('symbols').insert({region:zone.dataset.name,symbol:type}).then(()=>{});
-  }
+  return symbolKey;
 }
 
 // Panel buttons
 panel.querySelectorAll('button').forEach(btn=>{
   btn.addEventListener('click', ()=>{
     if(!activeZone) return;
-    addSymbolToZone(activeZone, btn.dataset.symbol);
+    const key = addSymbolToZone(activeZone, btn.dataset.symbol);
+    if(key) supabaseClient.from('symbols').insert({region:activeZone.dataset.name,symbol:btn.dataset.symbol}).then(()=>{});
   });
 });
 
-// Info Panel
+// Info panel
 const infoHeader = document.getElementById('info-header');
 const infoContent = document.getElementById('info-content');
 const notesContainer = document.getElementById('notes-container');
@@ -164,8 +171,9 @@ async function loadData(){
   const {data:symbols} = await supabaseClient.from('symbols').select('*');
   symbols.forEach(s=>{
     const zoneEl=document.querySelector(`.zone[data-name="${s.region}"]`);
-    if(zoneEl) addSymbolToZone(zoneEl,s.symbol,true);
+    if(zoneEl) addSymbolToZone(zoneEl,s.symbol,`${s.region}_${s.symbol}_${s.id}`);
   });
+
   const {data:notes} = await supabaseClient.from('notes').select('*');
   notes.forEach(n=>{
     const noteDiv=document.createElement('div');
@@ -179,18 +187,18 @@ async function loadData(){
 }
 loadData();
 
-// Realtime updates
+// Realtime
 supabaseClient.channel('public:symbols')
   .on('postgres_changes',{event:'INSERT',schema:'public',table:'symbols'}, payload=>{
     const zoneEl=document.querySelector(`.zone[data-name="${payload.new.region}"]`);
-    if(zoneEl) addSymbolToZone(zoneEl,payload.new.symbol,true);
+    if(zoneEl) addSymbolToZone(zoneEl,payload.new.symbol,`${payload.new.region}_${payload.new.symbol}_${payload.new.id}`);
   })
-  .on('postgres_changes',{event:'DELETE',schema:'public',table:'symbols'},payload=>{
+  .on('postgres_changes',{event:'DELETE',schema:'public',table:'symbols'}, payload=>{
     loadData();
   }).subscribe();
 
 supabaseClient.channel('public:notes')
-  .on('postgres_changes',{event:'INSERT',schema:'public',table:'notes'},payload=>{
+  .on('postgres_changes',{event:'INSERT',schema:'public',table:'notes'}, payload=>{
     const noteDiv=document.createElement('div');
     noteDiv.textContent=payload.new.content;
     noteDiv.addEventListener('click', ()=>{
@@ -199,7 +207,7 @@ supabaseClient.channel('public:notes')
     });
     notesContainer.appendChild(noteDiv);
   })
-  .on('postgres_changes',{event:'DELETE',schema:'public',table:'notes'},payload=>{
+  .on('postgres_changes',{event:'DELETE',schema:'public',table:'notes'}, payload=>{
     loadData();
   }).subscribe();
 
