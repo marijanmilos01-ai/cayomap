@@ -32,6 +32,22 @@ html, body {
   --hud-bg: rgba(0, 0, 0, 0);             /* set alpha > 0 to show panel */
   --hud-border: rgba(255, 255, 255, 0);   /* set alpha > 0 to show border */
   --hud-panel-shadow: rgba(0, 0, 0, 0);   /* set alpha > 0 to show box shadow */
+
+  /* ===============================
+     RESPONSIVE UI SCALE (ADDED)
+     Keeps HUD + Loot panel sane on 720p/1080p/1440p + 4:3
+  ================================ */
+  --ui-pad: clamp(6px, 1.0vw, 14px);
+  --ui-gap: clamp(8px, 1.2vw, 14px);
+
+  /* Fonts tuned for 720p→1440p */
+  --hud-label-size: clamp(18px, 2.0vw, 34px);
+  --hud-value-size: clamp(22px, 2.6vw, 48px);
+  --hud-subvalue-size: clamp(18px, 2.0vw, 34px);
+
+  /* Loot panel width scaling */
+  --panel-width-open: clamp(260px, 22vw, 460px);
+  --panel-width-collapsed: clamp(160px, 14vw, 240px);
 }
 
 #map-container {
@@ -128,11 +144,12 @@ html, body {
 }
 
 /* ===== INFO PANEL ===== */
+/* CHANGED: absolute -> fixed, and responsive widths/offsets */
 #info-panel {
-  position: absolute;
-  top: 0px;
-  left: 0px;
-  width: 20vw; /* full width when opened */
+  position: fixed; /* was absolute */
+  top: 0;
+  left: 0;
+  width: var(--panel-width-open);
   background: rgba(40,40,40,0.6);
   border-radius: 8px;
   overflow: hidden;
@@ -147,12 +164,15 @@ html, body {
     left 0.3s ease;
   max-height: 100vh;
   backdrop-filter: blur(4px);
+
+  /* safety on tiny screens */
+  max-width: 92vw;
 }
 
 #info-panel.collapsed {
-  width: 175px; /* narrower width when collapsed */
-  top: 30px;
-  left: 30px;
+  width: var(--panel-width-collapsed);
+  top: clamp(10px, 2.5vw, 30px);
+  left: clamp(10px, 2.5vw, 30px);
 }
 
 #info-header {
@@ -277,10 +297,11 @@ html, body {
 }
 
 /* Apply to headers */
+/* CHANGED: font-size made responsive so it won't blow up on small displays */
 #panel-title,
 #info-header {
   font-family: 'Mission Script', cursive;
-  font-size: 2em;
+  font-size: clamp(20px, 2.2vw, 34px);
 }
 
 /* ===== CALCULATOR STYLES ===== */
@@ -402,10 +423,11 @@ html, body {
 }
 
 /* ===== Heads-up display (top-right) ===== */
+/* CHANGED: responsive padding, max-width, and clamp() font sizes */
 #hud {
   position: fixed;
-  top: 18px;
-  right: 18px;
+  top: var(--ui-pad);
+  right: var(--ui-pad);
   z-index: 40;
 
   background: var(--hud-bg);
@@ -414,6 +436,7 @@ html, body {
 
   padding: 0;
   pointer-events: none; /* clicks pass through */
+  max-width: min(92vw, 520px);
 }
 
 /* Row layout */
@@ -421,14 +444,14 @@ html, body {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  gap: 12px;
-  margin: 6px 0;
+  gap: var(--ui-gap);
+  margin: clamp(4px, 0.6vw, 8px) 0;
 }
 
 /* Label (e.g. "Total Take", player names) */
 .hud-label {
   font-family: 'Mission Script', cursive;
-  font-size: 2.2em;   /* BIGGER */
+  font-size: var(--hud-label-size);
   color: var(--hud-label-color);
   opacity: 1;
   text-shadow: 0 0 8px var(--hud-label-shadow-color);
@@ -438,7 +461,7 @@ html, body {
 /* Main numbers */
 .hud-value {
   font-family: 'Pricedown', sans-serif;
-  font-size: 3em;     /* BIG MONEY TEXT */
+  font-size: var(--hud-value-size);
   font-weight: bold;
   color: var(--hud-value-color);
   letter-spacing: 1px;
@@ -449,7 +472,7 @@ html, body {
 /* Optional smaller secondary values */
 .hud-subvalue {
   font-family: 'Pricedown', sans-serif;
-  font-size: 2.2em;
+  font-size: var(--hud-subvalue-size);
   color: var(--hud-subvalue-color);
   opacity: 1;
   text-shadow: 0 0 10px var(--hud-value-shadow-color);
@@ -466,7 +489,6 @@ html, body {
   50%  { transform: scale(1.08); opacity: 1; }
   100% { transform: scale(1); }
 }
-
 </style>
 </head>
 
@@ -485,14 +507,15 @@ html, body {
   <div id="info-header">Loot Panel ▼</div>
   <div id="info-content">
 
-    <div class="loot-section" data-section="primary">
+    <!-- default collapsed -->
+    <div class="loot-section collapsed" data-section="primary">
       <div class="loot-section-header">
         <div class="loot-section-title">Primary Loot Table</div>
         <div class="loot-section-chevron">▼</div>
       </div>
       <div class="loot-section-body">
         <table class="loot-table">
-          <tr><th>Primary Loot</th><th>Normal</th><th>Hard</th><td>Rarity <72H</td><td>Rarity >72H</td></tr>
+          <tr><th>Primary Loot</th><th>Normal</th><th>Hard</th><td>Rarity &lt;72H</td><td>Rarity &gt;72H</td></tr>
           <tr><td>Tequila</td><td>$630k</td><td>$693k</td><td>47.6%</td><td>25%</td></tr>
           <tr><td>Ruby</td><td>$700k</td><td>$770k</td><td>19%</td><td>25%</td></tr>
           <tr><td>Bonds</td><td>$770k</td><td>$847k</td><td>28.6%</td><td>37.5%</td></tr>
@@ -502,7 +525,8 @@ html, body {
       </div>
     </div>
 
-    <div class="loot-section" data-section="secondary">
+    <!-- default collapsed -->
+    <div class="loot-section collapsed" data-section="secondary">
       <div class="loot-section-header">
         <div class="loot-section-title">Secondary Loot Table</div>
         <div class="loot-section-chevron">▼</div>
@@ -518,7 +542,8 @@ html, body {
       </div>
     </div>
 
-    <div class="loot-section" data-section="fee">
+    <!-- default collapsed -->
+    <div class="loot-section collapsed" data-section="fee">
       <div class="loot-section-header">
         <div class="loot-section-title">Fee Table</div>
         <div class="loot-section-chevron">▼</div>
@@ -629,6 +654,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const header = section.querySelector('.loot-section-header');
       const chevron = section.querySelector('.loot-section-chevron');
       if (!header || !chevron) return;
+
+      // Default CLOSED (also enforced in HTML via .collapsed)
+      section.classList.add('collapsed');
 
       header.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -1098,6 +1126,81 @@ document.addEventListener('DOMContentLoaded', () => {
     calculatorState.secondary_take = take;
   }
 
+  /* ========= UPDATED: dynamic suggested secondary loot (bounded knapsack, min value) ========= */
+  function computeSuggestedSecondaryTake() {
+    const available = getSymbolCounts();
+    const capacityUnits = getBagCapacityUnits();
+
+    // min values (you said minimal value is ok)
+    const MIN_VALUE = { Cash: 78000, Painting: 176000, Gold: 328000 };
+
+    const maxPaint = Math.max(0, Math.floor(available.Painting || 0));
+    const maxGoldT = Math.max(0, Math.floor((available.Gold || 0) * 10));
+    const maxCashT = Math.max(0, Math.floor((available.Cash || 0) * 10));
+
+    let best = { Cash: 0, Painting: 0, Gold: 0 };
+    let bestValue = -1;
+    let bestUsed = -1;
+
+    function scoreMinValue(take) {
+      return (take.Cash || 0) * MIN_VALUE.Cash +
+             (take.Gold || 0) * MIN_VALUE.Gold +
+             (take.Painting || 0) * MIN_VALUE.Painting;
+    }
+
+    // Tie-breakers:
+    // 1) higher min value
+    // 2) if tied, fill bag more
+    // 3) if still tied, prefer more Gold, then more Paintings
+    function isBetter(candidate, candidateValue, candidateUsed) {
+      if (candidateValue > bestValue) return true;
+      if (candidateValue < bestValue) return false;
+
+      if (candidateUsed > bestUsed) return true;
+      if (candidateUsed < bestUsed) return false;
+
+      if ((candidate.Gold || 0) > (best.Gold || 0)) return true;
+      if ((candidate.Gold || 0) < (best.Gold || 0)) return false;
+
+      if ((candidate.Painting || 0) > (best.Painting || 0)) return true;
+      if ((candidate.Painting || 0) < (best.Painting || 0)) return false;
+
+      return false;
+    }
+
+    for (let p = 0; p <= maxPaint; p++) {
+      for (let gT = 0; gT <= maxGoldT; gT++) {
+        const g = gT / 10;
+
+        const baseTake = { Cash: 0, Painting: p, Gold: g };
+        const baseUsed = computeBagUsedUnits(baseTake);
+        if (baseUsed > capacityUnits) continue;
+
+        for (let cT = 0; cT <= maxCashT; cT++) {
+          const c = cT / 10;
+
+          const take = { Cash: c, Painting: p, Gold: g };
+          const used = computeBagUsedUnits(take);
+          if (used > capacityUnits) continue;
+
+          const value = scoreMinValue(take);
+
+          if (isBetter(take, value, used)) {
+            best = take;
+            bestValue = value;
+            bestUsed = used;
+          }
+        }
+      }
+    }
+
+    best.Cash = Math.round((best.Cash || 0) * 10) / 10;
+    best.Gold = Math.round((best.Gold || 0) * 10) / 10;
+    best.Painting = Math.floor(best.Painting || 0);
+
+    return best;
+  }
+
   function renderSecondaryControls() {
     if (!calculatorState) return;
 
@@ -1106,8 +1209,24 @@ document.addEventListener('DOMContentLoaded', () => {
     const available = getSymbolCounts();
     const take = calculatorState.secondary_take || { Cash:0, Painting:0, Gold:0 };
 
+    const suggested = computeSuggestedSecondaryTake();
+    const suggestedUsedPct = computeBagUsedUnits(suggested) / 10;
+    const capPct = getBagCapacityUnits() / 10;
+
     secondaryLootDiv.innerHTML = `
       <div class="calc-title">Secondary Loot (select what you take)</div>
+
+      <!-- Suggestion row -->
+      <div class="calc-row" style="margin-top: 8px;">
+        <span class="calc-meta" style="flex:1;">
+          <strong>Suggested fill:</strong>
+          Gold <strong>${suggested.Gold}</strong>,
+          Paintings <strong>${suggested.Painting}</strong>,
+          Cash <strong>${suggested.Cash}</strong>
+          <span style="opacity:0.7;">(bag: ${Math.min(capPct, suggestedUsedPct).toFixed(1)}% / ${capPct.toFixed(0)}%)</span>
+        </span>
+        <button class="calc-btn" id="apply-suggested">Apply</button>
+      </div>
 
       <div class="calc-row">
         <span class="calc-meta">Cash</span>
@@ -1140,6 +1259,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const cashInp = document.getElementById('take-cash');
     const goldInp = document.getElementById('take-gold');
     const paintInp = document.getElementById('take-painting');
+    const applyBtn = document.getElementById('apply-suggested');
 
     function commitCashGold(which, rawValue) {
       const maxAvail = which === 'Cash' ? available.Cash : available.Gold;
@@ -1174,6 +1294,20 @@ document.addEventListener('DOMContentLoaded', () => {
       renderSecondaryControls();
       renderLootResult();
     }
+
+    // Apply suggestion
+    applyBtn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+
+      calculatorState.secondary_take = {
+        Cash: suggested.Cash,
+        Gold: suggested.Gold,
+        Painting: suggested.Painting
+      };
+      clampSecondaryToAvailable();
+
+      await syncSecondaryTakeAndRefresh();
+    });
 
     // Cash: Enter/blur to sync
     cashInp.addEventListener('keydown', async e => {
@@ -1287,7 +1421,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const elitePerPlayer = (difficulty === 'hard') ? 100000 : 50000;
     const eliteTotal = elitePerPlayer * playerCount;
 
-    // Wall safe always included, no bag usage
     let totalMin = primaryValue + totalSecondaryMin + WALL_SAFE_MIN + eliteTotal;
     let totalMax = primaryValue + totalSecondaryMax + WALL_SAFE_MAX + eliteTotal;
 
@@ -1348,5 +1481,3 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
-
-
