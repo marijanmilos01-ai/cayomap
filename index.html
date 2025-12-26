@@ -11,7 +11,7 @@
 <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 <link rel="manifest" href="site.webmanifest">
-  
+
 <style>
 html, body {
   margin:0; padding:0;
@@ -59,6 +59,16 @@ html, body {
   /* Loot panel width scaling */
   --panel-width-open: clamp(260px, 22vw, 460px);
   --panel-width-collapsed: clamp(160px, 14vw, 240px);
+
+  /* ===============================
+     ZONE SIZE (UPDATED)
+     - fixed px size
+     - square (1:1)
+     - doesn't "responsive scale" with viewport size
+     - we also counter browser zoom via --inv-zoom (set by JS)
+  ================================ */
+  --zone-size: 86px;       /* change this to whatever feels right */
+  --inv-zoom: 1;           /* JS updates this */
 }
 
 /* Apply custom cursor to interactive elements */
@@ -80,8 +90,19 @@ input, select, textarea {
   background-size:cover;
 }
 
+/* ===============================
+   ZONES (UPDATED)
+   - fixed pixel size
+   - 1:1 aspect ratio
+   - inline width/height % removed from HTML
+   - counter zoom using transform: scale(var(--inv-zoom))
+=============================== */
 .zone {
   position:absolute;
+  width: var(--zone-size);
+  aspect-ratio: 1 / 1;
+  height: auto;
+
   border:2px solid rgba(30,30,30,0.8);
   background-color: rgba(40,40,40,0.6);
   box-shadow: 0 4px 12px rgba(0,0,0,0.5), 0 0 10px rgba(30,30,30,0.5);
@@ -89,6 +110,10 @@ input, select, textarea {
   box-sizing:border-box;
   border-radius:8px;
   transition: all 0.3s ease;
+
+  /* counteract browser zoom (best-effort via devicePixelRatio) */
+  transform: scale(var(--inv-zoom));
+  transform-origin: top left;
 }
 .zone:hover {
   border-color:#fff;
@@ -96,9 +121,14 @@ input, select, textarea {
   box-shadow: 0 4px 12px rgba(0,0,0,0.5), 0 0 10px rgba(30,30,30,0.5);
 }
 
+/* ===============================
+   SYMBOLS (UPDATED)
+   - 2x2 grid inside zone
+   - max 4 symbols per zone
+=============================== */
 .symbol {
   position:absolute;
-  width:20%;
+  width: 46%;
   aspect-ratio: 1 / 1;
   display:flex;
   justify-content:center;
@@ -714,11 +744,12 @@ input, select, textarea {
 </div>
 
 <div id="map-container">
-  <div class="zone" style="left:47%;top:54%;width:6%;height:5%;" data-name="Vault"></div>
-  <div class="zone" style="left:45%;top:48%;width:6%;height:5%;" data-name="Office"></div>
-  <div class="zone" style="left:53%;top:46%;width:6%;height:5%;" data-name="North Storage"></div>
-  <div class="zone" style="left:65%;top:55%;width:6%;height:5%;" data-name="West Storage"></div>
-  <div class="zone" style="left:47%;top:65%;width:6%;height:5%;" data-name="South Storage"></div>
+  <!-- UPDATED: removed width/height %; zones are now fixed pixel squares via CSS -->
+  <div class="zone" style="left:47%;top:54%;" data-name="Vault"></div>
+  <div class="zone" style="left:45%;top:48%;" data-name="Office"></div>
+  <div class="zone" style="left:53%;top:46%;" data-name="North Storage"></div>
+  <div class="zone" style="left:65%;top:55%;" data-name="West Storage"></div>
+  <div class="zone" style="left:47%;top:65%;" data-name="South Storage"></div>
 </div>
 
 <div id="panel" class="panel">
@@ -742,6 +773,22 @@ input, select, textarea {
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+  /* =========================================================
+     UPDATED: Counteract browser zoom for zone sizing (best-effort)
+     - sets CSS var --inv-zoom = 1 / devicePixelRatio
+     - makes .zone stay visually the same size when zoom changes
+  ========================================================= */
+  function updateInvZoom() {
+    const dpr = window.devicePixelRatio || 1;
+    document.documentElement.style.setProperty('--inv-zoom', String(1 / dpr));
+  }
+  updateInvZoom();
+  window.addEventListener('resize', updateInvZoom);
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', updateInvZoom);
+    window.visualViewport.addEventListener('scroll', updateInvZoom);
+  }
+
   const sb = supabase.createClient(
     'https://qanrnafvvnmimewtxrxv.supabase.co',
     'sb_publishable_8F3cI7ZKCgpxv6UfaRJn7A_r1s17TmC'
@@ -866,7 +913,7 @@ document.addEventListener('DOMContentLoaded', () => {
         await document.exitFullscreen();
       }
     } catch (err) {
-      // Fail silently (some browsers block without user gesture; this is already a click)
+      // Fail silently
       console.warn('Fullscreen toggle failed:', err);
     }
     setFsIcon();
@@ -979,17 +1026,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function renderSymbol(zone, type, id) {
     if (zone.querySelector(`.symbol[data-id="${id}"]`)) return;
+
     const idx = zone.querySelectorAll('.symbol').length;
-    if (idx >= 6) return;
+
+    /* UPDATED: max 4 symbols per zone */
+    if (idx >= 4) return;
 
     const symbol = document.createElement('div');
     symbol.className = 'symbol';
     symbol.dataset.id = id;
 
-    const row = idx < 3 ? 0 : 1;
-    const col = idx % 3;
+    /* UPDATED: 2x2 grid */
+    const row = Math.floor(idx / 2);   // 0..1
+    const col = idx % 2;              // 0..1
     symbol.style.top = `${row * 50 + 2}%`;
-    symbol.style.left = `${col * 33 + 1}%`;
+    symbol.style.left = `${col * 50 + 2}%`;
 
     const icons = {
       Gold: 'https://www.svgrepo.com/show/532436/gold.svg',
@@ -1012,8 +1063,10 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!activeZone) return;
 
       const region = activeZone.dataset.name;
+
+      /* UPDATED: max 4 symbols per zone in DB check */
       const { count } = await sb.from('symbols').select('*', { count: 'exact', head: true }).eq('region', region);
-      if (count >= 6) return;
+      if (count >= 4) return;
 
       const { data } = await sb.from('symbols').insert({ region, symbol: btn.dataset.symbol }).select().single();
       if (data) {
@@ -1686,10 +1739,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
       html += `${p.name}: $${minTake.toLocaleString()} - $${maxTake.toLocaleString()}<br>`;
 
-      /* ===========================
-         HUD: SHOW CUT % + TAKE
-         (INTEGRATED CHANGE)
-      ============================ */
       const cutPct = Math.round(cutRaw * 10) / 10;
 
       hudLines.push({
