@@ -21,8 +21,8 @@ html, body {
 :root {
   /* Text colors */
   --hud-label-color: rgba(255, 255, 255, 0.95);
-  --hud-value-color: rgba(255, 255, 255, 1);
-  --hud-subvalue-color: rgba(179, 233, 183, 0.85);
+  --hud-value-color: rgba(179, 233, 183, 1);
+  --hud-subvalue-color: rgba(179, 233, 183, 0.7);
 
   /* Text glow/shadow colors */
   --hud-label-shadow-color: rgba(0, 0, 0, 0.75);
@@ -525,7 +525,10 @@ html, body {
   transition: opacity 0.15s ease, transform 0.15s ease;
   white-space: nowrap;
   font-family: 'Mission Script', cursive;
-  letter-spacing: 0.5px;
+  font-size: clamp(16px, 1.6vw, 24px);
+  line-height: 1.05;
+  letter-spacing: 0.4px;
+  padding: 10px 12px;
 }
 .tooltip.show {
   opacity: 1;
@@ -1699,4 +1702,5 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
+
 
