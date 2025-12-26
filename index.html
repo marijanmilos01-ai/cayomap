@@ -431,6 +431,16 @@ document.addEventListener('DOMContentLoaded', () => {
   let collapsed = false;
   const localInsertedSymbols = new Set();
   let calculatorState = null;
+  // Ensure derived UI (bag % + Actual Take) updates after BOTH initial loads (symbols + calculator)
+  let symbolsLoaded = false;
+  let calculatorLoaded = false;
+  
+  function recomputeIfReady() {
+    if (!symbolsLoaded || !calculatorLoaded) return;
+    renderSecondaryControls();
+    renderLootResult();
+}
+
 
   /* ================= NOTES LOGIC ================= */
   noteInput.addEventListener('keydown', async e => {
@@ -545,12 +555,15 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   async function loadSymbols() {
-    const { data } = await sb.from('symbols').select('*');
-    data?.forEach(s => {
-      const zone = document.querySelector(`.zone[data-name="${s.region}"]`);
-      if (zone) renderSymbol(zone, s.symbol, s.id);
-    });
-  }
+  const { data } = await sb.from('symbols').select('*');
+  data?.forEach(s => {
+    const zone = document.querySelector(`.zone[data-name="${s.region}"]`);
+    if (zone) renderSymbol(zone, s.symbol, s.id);
+  });
+
+  symbolsLoaded = true;
+  recomputeIfReady();
+}
 
   /* ===== SYNC INDICATORS ===== */
   const syncDot = document.getElementById('sync-dot');
@@ -617,7 +630,7 @@ document.addEventListener('DOMContentLoaded', () => {
     })
     .subscribe();
 
-  loadSymbols();
+  loadCalculator();
 
   /* ================= CALCULATOR LOGIC ================= */
   const difficultySelect = document.getElementById('difficulty-select');
@@ -662,8 +675,8 @@ document.addEventListener('DOMContentLoaded', () => {
     primaryLootSelect.value = calculatorState.primary_loot || '';
 
     renderPlayers();
-    renderSecondaryControls();
-    renderLootResult();
+    calculatorLoaded = true;
+    recomputeIfReady();
   }
 
   async function updateCalculatorState(updates) {
@@ -1074,9 +1087,10 @@ document.addEventListener('DOMContentLoaded', () => {
     })
     .subscribe();
 
-  loadCalculator();
+  loadSymbols();
 });
 </script>
 </body>
 </html>
+
 
