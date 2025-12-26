@@ -387,59 +387,64 @@ html, body {
   top: 18px;
   right: 18px;
   z-index: 40;
-  color: #fff;
-  background: rgba(40,40,40,0.45);
-  border: 1px solid rgba(255,255,255,0.14);
-  border-radius: 12px;
-  padding: 10px 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.5), 0 0 10px rgba(30,30,30,0.35);
-  backdrop-filter: blur(4px);
-  min-width: 280px;
-  max-width: 380px;
+
+  /* Fully transparent */
+  background: transparent;
+  border: none;
+  box-shadow: none;
+
+  padding: 0;
+  pointer-events: none; /* clicks pass through */
 }
 
+/* Row layout */
 .hud-row {
-  display:flex;
-  align-items: baseline;
+  display: flex;
   justify-content: space-between;
-  gap: 10px;
+  align-items: baseline;
+  gap: 12px;
   margin: 6px 0;
 }
+
+/* Label (e.g. "Total Take", player names) */
 .hud-label {
   font-family: 'Mission Script', cursive;
-  font-size: 1.3em;
+  font-size: 2.2em;   /* BIGGER */
+  color: white;
   opacity: 0.95;
+  text-shadow: 0 0 8px rgba(0,0,0,0.75);
   white-space: nowrap;
-}
-.hud-value {
-  font-family: 'Pricedown', sans-serif;
-  font-size: 1.6em;
-  font-weight: bold;
-  letter-spacing: 0.5px;
-  white-space: nowrap;
-}
-.hud-subvalue {
-  font-family: 'Pricedown', sans-serif;
-  font-size: 1.25em;
-  font-weight: bold;
-  letter-spacing: 0.4px;
-  white-space: nowrap;
-  opacity: 0.95;
-}
-.hud-divider {
-  height: 1px;
-  background: rgba(255,255,255,0.12);
-  margin: 8px 0;
 }
 
+/* Main numbers */
+.hud-value {
+  font-family: 'Pricedown', sans-serif;
+  font-size: 3em;     /* BIG MONEY TEXT */
+  font-weight: bold;
+  color: white;
+  letter-spacing: 1px;
+  text-shadow: 0 0 10px rgba(0,0,0,0.9);
+  white-space: nowrap;
+}
+
+/* Optional smaller secondary values */
+.hud-subvalue {
+  font-family: 'Pricedown', sans-serif;
+  font-size: 2.2em;
+  opacity: 0.85;
+}
+
+/* Animation when values change */
 .hud-bump {
   animation: hudBump 0.25s ease;
 }
+
 @keyframes hudBump {
-  0% { transform: scale(1); opacity: 0.9; }
-  50% { transform: scale(1.06); opacity: 1; }
-  100% { transform: scale(1); opacity: 1; }
+  0%   { transform: scale(1); opacity: 0.85; }
+  50%  { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(1); }
 }
+
 </style>
 </head>
 
@@ -1321,3 +1326,4 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
+
