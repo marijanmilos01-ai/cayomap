@@ -69,6 +69,14 @@ html, body {
   ================================ */
   --zone-size: 86px;       /* change this to whatever feels right */
   --inv-zoom: 1;           /* JS updates this */
+
+  /* ===============================
+     SYMBOL POP ANIMATION TUNING (ADDED)
+  ================================ */
+  --symbol-pop-in-duration: 180ms;
+  --symbol-pop-out-duration: 140ms;
+  --symbol-pop-ease: cubic-bezier(.2, .9, .2, 1.15);
+  --symbol-pop-out-ease: cubic-bezier(.4, 0, .2, 1);
 }
 
 /* Apply custom cursor to interactive elements */
@@ -137,11 +145,40 @@ input, select, textarea {
   border-radius:50%;
   background-color: rgba(255, 255, 255, 0.8);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transform-origin: center;
+  will-change: transform, opacity;
 }
 .symbol:hover {
   transform: scale(1.2);
   box-shadow: 0 0 10px rgba(255,255,255,0.9);
   background-color: rgba(255, 255, 255, 1);
+}
+
+/* =========================================================
+   ADDED: Pop-in / pop-out animations for insertable symbols
+========================================================= */
+@keyframes symbolPopIn {
+  0%   { transform: scale(0.75); opacity: 0; filter: blur(0.25px); }
+  65%  { transform: scale(1.08); opacity: 1; filter: blur(0); }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes symbolPopOut {
+  0%   { transform: scale(1); opacity: 1; }
+  100% { transform: scale(0.88); opacity: 0; }
+}
+.symbol.pop-in {
+  animation: symbolPopIn var(--symbol-pop-in-duration) var(--symbol-pop-ease) both;
+}
+.symbol.pop-out {
+  animation: symbolPopOut var(--symbol-pop-out-duration) var(--symbol-pop-out-ease) both;
+  pointer-events: none;
+}
+
+/* If user prefers reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .symbol.pop-in, .symbol.pop-out {
+    animation: none !important;
+  }
 }
 
 /* ===== SYMBOL PANEL ANIMATIONS ===== */
@@ -632,6 +669,63 @@ input, select, textarea {
   stroke-linecap: round;
   stroke-linejoin: round;
 }
+
+/* =========================================================
+   ADDED: Toast popup (Supabase failure)
+========================================================= */
+#toast {
+  position: fixed;
+  left: 50%;
+  bottom: max(16px, env(safe-area-inset-bottom));
+  transform: translateX(-50%) translateY(10px);
+  z-index: 9999;
+
+  min-width: 260px;
+  max-width: min(520px, calc(100vw - 24px));
+
+  background: rgba(20,20,20,0.92);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+  backdrop-filter: blur(6px);
+
+  padding: 12px 14px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  align-items: center;
+
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+#toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+  pointer-events: auto;
+}
+#toast .toast-title {
+  font-weight: 700;
+  margin-bottom: 2px;
+  opacity: 0.95;
+}
+#toast .toast-msg {
+  opacity: 0.9;
+  font-size: 0.95em;
+  line-height: 1.25;
+}
+#toast button {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.28);
+  color: #fff;
+  border-radius: 10px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+#toast button:hover {
+  background: rgba(255,255,255,0.12);
+}
 </style>
 </head>
 
@@ -770,6 +864,17 @@ input, select, textarea {
 </button>
 <div id="ui-tooltip" class="tooltip" role="tooltip"></div>
 
+<!-- =========================================================
+     ADDED: Toast popup element (Supabase failures)
+========================================================= -->
+<div id="toast" role="status" aria-live="polite">
+  <div>
+    <div class="toast-title" id="toast-title">Error</div>
+    <div class="toast-msg" id="toast-msg">Something went wrong.</div>
+  </div>
+  <button type="button" id="toast-close">Close</button>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
@@ -788,6 +893,29 @@ document.addEventListener('DOMContentLoaded', () => {
     window.visualViewport.addEventListener('resize', updateInvZoom);
     window.visualViewport.addEventListener('scroll', updateInvZoom);
   }
+
+  /* =========================================================
+     ADDED: Toast helpers (Supabase failure popup)
+  ========================================================= */
+  const toastEl = document.getElementById('toast');
+  const toastTitleEl = document.getElementById('toast-title');
+  const toastMsgEl = document.getElementById('toast-msg');
+  const toastCloseBtn = document.getElementById('toast-close');
+  let toastTimer = null;
+
+  function showToast(title, message, ms = 3500) {
+    if (!toastEl) return;
+    toastTitleEl.textContent = title || 'Notice';
+    toastMsgEl.textContent = message || '';
+    toastEl.classList.add('show');
+
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toastEl.classList.remove('show'), ms);
+  }
+
+  toastCloseBtn?.addEventListener('click', () => {
+    toastEl?.classList.remove('show');
+  });
 
   const sb = supabase.createClient(
     'https://qanrnafvvnmimewtxrxv.supabase.co',
@@ -817,6 +945,36 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!symbolsLoaded || !calculatorLoaded) return;
     renderSecondaryControls();
     renderLootResult();
+  }
+
+  /* =========================================================
+     ADDED: Symbol animation helpers (pop in / pop out)
+  ========================================================= */
+  function playPopIn(el) {
+    if (!el) return;
+    el.classList.remove('pop-in');
+    void el.offsetWidth; // restart animation
+    el.classList.add('pop-in');
+    el.addEventListener('animationend', () => {
+      el.classList.remove('pop-in');
+    }, { once: true });
+  }
+
+  function popOutAndRemove(el) {
+    if (!el) return;
+    if (el.dataset.removing === '1') return;
+    el.dataset.removing = '1';
+
+    el.classList.remove('pop-in');
+    el.classList.add('pop-out');
+    el.addEventListener('animationend', () => {
+      el.remove();
+    }, { once: true });
+  }
+
+  function popOutSymbolById(id) {
+    const el = document.querySelector(`.symbol[data-id="${id}"]`);
+    if (el) popOutAndRemove(el);
   }
 
   /* =========================================================
@@ -913,8 +1071,8 @@ document.addEventListener('DOMContentLoaded', () => {
         await document.exitFullscreen();
       }
     } catch (err) {
-      // Fail silently
       console.warn('Fullscreen toggle failed:', err);
+      showToast('Fullscreen failed', 'Your browser blocked fullscreen. Try again.');
     }
     setFsIcon();
     positionTooltip();
@@ -962,7 +1120,12 @@ document.addEventListener('DOMContentLoaded', () => {
   noteInput.addEventListener('keydown', async e => {
     e.stopPropagation();
     if (e.key !== 'Enter' || !noteInput.value.trim()) return;
-    await sb.from('notes').insert({ content: noteInput.value.trim() });
+
+    const { error } = await sb.from('notes').insert({ content: noteInput.value.trim() });
+    if (error) {
+      showToast('Sync failed', 'Could not save note. Check your connection and try again.');
+      return;
+    }
     noteInput.value = '';
   });
 
@@ -972,13 +1135,15 @@ document.addEventListener('DOMContentLoaded', () => {
     div.textContent = n.content;
     div.dataset.id = n.id;
     div.onclick = async () => {
-      await sb.from('notes').delete().eq('id', n.id);
+      const { error } = await sb.from('notes').delete().eq('id', n.id);
+      if (error) showToast('Sync failed', 'Could not delete note. Try again.');
     };
     notesContainer.appendChild(div);
   }
 
   async function loadNotes() {
-    const { data } = await sb.from('notes').select('*');
+    const { data, error } = await sb.from('notes').select('*');
+    if (error) showToast('Load failed', 'Could not load notes. Try refreshing.');
     data?.forEach(addNote);
   }
 
@@ -1049,9 +1214,21 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     symbol.innerHTML = `<img src="${icons[type]}" width="100%" height="100%">`;
 
+    // Pop IN on insertion
+    playPopIn(symbol);
+
     symbol.onclick = async e => {
       e.stopPropagation();
-      await sb.from('symbols').delete().eq('id', id);
+
+      // Instant UX: pop out immediately
+      popOutAndRemove(symbol);
+
+      const { error } = await sb.from('symbols').delete().eq('id', id);
+      if (error) {
+        showToast('Sync failed', 'Could not delete symbol. Check connection and try again.');
+        // Restore symbol visually
+        renderSymbol(zone, type, id);
+      }
     };
 
     zone.appendChild(symbol);
@@ -1065,10 +1242,26 @@ document.addEventListener('DOMContentLoaded', () => {
       const region = activeZone.dataset.name;
 
       /* UPDATED: max 4 symbols per zone in DB check */
-      const { count } = await sb.from('symbols').select('*', { count: 'exact', head: true }).eq('region', region);
+      const { count, error: countErr } = await sb.from('symbols')
+        .select('*', { count: 'exact', head: true })
+        .eq('region', region);
+
+      if (countErr) {
+        showToast('Sync failed', 'Could not check zone capacity. Try again.');
+        return;
+      }
       if (count >= 4) return;
 
-      const { data } = await sb.from('symbols').insert({ region, symbol: btn.dataset.symbol }).select().single();
+      const { data, error } = await sb.from('symbols')
+        .insert({ region, symbol: btn.dataset.symbol })
+        .select()
+        .single();
+
+      if (error) {
+        showToast('Sync failed', 'Could not add symbol. Check connection and try again.');
+        return;
+      }
+
       if (data) {
         localInsertedSymbols.add(data.id);
         renderSymbol(activeZone, data.symbol, data.id);
@@ -1077,7 +1270,10 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   async function loadSymbols() {
-    const { data } = await sb.from('symbols').select('*');
+    const { data, error } = await sb.from('symbols').select('*');
+    if (error) {
+      showToast('Load failed', 'Could not load symbols. Try refreshing.');
+    }
     data?.forEach(s => {
       const zone = document.querySelector(`.zone[data-name="${s.region}"]`);
       if (zone) renderSymbol(zone, s.symbol, s.id);
@@ -1141,7 +1337,8 @@ document.addEventListener('DOMContentLoaded', () => {
     .on('postgres_changes', { event: 'DELETE', table: 'symbols' }, payload => {
       setMapSyncing(true);
 
-      document.querySelector(`.symbol[data-id="${payload.old.id}"]`)?.remove();
+      // Pop OUT then remove (instead of immediate remove)
+      popOutSymbolById(payload.old.id);
 
       if (calculatorState) {
         renderSecondaryControls();
@@ -1191,7 +1388,11 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function loadCalculator() {
-    const { data } = await sb.from('calculator_state').select('*').limit(1).single();
+    const { data, error } = await sb.from('calculator_state').select('*').limit(1).single();
+    if (error) {
+      showToast('Load failed', 'Could not load calculator state. Try refreshing.');
+      return;
+    }
     if (!data) return;
 
     calculatorState = data;
@@ -1212,9 +1413,15 @@ document.addEventListener('DOMContentLoaded', () => {
   async function updateCalculatorState(updates) {
     setSyncing(true);
 
-    await sb.from('calculator_state')
+    const { error } = await sb.from('calculator_state')
       .update(updates)
       .eq('id', calculatorState.id);
+
+    if (error) {
+      setSyncing(false);
+      showToast('Sync failed', 'Could not save calculator changes. Try again.');
+      return;
+    }
 
     Object.assign(calculatorState, updates);
 
@@ -1781,8 +1988,3 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
-
-
-
-
-
