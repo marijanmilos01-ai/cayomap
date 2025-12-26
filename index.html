@@ -1657,14 +1657,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const hudLines = [];
 
     players.forEach(p => {
-      const cut = (parseFloat(p.cut) || 0) / 100;
+      const cutRaw = parseFloat(p.cut) || 0;
+      const cut = cutRaw / 100;
       const minTake = Math.floor(grandTotalMin * cut);
       const maxTake = Math.floor(grandTotalMax * cut);
 
       html += `${p.name}: $${minTake.toLocaleString()} - $${maxTake.toLocaleString()}<br>`;
 
+      /* ===========================
+         HUD: SHOW CUT % + TAKE
+         (INTEGRATED CHANGE)
+      ============================ */
+      const cutPct = Math.round(cutRaw * 10) / 10;
+
       hudLines.push({
-        label: `${p.name}:`,
+        label: `${p.name} (${cutPct}%):`,
         value: (minTake === maxTake)
           ? `$${minTake.toLocaleString()}`
           : `$${minTake.toLocaleString()} - $${maxTake.toLocaleString()}`
@@ -1703,6 +1710,3 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
-
-
-
