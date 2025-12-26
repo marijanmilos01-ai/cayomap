@@ -112,7 +112,7 @@ html, body {
   position: absolute;
   top: 0px;
   left: 0px;
-  width: 20vw;
+  width: 20vw; /* full width when opened */
   background: rgba(40,40,40,0.6);
   border-radius: 8px;
   overflow: hidden;
@@ -130,7 +130,7 @@ html, body {
 }
 
 #info-panel.collapsed {
-  width: 175px;
+  width: 175px; /* narrower width when collapsed */
   top: 30px;
   left: 30px;
 }
@@ -191,6 +191,55 @@ html, body {
   text-align: center;
 }
 
+/* ===== Collapsible Loot Tables ===== */
+.loot-section {
+  border-radius: 8px;
+  margin-bottom: 10px;
+  background: rgba(30,30,30,0.25);
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+}
+
+.loot-section-header {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding: 10px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  background: rgba(40,40,40,0.35);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.loot-section-header:hover {
+  background: rgba(30,30,30,0.45);
+}
+.loot-section-title {
+  opacity: 0.95;
+  font-weight: 600;
+}
+.loot-section-chevron {
+  opacity: 0.9;
+  transition: transform 0.25s ease;
+  transform: rotate(0deg);
+}
+.loot-section.collapsed .loot-section-chevron {
+  transform: rotate(-90deg);
+}
+
+.loot-section-body {
+  overflow: hidden;
+  max-height: 1200px;
+  opacity: 1;
+  padding: 8px 0 0 0;
+  transition: max-height 0.3s ease, opacity 0.25s ease, padding 0.3s ease;
+}
+.loot-section.collapsed .loot-section-body {
+  max-height: 0;
+  opacity: 0;
+  padding: 0;
+}
+
 /* ===== MISSION SCRIPT FONT ===== */
 @font-face {
   font-family: 'Mission Script';
@@ -202,7 +251,7 @@ html, body {
 /* ===== PRICEDOWN FONT ===== */
 @font-face {
   font-family: 'Pricedown';
-  src: url('Pricedown.ttf') format('truetype');
+  src: url('pricedown.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
 }
@@ -212,62 +261,6 @@ html, body {
 #info-header {
   font-family: 'Mission Script', cursive;
   font-size: 2em;
-}
-
-/* ===== COLLAPSIBLE LOOT SECTIONS ===== */
-.loot-section {
-  margin-bottom: 10px;
-  border-radius: 10px;
-  overflow: hidden;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(30,30,30,0.25);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.35);
-}
-
-.loot-section-header {
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
-  padding: 10px;
-  cursor:pointer;
-  background: rgba(40,40,40,0.55);
-  transition: background 0.2s ease, transform 0.2s ease;
-}
-.loot-section-header:hover {
-  background: rgba(30,30,30,0.7);
-}
-
-.loot-section-title {
-  font-family: 'Mission Script', cursive;
-  font-size: 1.4em;
-  line-height: 1;
-}
-
-.loot-section-chevron {
-  opacity: 0.85;
-  transition: transform 0.25s cubic-bezier(0.4,0,0.2,1), opacity 0.25s ease;
-}
-
-.loot-section-body {
-  overflow: hidden;
-  max-height: 800px;
-  opacity: 1;
-  transform: translateY(0);
-  transition: max-height 0.28s cubic-bezier(0.4,0,0.2,1),
-              opacity 0.22s ease,
-              transform 0.22s ease;
-}
-
-.loot-section.collapsed .loot-section-body {
-  max-height: 0;
-  opacity: 0;
-  transform: translateY(-4px);
-}
-
-.loot-section.collapsed .loot-section-chevron {
-  transform: rotate(-90deg);
-  opacity: 0.7;
 }
 
 /* ===== CALCULATOR STYLES ===== */
@@ -295,7 +288,7 @@ html, body {
   border-radius: 4px;
   padding: 2px 4px;
   margin-right: 6px;
-  margin-bottom: 6px;
+  margin-bottom: 6px; /* prevents overlap between stacked selector rows */
 }
 
 /* ===== CALCULATOR UI (minimal + modern) ===== */
@@ -388,118 +381,91 @@ html, body {
   100% { transform: scale(0.9); opacity: 0.35; }
 }
 
-/* ===== TOP-RIGHT HUD ===== */
-#take-hud {
+/* ===== Heads-up display (top-right) ===== */
+#hud {
   position: fixed;
   top: 18px;
   right: 18px;
-  z-index: 50;
-  padding: 12px 14px;
+  z-index: 40;
+  color: #fff;
+  background: rgba(40,40,40,0.45);
+  border: 1px solid rgba(255,255,255,0.14);
   border-radius: 12px;
-  background: rgba(20,20,20,0.45);
-  border: 1px solid rgba(255,255,255,0.12);
-  box-shadow: 0 10px 30px rgba(0,0,0,0.45);
-  backdrop-filter: blur(6px);
+  padding: 10px 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5), 0 0 10px rgba(30,30,30,0.35);
+  backdrop-filter: blur(4px);
   min-width: 280px;
-  pointer-events: none;
+  max-width: 380px;
 }
 
-#take-hud .hud-line {
+.hud-row {
   display:flex;
-  justify-content:space-between;
-  align-items:baseline;
-  gap: 12px;
-  margin: 4px 0;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 6px 0;
 }
-
-#take-hud .hud-label {
+.hud-label {
   font-family: 'Mission Script', cursive;
-  font-size: 1.25em;
+  font-size: 1.3em;
   opacity: 0.95;
   white-space: nowrap;
 }
-
-#take-hud .hud-value {
+.hud-value {
   font-family: 'Pricedown', sans-serif;
-  font-size: 1.45em;
+  font-size: 1.6em;
+  font-weight: bold;
   letter-spacing: 0.5px;
-  text-shadow: 0 2px 10px rgba(0,0,0,0.6);
   white-space: nowrap;
 }
-
-#take-hud .hud-sub {
-  margin-top: 6px;
-  padding-top: 6px;
-  border-top: 1px solid rgba(255,255,255,0.12);
+.hud-subvalue {
+  font-family: 'Pricedown', sans-serif;
+  font-size: 1.25em;
+  font-weight: bold;
+  letter-spacing: 0.4px;
+  white-space: nowrap;
   opacity: 0.95;
 }
+.hud-divider {
+  height: 1px;
+  background: rgba(255,255,255,0.12);
+  margin: 8px 0;
+}
 
-#take-hud .hud-bump {
+.hud-bump {
   animation: hudBump 0.25s ease;
 }
 @keyframes hudBump {
-  0%   { transform: scale(0.98); opacity: 0.85; }
-  60%  { transform: scale(1.06); opacity: 1; }
-  100% { transform: scale(1); }
-}
-
-/* ===== CLEAR LOOT BUTTON ===== */
-#clear-loot-btn {
-  position: fixed;
-  top: 16px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 60;
-  background: rgba(40,40,40,0.55);
-  color: #fff;
-  border: 1px solid rgba(255,255,255,0.22);
-  border-radius: 10px;
-  padding: 8px 14px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  backdrop-filter: blur(6px);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.45);
-  font-family: 'Mission Script', cursive;
-  font-size: 1.4em;
-}
-#clear-loot-btn:hover {
-  background: rgba(70,70,70,0.65);
-  box-shadow: 0 0 10px rgba(255,255,255,0.25);
-  transform: translateX(-50%) translateY(-2px);
-}
-#clear-loot-btn:active {
-  transform: translateX(-50%) translateY(0px);
+  0% { transform: scale(1); opacity: 0.9; }
+  50% { transform: scale(1.06); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
 }
 </style>
 </head>
 
 <body>
 
-<!-- Floating clear button -->
-<button id="clear-loot-btn">Clear Loot</button>
-
-<!-- Top-right HUD -->
-<div id="take-hud">
-  <div class="hud-line">
-    <div class="hud-label">Total Take:</div>
-    <div class="hud-value" id="hud-total">$0 - $0</div>
+<div id="hud">
+  <div class="hud-row">
+    <span class="hud-label">Total Take:</span>
+    <span class="hud-value" id="hud-total">$0</span>
   </div>
-  <div class="hud-sub" id="hud-players"></div>
+  <div class="hud-divider"></div>
+  <div id="hud-players"></div>
 </div>
 
 <div id="info-panel" class="collapsed">
   <div id="info-header">Loot Panel ▼</div>
   <div id="info-content">
 
-    <!-- Collapsible: Primary -->
-    <div class="loot-section" data-collapsible>
+    <div class="loot-section" data-section="primary">
       <div class="loot-section-header">
-        <span class="loot-section-title">Primary Loot Table</span>
-        <span class="loot-section-chevron">▼</span>
+        <div class="loot-section-title">Primary Loot Table</div>
+        <div class="loot-section-chevron">▼</div>
       </div>
       <div class="loot-section-body">
         <table class="loot-table">
-          <tr><th>Primary Loot</th><th>Normal</th><th>Hard</th><td>Rarity &lt;72H</td><td>Rarity &gt;72H</td></tr>
+          <tr><th>Primary Loot</th><th>Normal</th><th>Hard</th><td>Rarity <72H</td><td>Rarity >72H</td></tr>
           <tr><td>Tequila</td><td>$630k</td><td>$693k</td><td>47.6%</td><td>25%</td></tr>
           <tr><td>Ruby</td><td>$700k</td><td>$770k</td><td>19%</td><td>25%</td></tr>
           <tr><td>Bonds</td><td>$770k</td><td>$847k</td><td>28.6%</td><td>37.5%</td></tr>
@@ -509,11 +475,10 @@ html, body {
       </div>
     </div>
 
-    <!-- Collapsible: Secondary -->
-    <div class="loot-section" data-collapsible>
+    <div class="loot-section" data-section="secondary">
       <div class="loot-section-header">
-        <span class="loot-section-title">Secondary Loot Table</span>
-        <span class="loot-section-chevron">▼</span>
+        <div class="loot-section-title">Secondary Loot Table</div>
+        <div class="loot-section-chevron">▼</div>
       </div>
       <div class="loot-section-body">
         <table class="loot-table">
@@ -526,11 +491,10 @@ html, body {
       </div>
     </div>
 
-    <!-- Collapsible: Fees -->
-    <div class="loot-section" data-collapsible>
+    <div class="loot-section" data-section="fee">
       <div class="loot-section-header">
-        <span class="loot-section-title">Fee Table</span>
-        <span class="loot-section-chevron">▼</span>
+        <div class="loot-section-title">Fee Table</div>
+        <div class="loot-section-chevron">▼</div>
       </div>
       <div class="loot-section-body">
         <table class="loot-table">
@@ -615,12 +579,14 @@ document.addEventListener('DOMContentLoaded', () => {
   const notesContainer = document.getElementById('notes-container');
   const noteInput = document.getElementById('note-input');
 
+  const hudTotal = document.getElementById('hud-total');
+  const hudPlayers = document.getElementById('hud-players');
+
   let activeZone = null;
   let collapsed = false;
   const localInsertedSymbols = new Set();
   let calculatorState = null;
-
-  // Ensure derived UI updates after BOTH initial loads
+  // Ensure derived UI (bag % + Actual Take) updates after BOTH initial loads (symbols + calculator)
   let symbolsLoaded = false;
   let calculatorLoaded = false;
 
@@ -630,95 +596,21 @@ document.addEventListener('DOMContentLoaded', () => {
     renderLootResult();
   }
 
-  /* ================= COLLAPSIBLE TABLES ================= */
-  function initCollapsibles() {
-    document.querySelectorAll('[data-collapsible]').forEach(section => {
+  /* ================= Collapsible table sections ================= */
+  function initLootSections() {
+    document.querySelectorAll('.loot-section').forEach(section => {
       const header = section.querySelector('.loot-section-header');
-      if (!header) return;
+      const chevron = section.querySelector('.loot-section-chevron');
+      if (!header || !chevron) return;
+
       header.addEventListener('click', (e) => {
         e.stopPropagation();
         section.classList.toggle('collapsed');
+        chevron.textContent = '▼';
       });
     });
   }
-  initCollapsibles();
-
-  /* ================= HUD ================= */
-  const hudTotalEl = document.getElementById('hud-total');
-  const hudPlayersEl = document.getElementById('hud-players');
-  let lastHudSnapshot = { total: '', players: [] };
-
-  function bump(el) {
-    if (!el) return;
-    el.classList.remove('hud-bump');
-    void el.offsetWidth;
-    el.classList.add('hud-bump');
-  }
-
-  function fmtRange(min, max) {
-    return `$${Math.floor(min).toLocaleString()} - $${Math.floor(max).toLocaleString()}`;
-  }
-
-  function updateHud(grandTotalMin, grandTotalMax) {
-    const totalStr = fmtRange(grandTotalMin, grandTotalMax);
-
-    if (hudTotalEl && totalStr !== lastHudSnapshot.total) {
-      hudTotalEl.textContent = totalStr;
-      bump(hudTotalEl);
-      lastHudSnapshot.total = totalStr;
-    }
-
-    const players = calculatorState?.players || [];
-    const lines = players.map((p, idx) => {
-      const name = (p.name ?? `Player ${idx+1}`).trim() || `Player ${idx+1}`;
-      const cut = (parseFloat(p.cut) || 0) / 100;
-      const pMin = grandTotalMin * cut;
-      const pMax = grandTotalMax * cut;
-      return { label: `${name}:`, value: fmtRange(pMin, pMax) };
-    });
-
-    if (hudPlayersEl) {
-      hudPlayersEl.innerHTML = lines.map((l, i) => `
-        <div class="hud-line">
-          <div class="hud-label">${l.label}</div>
-          <div class="hud-value" data-hud-player="${i}">${l.value}</div>
-        </div>
-      `).join('');
-
-      lines.forEach((l, i) => {
-        const prev = lastHudSnapshot.players[i];
-        if (!prev || prev.value !== l.value || prev.label !== l.label) {
-          const el = hudPlayersEl.querySelector(\`[data-hud-player="\${i}"]\`);
-          bump(el);
-        }
-      });
-
-      lastHudSnapshot.players = lines;
-    }
-  }
-
-  /* ================= CLEAR ALL SYMBOLS ================= */
-  const clearLootBtn = document.getElementById('clear-loot-btn');
-
-  clearLootBtn.addEventListener('click', async (e) => {
-    e.stopPropagation();
-    setMapSyncing(true);
-
-    const { data: rows, error: selErr } = await sb.from('symbols').select('id');
-    if (selErr) {
-      setMapSyncing(false);
-      return;
-    }
-
-    const ids = (rows || []).map(r => r.id).filter(Boolean);
-    if (ids.length === 0) {
-      setMapSyncing(false);
-      return;
-    }
-
-    await sb.from('symbols').delete().in('id', ids);
-    setMapSyncing(false);
-  });
+  initLootSections();
 
   /* ================= NOTES LOGIC ================= */
   noteInput.addEventListener('keydown', async e => {
@@ -729,7 +621,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   function addNote(n) {
-    if (notesContainer.querySelector(\`[data-id="\${n.id}"]\`)) return;
+    if (notesContainer.querySelector(`[data-id="${n.id}"]`)) return;
     const div = document.createElement('div');
     div.textContent = n.content;
     div.dataset.id = n.id;
@@ -747,7 +639,7 @@ document.addEventListener('DOMContentLoaded', () => {
   sb.channel('notes')
     .on('postgres_changes', { event: 'INSERT', table: 'notes' }, payload => addNote(payload.new))
     .on('postgres_changes', { event: 'DELETE', table: 'notes' }, payload => {
-      notesContainer.querySelector(\`[data-id="\${payload.old.id}"]\`)?.remove();
+      notesContainer.querySelector(`[data-id="${payload.old.id}"]`)?.remove();
     })
     .subscribe();
 
@@ -787,7 +679,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   function renderSymbol(zone, type, id) {
-    if (zone.querySelector(\`.symbol[data-id="\${id}"]\`)) return;
+    if (zone.querySelector(`.symbol[data-id="${id}"]`)) return;
     const idx = zone.querySelectorAll('.symbol').length;
     if (idx >= 6) return;
 
@@ -797,15 +689,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const row = idx < 3 ? 0 : 1;
     const col = idx % 3;
-    symbol.style.top = \`\${row * 50 + 2}%\`;
-    symbol.style.left = \`\${col * 33 + 1}%\`;
+    symbol.style.top = `${row * 50 + 2}%`;
+    symbol.style.left = `${col * 33 + 1}%`;
 
     const icons = {
       Gold: 'https://www.svgrepo.com/show/323883/gold-bar.svg',
       Cash: 'https://www.svgrepo.com/show/59549/dollar-coin-symbol.svg',
       Painting: 'https://www.svgrepo.com/show/535548/painting.svg'
     };
-    symbol.innerHTML = \`<img src="\${icons[type]}" width="100%" height="100%">\`;
+    symbol.innerHTML = `<img src="${icons[type]}" width="100%" height="100%">`;
 
     symbol.onclick = async e => {
       e.stopPropagation();
@@ -835,7 +727,7 @@ document.addEventListener('DOMContentLoaded', () => {
   async function loadSymbols() {
     const { data } = await sb.from('symbols').select('*');
     data?.forEach(s => {
-      const zone = document.querySelector(\`.zone[data-name="\${s.region}"]\`);
+      const zone = document.querySelector(`.zone[data-name="${s.region}"]`);
       if (zone) renderSymbol(zone, s.symbol, s.id);
     });
 
@@ -884,7 +776,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setMapSyncing(false);
         return;
       }
-      const zone = document.querySelector(\`.zone[data-name="\${payload.new.region}"]\`);
+      const zone = document.querySelector(`.zone[data-name="${payload.new.region}"]`);
       if (zone) renderSymbol(zone, payload.new.symbol, payload.new.id);
 
       if (calculatorState) {
@@ -897,7 +789,7 @@ document.addEventListener('DOMContentLoaded', () => {
     .on('postgres_changes', { event: 'DELETE', table: 'symbols' }, payload => {
       setMapSyncing(true);
 
-      document.querySelector(\`.symbol[data-id="\${payload.old.id}"]\`)?.remove();
+      document.querySelector(`.symbol[data-id="${payload.old.id}"]`)?.remove();
 
       if (calculatorState) {
         renderSecondaryControls();
@@ -919,6 +811,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const bagStatusDiv = document.getElementById('bag-status');
 
   // Deterministic bag math in "bag units" (1 unit = 0.1%)
+  // capacity is dynamic: 1 player=100% (1000 units), 2=200% (2000), 3=300% (3000)
   const BAG_PER_STACK_UNITS = { Cash: 250, Painting: 500, Gold: 667 };
 
   // always included, doesn't use bag space
@@ -936,19 +829,13 @@ document.addEventListener('DOMContentLoaded', () => {
     Gold:[328000,333000]
   };
 
-  function getPlayerCountForBags() {
-    const n = (calculatorState?.players?.length || 0);
-    return Math.max(1, Math.min(3, n));
+  function getPlayerCountForBag() {
+    const n = (calculatorState?.players || []).length;
+    return Math.max(1, n);
   }
 
   function getBagCapacityUnits() {
-    // 100% => 1000 units
-    return getPlayerCountForBags() * 1000;
-  }
-
-  function getEliteBonusPerPlayer(difficulty) {
-    // Normal: 50k * players, Hard: 100k * players
-    return difficulty === 'hard' ? 100000 : 50000;
+    return getPlayerCountForBag() * 1000;
   }
 
   async function loadCalculator() {
@@ -1060,7 +947,6 @@ document.addEventListener('DOMContentLoaded', () => {
         enforceCutLimit();
         await updateCalculatorState({players: calculatorState.players});
         renderPlayers();
-        renderSecondaryControls(); // capacity depends on players
         renderLootResult();
       };
 
@@ -1068,6 +954,7 @@ document.addEventListener('DOMContentLoaded', () => {
       playerCutsDiv.appendChild(addRow);
     }
 
+    // Player name: Enter/blur to sync
     playerCutsDiv.querySelectorAll('.player-name').forEach(inp => {
       inp.addEventListener('keydown', async e => {
         e.stopPropagation();
@@ -1081,6 +968,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
 
+    // Player cut: Enter/blur to sync (no steppers)
     playerCutsDiv.querySelectorAll('.player-cut').forEach(inp => {
       inp.addEventListener('keydown', async e => {
         e.stopPropagation();
@@ -1094,6 +982,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
 
+    // Remove player: immediate sync
     playerCutsDiv.querySelectorAll('.remove-player').forEach(btn => {
       btn.addEventListener('click', async e => {
         e.stopPropagation();
@@ -1102,7 +991,6 @@ document.addEventListener('DOMContentLoaded', () => {
         enforceCutLimit();
         await updateCalculatorState({players: calculatorState.players});
         renderPlayers();
-        renderSecondaryControls(); // capacity depends on players
         renderLootResult();
       });
     });
@@ -1159,15 +1047,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function enforceBagCapacity(changedType) {
     const take = calculatorState.secondary_take || { Cash:0, Painting:0, Gold:0 };
+    const BAG_CAPACITY_UNITS = getBagCapacityUnits();
 
     let usedUnits = computeBagUsedUnits(take);
-    const capUnits = getBagCapacityUnits();
-    if (usedUnits <= capUnits) return;
+    if (usedUnits <= BAG_CAPACITY_UNITS) return;
 
     const perUnits = BAG_PER_STACK_UNITS[changedType];
     if (!perUnits) return;
 
-    const excessUnits = usedUnits - capUnits;
+    const excessUnits = usedUnits - BAG_CAPACITY_UNITS;
     let reduceBy = excessUnits / perUnits;
 
     let cur = parseFloat(take[changedType]) || 0;
@@ -1176,7 +1064,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (changedType === 'Painting') {
       next = Math.floor(next);
     } else {
-      next = Math.max(0, Math.round(next * 10) / 10);
+      next = Math.max(0, Math.round(next * 10) / 10); // 0.1 precision
     }
 
     take[changedType] = Math.max(0, next);
@@ -1191,11 +1079,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const available = getSymbolCounts();
     const take = calculatorState.secondary_take || { Cash:0, Painting:0, Gold:0 };
 
-    const capPct = (getBagCapacityUnits() / 10).toFixed(0);
-
     secondaryLootDiv.innerHTML = `
       <div class="calc-title">Secondary Loot (select what you take)</div>
-      <div class="calc-meta" style="margin:4px 0 8px 0;">Bag capacity: <strong>${capPct}%</strong> (based on players)</div>
 
       <div class="calc-row">
         <span class="calc-meta">Cash</span>
@@ -1263,6 +1148,7 @@ document.addEventListener('DOMContentLoaded', () => {
       renderLootResult();
     }
 
+    // Cash: Enter/blur to sync
     cashInp.addEventListener('keydown', async e => {
       e.stopPropagation();
       if (e.key !== 'Enter') return;
@@ -1276,6 +1162,7 @@ document.addEventListener('DOMContentLoaded', () => {
       await syncSecondaryTakeAndRefresh();
     });
 
+    // Gold: Enter/blur to sync
     goldInp.addEventListener('keydown', async e => {
       e.stopPropagation();
       if (e.key !== 'Enter') return;
@@ -1289,6 +1176,7 @@ document.addEventListener('DOMContentLoaded', () => {
       await syncSecondaryTakeAndRefresh();
     });
 
+    // Paintings: Enter/blur to sync (whole numbers)
     paintInp.addEventListener('keydown', async e => {
       e.stopPropagation();
       if (e.key !== 'Enter') return;
@@ -1303,20 +1191,48 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  function bumpIfChanged(el, nextText) {
+    if (!el) return;
+    if (el.textContent !== nextText) {
+      el.textContent = nextText;
+      el.classList.remove('hud-bump');
+      void el.offsetWidth;
+      el.classList.add('hud-bump');
+    }
+  }
+
+  function updateHud(grandTotalMin, grandTotalMax, playerLines) {
+    const totalText = (grandTotalMin === grandTotalMax)
+      ? `$${Math.floor(grandTotalMin).toLocaleString()}`
+      : `$${Math.floor(grandTotalMin).toLocaleString()} - $${Math.floor(grandTotalMax).toLocaleString()}`;
+
+    bumpIfChanged(hudTotal, totalText);
+
+    hudPlayers.innerHTML = '';
+    (playerLines || []).forEach(line => {
+      const row = document.createElement('div');
+      row.className = 'hud-row';
+      row.innerHTML = `
+        <span class="hud-label">${line.label}</span>
+        <span class="hud-subvalue">${line.value}</span>
+      `;
+      hudPlayers.appendChild(row);
+    });
+  }
+
   function renderLootResult() {
     if (!calculatorState) return;
 
     const take = calculatorState.secondary_take || { Cash:0, Painting:0, Gold:0 };
 
+    const BAG_CAPACITY_UNITS = getBagCapacityUnits();
+    const capPct = BAG_CAPACITY_UNITS / 10;
+
     const usedUnits = computeBagUsedUnits(take);
     const usedPct = usedUnits / 10;
-
-    const capUnits = getBagCapacityUnits();
-    const capPct = capUnits / 10;
-
-    const leftUnits = Math.max(0, capUnits - usedUnits);
+    const leftUnits = Math.max(0, BAG_CAPACITY_UNITS - usedUnits);
     const leftPct = leftUnits / 10;
-    const bagsFull = usedUnits >= capUnits;
+    const bagsFull = usedUnits >= BAG_CAPACITY_UNITS;
 
     bagStatusDiv.innerHTML = bagsFull
       ? `<strong>BAGS FULL</strong> — ${Math.min(capPct, usedPct).toFixed(1)}% / ${capPct.toFixed(0)}%`
@@ -1337,37 +1253,44 @@ document.addEventListener('DOMContentLoaded', () => {
       totalSecondaryMax += qty * range[1];
     });
 
-    const playerCount = getPlayerCountForBags();
+    const players = calculatorState.players || [];
+    const playerCount = players.length;
+
+    // Elite challenge (fixed add, depends on difficulty & player count)
+    const elitePerPlayer = (difficulty === 'hard') ? 100000 : 50000;
+    const eliteTotal = elitePerPlayer * playerCount;
 
     // Wall safe always included, no bag usage
-    // Elite challenge included: Normal 50k/player, Hard 100k/player
-    const elitePerPlayer = getEliteBonusPerPlayer(difficulty);
-    const eliteBonus = elitePerPlayer * playerCount;
-
-    let totalMin = primaryValue + totalSecondaryMin + WALL_SAFE_MIN + eliteBonus;
-    let totalMax = primaryValue + totalSecondaryMax + WALL_SAFE_MAX + eliteBonus;
+    let totalMin = primaryValue + totalSecondaryMin + WALL_SAFE_MIN + eliteTotal;
+    let totalMax = primaryValue + totalSecondaryMax + WALL_SAFE_MAX + eliteTotal;
 
     // Fees (12% total)
     let grandTotalMin = totalMin * 0.88;
     let grandTotalMax = totalMax * 0.88;
 
-    const players = calculatorState.players || [];
     let html = `<strong>Actual Take:</strong><br>`;
     html += `<span style="opacity:0.8;">(includes Wall Safe: $${WALL_SAFE_MIN.toLocaleString()}–$${WALL_SAFE_MAX.toLocaleString()})</span><br>`;
-    html += `<span style="opacity:0.8;">(includes Elite Challenge: $${eliteBonus.toLocaleString()} — ${difficulty === 'hard' ? '$100k' : '$50k'} × ${playerCount} player(s))</span><br>`;
+    html += `<span style="opacity:0.8;">(includes Elite Challenge: $${eliteTotal.toLocaleString()})</span><br>`;
 
-    players.forEach((p, idx) => {
+    const hudLines = [];
+
+    players.forEach(p => {
       const cut = (parseFloat(p.cut) || 0) / 100;
       const minTake = Math.floor(grandTotalMin * cut);
       const maxTake = Math.floor(grandTotalMax * cut);
-      const name = (p.name ?? `Player ${idx+1}`).trim() || `Player ${idx+1}`;
-      html += `${name}: $${minTake.toLocaleString()} - $${maxTake.toLocaleString()}<br>`;
+
+      html += `${p.name}: $${minTake.toLocaleString()} - $${maxTake.toLocaleString()}<br>`;
+
+      hudLines.push({
+        label: `${p.name}:`,
+        value: (minTake === maxTake)
+          ? `$${minTake.toLocaleString()}`
+          : `$${minTake.toLocaleString()} - $${maxTake.toLocaleString()}`
+      });
     });
 
     lootResultDiv.innerHTML = html;
-
-    // HUD sync
-    updateHud(grandTotalMin, grandTotalMax);
+    updateHud(grandTotalMin, grandTotalMax, hudLines);
   }
 
   // REALTIME: apply updates from other devices
@@ -1388,11 +1311,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!isCalculatorEditing()) {
         renderPlayers();
         renderSecondaryControls();
-      } else {
-        // even if editing, bag cap changed by players should still reflect when state updates
-        renderSecondaryControls();
       }
-
       renderLootResult();
     })
     .subscribe();
