@@ -1411,9 +1411,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const secondaryLootDiv = document.getElementById('secondary-loot');
   const bagStatusDiv = document.getElementById('bag-status');
 
-  // Deterministic bag math in "bag units" (1 unit = 0.1%)
-  // capacity is dynamic: 1 player=100% (1000 units), 2=200% (2000), 3=300% (3000)
-  const BAG_PER_STACK_UNITS = { Cash: 250, Painting: 500, Gold: 667 };
+  // Deterministic bag math in "bag units"
+  // 1 bag = 3000 units (each unit = 1/30%)
+  // This represents 2/3 exactly: Gold stack = 2000 units.
+  const BAG_UNITS_PER_BAG = 3000;
+  const BAG_PER_STACK_UNITS = { Cash: 750, Painting: 1500, Gold: 2000 };
 
   // always included, doesn't use bag space
   const WALL_SAFE_MIN = 20000;
@@ -1436,8 +1438,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function getBagCapacityUnits() {
-    return getPlayerCountForBag() * 1000;
-  }
+    return getPlayerCountForBag() * BAG_UNITS_PER_BAG;
+}
 
   async function loadCalculator() {
     const { data, error } = await sb.from('calculator_state').select('*').limit(1).maybeSingle();
@@ -1647,17 +1649,18 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function computeBagUsedUnits(take) {
-    const cash = (parseFloat(take.Cash) || 0);
-    const gold = (parseFloat(take.Gold) || 0);
-    const painting = (parseFloat(take.Painting) || 0);
+    const cashT = Math.round((parseFloat(take.Cash) || 0) * 10);   // tenths
+    const goldT = Math.round((parseFloat(take.Gold) || 0) * 10);   // tenths
+    const painting = Math.floor(parseFloat(take.Painting) || 0);   // whole
 
-    const used =
-      Math.round(cash * BAG_PER_STACK_UNITS.Cash) +
-      Math.round(gold * BAG_PER_STACK_UNITS.Gold) +
-      Math.round(painting * BAG_PER_STACK_UNITS.Painting);
+  // Use integer math only
+  const used =
+    cashT * (BAG_PER_STACK_UNITS.Cash / 10) +
+    goldT * (BAG_PER_STACK_UNITS.Gold / 10) +
+    painting * BAG_PER_STACK_UNITS.Painting;
 
-    return Math.max(0, used);
-  }
+  return Math.max(0, Math.round(used));
+}
 
   function enforceBagCapacity(changedType) {
     const take = calculatorState.secondary_take || { Cash:0, Painting:0, Gold:0 };
@@ -1769,8 +1772,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const take = calculatorState.secondary_take || { Cash:0, Painting:0, Gold:0 };
 
     const suggested = computeSuggestedSecondaryTake();
-    const suggestedUsedPct = computeBagUsedUnits(suggested) / 10;
-    const capPct = getBagCapacityUnits() / 10;
+    const suggestedUsedPct = computeBagUsedUnits(suggested) / 30;
+    const capPct = getBagCapacityUnits() / 30;
 
     secondaryLootDiv.innerHTML = `
       <div class="calc-title">Secondary Loot (select what you take)</div>
@@ -1799,7 +1802,7 @@ document.addEventListener('DOMContentLoaded', () => {
       <div class="calc-row">
         <span class="calc-meta">Gold</span>
         <span class="calc-meta">available: ${available.Gold}</span>
-        <span class="calc-meta">bag: ${(BAG_PER_STACK_UNITS.Gold/10).toFixed(1)}%</span>
+        <span class="calc-meta">bag: ${(BAG_PER_STACK_UNITS.Gold/30).toFixed(1)}%</span>
         <input id="take-gold" class="calc-input" type="text" inputmode="decimal" autocomplete="off" spellcheck="false"
                value="${take.Gold}" style="width:90px;">
         <span class="calc-meta">(Enter to sync)</span>
@@ -2057,12 +2060,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const take = calculatorState.secondary_take || { Cash:0, Painting:0, Gold:0 };
 
     const BAG_CAPACITY_UNITS = getBagCapacityUnits();
-    const capPct = BAG_CAPACITY_UNITS / 10;
+    const capPct = BAG_CAPACITY_UNITS / 30;
 
     const usedUnits = computeBagUsedUnits(take);
-    const usedPct = usedUnits / 10;
+    const usedPct = usedUnits / 30;
     const leftUnits = Math.max(0, BAG_CAPACITY_UNITS - usedUnits);
-    const leftPct = leftUnits / 10;
+    const leftPct = leftUnits / 30;
     const bagsFull = usedUnits >= BAG_CAPACITY_UNITS;
 
     bagStatusDiv.innerHTML = bagsFull
@@ -2154,5 +2157,6 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
+
 
 
