@@ -77,6 +77,12 @@ html, body {
   --symbol-pop-out-duration: 140ms;
   --symbol-pop-ease: cubic-bezier(.2, .9, .2, 1.15);
   --symbol-pop-out-ease: cubic-bezier(.4, 0, .2, 1);
+
+  /* ===============================
+     HUD ODOMETER ROLL TUNING (ADDED)
+  ================================ */
+  --hud-roll-duration: 360ms;
+  --hud-roll-ease: cubic-bezier(.22,.9,.2,1);
 }
 
 /* Apply custom cursor to interactive elements */
@@ -565,7 +571,6 @@ input, select, textarea {
   text-shadow: 0 0 10px var(--hud-value-shadow-color);
   white-space: nowrap;
 
-  /* FIX: bump scales from the right edge, not center */
   display: inline-block;
   transform-origin: 100% 50%;
 }
@@ -579,20 +584,60 @@ input, select, textarea {
   text-shadow: 0 0 10px var(--hud-value-shadow-color);
   white-space: nowrap;
 
-  /* FIX: bump scales from the right edge, not center */
   display: inline-block;
   transform-origin: 100% 50%;
 }
 
-/* Animation when values change */
-.hud-bump {
-  animation: hudBump 0.25s ease;
+/* =========================================================
+   ADDED: Odometer / rolling digit HUD animation
+   - replaces the old "bump/zoom" effect
+========================================================= */
+.roll-number {
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  white-space: nowrap;
 }
 
-@keyframes hudBump {
-  0%   { transform: scale(1); opacity: 0.85; }
-  50%  { transform: scale(1.08); opacity: 1; }
-  100% { transform: scale(1); opacity: 1; }
+.roll-char {
+  display: inline-block;
+}
+
+.roll-digit {
+  display: inline-block;
+  position: relative;
+  overflow: hidden;
+  height: 1em;          /* clips one digit line */
+  line-height: 1em;
+  width: 0.62em;        /* good for Pricedown-ish digits */
+  vertical-align: baseline;
+}
+
+.roll-digit-inner {
+  display: block;
+  will-change: transform;
+  transform: translateY(0);
+  transition: transform var(--hud-roll-duration) var(--hud-roll-ease);
+}
+
+.roll-digit-inner > span {
+  display: block;
+  height: 1em;
+  line-height: 1em;
+  text-align: center;
+}
+
+/* Non-digit chars keep spacing predictable */
+.roll-static {
+  display: inline-block;
+  vertical-align: baseline;
+}
+
+/* If user prefers reduced motion, no rolling */
+@media (prefers-reduced-motion: reduce) {
+  .roll-digit-inner {
+    transition: none !important;
+  }
 }
 
 /* =========================================================
@@ -1856,14 +1901,120 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  function bumpIfChanged(el, nextText) {
-    if (!el) return;
-    if (el.textContent !== nextText) {
-      el.textContent = nextText;
-      el.classList.remove('hud-bump');
-      void el.offsetWidth;
-      el.classList.add('hud-bump');
+  /* =========================================================
+     ADDED: HUD odometer/rolling number renderer
+     - rolls digits up/down like a car odometer
+  ========================================================= */
+  const hudPrevTextByKey = new Map(); // key -> previous full text
+
+  function prefersReducedMotion() {
+    return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  }
+
+  function extractComparableNumber(str) {
+    // Use the FIRST numeric chunk in the string as a direction hint (good enough for "$min - $max")
+    // returns null if none
+    const m = String(str ?? '').match(/-?\d[\d,]*/);
+    if (!m) return null;
+    const n = parseInt(m[0].replace(/,/g, ''), 10);
+    return Number.isFinite(n) ? n : null;
+  }
+
+  function buildRollDigitColumn() {
+    // 0..9
+    const inner = document.createElement('span');
+    inner.className = 'roll-digit-inner';
+    for (let i = 0; i <= 9; i++) {
+      const d = document.createElement('span');
+      d.textContent = String(i);
+      inner.appendChild(d);
     }
+    return inner;
+  }
+
+  function setRollDigit(innerEl, digit, immediate) {
+    const d = Math.max(0, Math.min(9, parseInt(digit, 10) || 0));
+    if (immediate) {
+      innerEl.style.transition = 'none';
+      innerEl.style.transform = `translateY(${-d}em)`;
+      // force reflow then restore transition so future updates animate
+      void innerEl.offsetHeight;
+      innerEl.style.transition = '';
+    } else {
+      innerEl.style.transform = `translateY(${-d}em)`;
+    }
+  }
+
+  function renderRollingText(el, nextText, key) {
+    if (!el) return;
+
+    const next = String(nextText ?? '');
+    const prev = hudPrevTextByKey.get(key) ?? el.textContent ?? '';
+
+    // Reduced motion: just set text
+    if (prefersReducedMotion()) {
+      el.textContent = next;
+      hudPrevTextByKey.set(key, next);
+      return;
+    }
+
+    // Direction hint (up for increase, down for decrease)
+    const prevNum = extractComparableNumber(prev);
+    const nextNum = extractComparableNumber(next);
+    const rollUp = (prevNum != null && nextNum != null) ? (nextNum >= prevNum) : true;
+
+    // Build new structure (simple + robust)
+    el.innerHTML = '';
+    const wrap = document.createElement('span');
+    wrap.className = 'roll-number';
+    el.appendChild(wrap);
+
+    // Pad digits so columns stay aligned between prev/next (only for digit chars)
+    // We'll align by position in the string itself (including commas/$), so no complex padding.
+    const maxLen = Math.max(prev.length, next.length);
+    const prevP = prev.padStart(maxLen, ' ');
+    const nextP = next.padStart(maxLen, ' ');
+
+    for (let i = 0; i < maxLen; i++) {
+      const pc = prevP[i];
+      const nc = nextP[i];
+
+      const isDigit = (c) => c >= '0' && c <= '9';
+
+      if (isDigit(nc)) {
+        const digitBox = document.createElement('span');
+        digitBox.className = 'roll-digit';
+
+        const inner = buildRollDigitColumn();
+        digitBox.appendChild(inner);
+        wrap.appendChild(digitBox);
+
+        // Start at prev digit (or 0 if none), then animate to next digit.
+        const startDigit = isDigit(pc) ? pc : '0';
+        setRollDigit(inner, startDigit, true);
+
+        // Ensure the browser has painted the start position before animating.
+        requestAnimationFrame(() => {
+          // If direction is down and digits decrease, it will visually roll down
+          // because we move the column "up" less (towards 0). For a stronger
+          // "always roll direction", we can fake it, but this keeps it clean.
+          setRollDigit(inner, nc, false);
+
+          // If you want strictly "up on increase / down on decrease" even when a digit goes 9->0 etc,
+          // we can do wraparound columns — but this is the simple odometer feel.
+          void rollUp; // kept for future tweak; currently not forcing wraparound.
+        });
+      } else {
+        const s = document.createElement('span');
+        s.className = 'roll-static';
+        // keep spacing for padded leading spaces
+        s.textContent = (nc === ' ') ? '\u00A0' : nc;
+        wrap.appendChild(s);
+      }
+    }
+
+    // Remember the actual (un-padded) next string
+    hudPrevTextByKey.set(key, next);
   }
 
   function updateHud(grandTotalMin, grandTotalMax, playerLines) {
@@ -1871,17 +2022,22 @@ document.addEventListener('DOMContentLoaded', () => {
       ? `$${Math.floor(grandTotalMin).toLocaleString()}`
       : `$${Math.floor(grandTotalMin).toLocaleString()} - $${Math.floor(grandTotalMax).toLocaleString()}`;
 
-    bumpIfChanged(hudTotal, totalText);
+    renderRollingText(hudTotal, totalText, 'hud-total');
 
     hudPlayers.innerHTML = '';
-    (playerLines || []).forEach(line => {
+    (playerLines || []).forEach((line, idx) => {
       const row = document.createElement('div');
       row.className = 'hud-row';
       row.innerHTML = `
         <span class="hud-label">${line.label}</span>
-        <span class="hud-subvalue">${line.value}</span>
+        <span class="hud-subvalue"></span>
       `;
+      const valEl = row.querySelector('.hud-subvalue');
       hudPlayers.appendChild(row);
+
+      // Key by label so it persists even when rows are recreated
+      const key = `player:${line.label}`;
+      renderRollingText(valEl, line.value, key);
     });
   }
 
