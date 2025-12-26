@@ -620,6 +620,13 @@ input, select, textarea {
   transition: transform var(--hud-roll-duration) var(--hud-roll-ease);
 }
 
+.roll-digit,
+.roll-static {
+  text-shadow:
+    0 0 2px rgba(0,0,0,0.9),
+    0 0 4px rgba(0,0,0,0.6);
+}
+
 .roll-digit-inner > span {
   display: block;
   height: 1em;
@@ -2144,3 +2151,4 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
+
