@@ -29,9 +29,9 @@ html, body {
   --hud-value-shadow-color: rgba(0, 0, 0, 0.90);
 
   /* Optional HUD panel (kept invisible by default) */
-  --hud-bg: rgba(0, 0, 0, 0);             /* set alpha > 0 to show panel */
-  --hud-border: rgba(255, 255, 255, 0);   /* set alpha > 0 to show border */
-  --hud-panel-shadow: rgba(0, 0, 0, 0);   /* set alpha > 0 to show box shadow */
+  --hud-bg: rgba(0, 0, 0, 0);
+  --hud-border: rgba(255, 255, 255, 0);
+  --hud-panel-shadow: rgba(0, 0, 0, 0);
 
   /* ===============================
      RESPONSIVE UI SCALE (ADDED)
@@ -98,11 +98,12 @@ html, body {
   background: rgba(40,40,40,0.6);
   color:#fff;
   padding:10px;
+  border: 1px solid rgba(40, 40, 40, 0.6);
   border-radius:10px;
   display:none;
   z-index:10;
   min-width:140px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.5), 0 0 10px rgba(30,30,30,0.5);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.8), 0 0 20px rgba(30,30,30,0.7);
   transform-origin: top center;
   transition: transform 0.25s cubic-bezier(0.4,0,0.2,1), opacity 0.25s ease;
   transform: scale(0.9);
@@ -1702,5 +1703,6 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
+
 
 
