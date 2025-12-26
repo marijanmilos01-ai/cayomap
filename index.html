@@ -1793,7 +1793,7 @@ document.addEventListener('DOMContentLoaded', () => {
       <div class="calc-row">
         <span class="calc-meta">Cash</span>
         <span class="calc-meta">available: ${available.Cash}</span>
-        <span class="calc-meta">bag: ${(BAG_PER_STACK_UNITS.Cash/10).toFixed(1)}%</span>
+        <span class="calc-meta">bag: ${(BAG_PER_STACK_UNITS.Cash/30).toFixed(1)}%</span>
         <input id="take-cash" class="calc-input" type="text" inputmode="decimal" autocomplete="off" spellcheck="false"
                value="${take.Cash}" style="width:90px;">
         <span class="calc-meta">(Enter to sync)</span>
@@ -1811,7 +1811,7 @@ document.addEventListener('DOMContentLoaded', () => {
       <div class="calc-row">
         <span class="calc-meta">Paintings</span>
         <span class="calc-meta">available: ${available.Painting}</span>
-        <span class="calc-meta">bag: ${(BAG_PER_STACK_UNITS.Painting/10).toFixed(0)}%</span>
+        <span class="calc-meta">bag: ${(BAG_PER_STACK_UNITS.Painting/30).toFixed(0)}%</span>
         <input id="take-painting" class="calc-input" type="text" inputmode="numeric" autocomplete="off" spellcheck="false"
                value="${Math.floor(take.Painting||0)}" style="width:90px;">
         <span class="calc-meta">(Enter to sync)</span>
@@ -2157,6 +2157,7 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
+
 
 
 
