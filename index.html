@@ -1374,7 +1374,7 @@ sb.channel('symbols')
     if (localInsertedSymbols.has(payload.new.id)) {
       localInsertedSymbols.delete(payload.new.id);
 
-      // ✅ FIX: update calculator immediately for local inserts
+      // update calculator immediately for local inserts
       if (calculatorState) {
         renderSecondaryControls();
         renderLootResult();
@@ -1397,7 +1397,6 @@ sb.channel('symbols')
   .on('postgres_changes', { event: 'DELETE', table: 'symbols' }, payload => {
     setMapSyncing(true);
 
-    // Pop OUT then remove
     popOutSymbolById(payload.old.id);
 
     if (calculatorState) {
@@ -2177,6 +2176,7 @@ sb.channel('symbols')
 </script>
 </body>
 </html>
+
 
 
 
