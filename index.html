@@ -14,11 +14,15 @@ html, body {
   background:#111;
 }
 
-/* ===============================
-   HUD COLOR CONTROLS (EDIT HERE)
-   (all RGBA)
-================================ */
-:root {
+/* ===== Custom cursor (middle finger) for interactive elements ===== */
+:root{
+  /* hotspot: 12 2 = where the “click point” is on the SVG (tweak if needed) */
+  --hover-cursor: url("https://www.svgrepo.com/show/314118/hand-middle-finger-solid.svg") 12 2, pointer;
+
+  /* ===============================
+     HUD COLOR CONTROLS (EDIT HERE)
+     (all RGBA)
+  ================================ */
   /* Text colors */
   --hud-label-color: rgba(255, 255, 255, 0.95);
   --hud-value-color: rgba(179, 233, 183, 1);
@@ -48,6 +52,17 @@ html, body {
   /* Loot panel width scaling */
   --panel-width-open: clamp(260px, 22vw, 460px);
   --panel-width-collapsed: clamp(160px, 14vw, 240px);
+}
+
+/* Apply custom cursor to interactive elements */
+a, button, [role="button"],
+.zone, .symbol,
+#panel button,
+#info-header,
+.loot-section-header,
+#fs-btn,
+input, select, textarea {
+  cursor: var(--hover-cursor);
 }
 
 #map-container {
@@ -1710,4 +1725,3 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
-
