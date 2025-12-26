@@ -1367,27 +1367,47 @@ document.addEventListener('DOMContentLoaded', () => {
     return !!el.closest('#calculator') && (el.tagName === 'INPUT' || el.tagName === 'SELECT' || el.isContentEditable);
   }
 
-  sb.channel('symbols')
-    .on('postgres_changes', { event: 'INSERT', table: 'symbols' }, payload => {
-      setMapSyncing(true);
+sb.channel('symbols')
+  .on('postgres_changes', { event: 'INSERT', table: 'symbols' }, payload => {
+    setMapSyncing(true);
 
-      if (localInsertedSymbols.has(payload.new.id)) {
-        localInsertedSymbols.delete(payload.new.id);
-        setMapSyncing(false);
-        return;
-      }
-      const zone = document.querySelector(`.zone[data-name="${payload.new.region}"]`);
-      if (zone) renderSymbol(zone, payload.new.symbol, payload.new.id);
+    if (localInsertedSymbols.has(payload.new.id)) {
+      localInsertedSymbols.delete(payload.new.id);
 
+      // ✅ FIX: update calculator immediately for local inserts
       if (calculatorState) {
         renderSecondaryControls();
         renderLootResult();
       }
 
       setMapSyncing(false);
-    })
-    .on('postgres_changes', { event: 'DELETE', table: 'symbols' }, payload => {
-      setMapSyncing(true);
+      return;
+    }
+
+    const zone = document.querySelector(`.zone[data-name="${payload.new.region}"]`);
+    if (zone) renderSymbol(zone, payload.new.symbol, payload.new.id);
+
+    if (calculatorState) {
+      renderSecondaryControls();
+      renderLootResult();
+    }
+
+    setMapSyncing(false);
+  })
+  .on('postgres_changes', { event: 'DELETE', table: 'symbols' }, payload => {
+    setMapSyncing(true);
+
+    // Pop OUT then remove
+    popOutSymbolById(payload.old.id);
+
+    if (calculatorState) {
+      renderSecondaryControls();
+      renderLootResult();
+    }
+
+    setMapSyncing(false);
+  })
+  .subscribe();
 
       // Pop OUT then remove (instead of immediate remove)
       popOutSymbolById(payload.old.id);
@@ -2157,6 +2177,7 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
+
 
 
 
