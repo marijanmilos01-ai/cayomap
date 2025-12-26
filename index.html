@@ -14,6 +14,26 @@ html, body {
   background:#111;
 }
 
+/* ===============================
+   HUD COLOR CONTROLS (EDIT HERE)
+   (all RGBA)
+================================ */
+:root {
+  /* Text colors */
+  --hud-label-color: rgba(255, 255, 255, 0.95);
+  --hud-value-color: rgba(255, 255, 255, 1);
+  --hud-subvalue-color: rgba(255, 255, 255, 0.85);
+
+  /* Text glow/shadow colors */
+  --hud-label-shadow-color: rgba(0, 0, 0, 0.75);
+  --hud-value-shadow-color: rgba(0, 0, 0, 0.90);
+
+  /* Optional HUD panel (kept invisible by default) */
+  --hud-bg: rgba(0, 0, 0, 0);             /* set alpha > 0 to show panel */
+  --hud-border: rgba(255, 255, 255, 0);   /* set alpha > 0 to show border */
+  --hud-panel-shadow: rgba(0, 0, 0, 0);   /* set alpha > 0 to show box shadow */
+}
+
 #map-container {
   position:relative;
   width:100vw;
@@ -388,10 +408,9 @@ html, body {
   right: 18px;
   z-index: 40;
 
-  /* Fully transparent */
-  background: transparent;
-  border: none;
-  box-shadow: none;
+  background: var(--hud-bg);
+  border: 1px solid var(--hud-border);
+  box-shadow: 0 0 0 var(--hud-panel-shadow);
 
   padding: 0;
   pointer-events: none; /* clicks pass through */
@@ -410,9 +429,9 @@ html, body {
 .hud-label {
   font-family: 'Mission Script', cursive;
   font-size: 2.2em;   /* BIGGER */
-  color: white;
-  opacity: 0.95;
-  text-shadow: 0 0 8px rgba(0,0,0,0.75);
+  color: var(--hud-label-color);
+  opacity: 1;
+  text-shadow: 0 0 8px var(--hud-label-shadow-color);
   white-space: nowrap;
 }
 
@@ -421,9 +440,9 @@ html, body {
   font-family: 'Pricedown', sans-serif;
   font-size: 3em;     /* BIG MONEY TEXT */
   font-weight: bold;
-  color: white;
+  color: var(--hud-value-color);
   letter-spacing: 1px;
-  text-shadow: 0 0 10px rgba(0,0,0,0.9);
+  text-shadow: 0 0 10px var(--hud-value-shadow-color);
   white-space: nowrap;
 }
 
@@ -431,7 +450,10 @@ html, body {
 .hud-subvalue {
   font-family: 'Pricedown', sans-serif;
   font-size: 2.2em;
-  opacity: 0.85;
+  color: var(--hud-subvalue-color);
+  opacity: 1;
+  text-shadow: 0 0 10px var(--hud-value-shadow-color);
+  white-space: nowrap;
 }
 
 /* Animation when values change */
