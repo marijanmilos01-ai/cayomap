@@ -240,9 +240,8 @@ input, select, textarea {
 }
 
 /* ===== INFO PANEL ===== */
-/* CHANGED: absolute -> fixed, and responsive widths/offsets */
 #info-panel {
-  position: fixed; /* was absolute */
+  position: fixed;
   top: 0;
   left: 0;
   width: var(--panel-width-open);
@@ -260,8 +259,6 @@ input, select, textarea {
     left 0.3s ease;
   max-height: 100vh;
   backdrop-filter: blur(4px);
-
-  /* safety on tiny screens */
   max-width: 92vw;
 }
 
@@ -393,7 +390,6 @@ input, select, textarea {
 }
 
 /* Apply to headers */
-/* CHANGED: font-size made responsive so it won't blow up on small displays */
 #panel-title,
 #info-header {
   font-family: 'Mission Script', cursive;
@@ -425,7 +421,7 @@ input, select, textarea {
   border-radius: 4px;
   padding: 2px 4px;
   margin-right: 6px;
-  margin-bottom: 6px; /* prevents overlap between stacked selector rows */
+  margin-bottom: 6px;
 }
 
 /* ===== CALCULATOR UI (minimal + modern) ===== */
@@ -519,7 +515,6 @@ input, select, textarea {
 }
 
 /* ===== Heads-up display (top-right) ===== */
-/* FIXED: safe inset + stable top-right anchoring + no "slip" when scaling */
 #hud {
   position: fixed;
   top: max(var(--ui-pad), env(safe-area-inset-top));
@@ -531,18 +526,15 @@ input, select, textarea {
   box-shadow: 0 0 0 var(--hud-panel-shadow);
 
   padding: 0;
-  pointer-events: none; /* clicks pass through */
+  pointer-events: none;
 
-  /* Let HUD size to content but never exceed viewport */
   width: max-content;
   max-width: calc(100vw - (max(var(--ui-pad), env(safe-area-inset-right)) * 2));
   overflow: visible;
 
-  /* If anything inside scales, keep growth inward */
   transform-origin: top right;
 }
 
-/* Row layout */
 .hud-row {
   display: flex;
   justify-content: space-between;
@@ -551,7 +543,6 @@ input, select, textarea {
   margin: clamp(4px, 0.6vw, 8px) 0;
 }
 
-/* Label (e.g. "Total Take", player names) */
 .hud-label {
   font-family: 'Mission Script', cursive;
   font-size: var(--hud-label-size);
@@ -561,7 +552,6 @@ input, select, textarea {
   white-space: nowrap;
 }
 
-/* Main numbers */
 .hud-value {
   font-family: 'Pricedown', sans-serif;
   font-size: var(--hud-value-size);
@@ -575,7 +565,6 @@ input, select, textarea {
   transform-origin: 100% 50%;
 }
 
-/* Optional smaller secondary values */
 .hud-subvalue {
   font-family: 'Pricedown', sans-serif;
   font-size: var(--hud-subvalue-size);
@@ -590,7 +579,6 @@ input, select, textarea {
 
 /* =========================================================
    ADDED: Odometer / rolling digit HUD animation
-   - replaces the old "bump/zoom" effect
 ========================================================= */
 .roll-number {
   display: inline-flex;
@@ -607,9 +595,9 @@ input, select, textarea {
   display: inline-block;
   position: relative;
   overflow: hidden;
-  height: 1em;          /* clips one digit line */
+  height: 1em;
   line-height: 1em;
-  width: 0.62em;        /* good for Pricedown-ish digits */
+  width: 0.62em;
   vertical-align: baseline;
 }
 
@@ -634,13 +622,11 @@ input, select, textarea {
   text-align: center;
 }
 
-/* Non-digit chars keep spacing predictable */
 .roll-static {
   display: inline-block;
   vertical-align: baseline;
 }
 
-/* If user prefers reduced motion, no rolling */
 @media (prefers-reduced-motion: reduce) {
   .roll-digit-inner {
     transition: none !important;
@@ -648,7 +634,7 @@ input, select, textarea {
 }
 
 /* =========================================================
-   ADDED: Shared tooltip style (for zones + fullscreen button)
+   ADDED: Shared tooltip style
 ========================================================= */
 .tooltip {
   position: fixed;
@@ -678,7 +664,7 @@ input, select, textarea {
 }
 
 /* =========================================================
-   ADDED: Floating fullscreen button (bottom-right)
+   ADDED: Floating fullscreen button
 ========================================================= */
 #fs-btn {
   position: fixed;
@@ -890,7 +876,6 @@ input, select, textarea {
 </div>
 
 <div id="map-container">
-  <!-- UPDATED: removed width/height %; zones are now fixed pixel squares via CSS -->
   <div class="zone" style="left:50%;top:50%;" data-name="Office"></div>
   <div class="zone" style="left:45%;top:48%;" data-name="Vault"></div>
   <div class="zone" style="left:54%;top:45%;" data-name="North Storage"></div>
@@ -905,20 +890,13 @@ input, select, textarea {
   <button data-symbol="Painting">Painting</button>
 </div>
 
-<!-- =========================================================
-     ADDED: floating fullscreen button + tooltip element
-========================================================= -->
 <button id="fs-btn" type="button" aria-label="Toggle Fullscreen Mode">
-  <!-- default icon will be set by JS as well, but keeping a safe initial glyph -->
   <svg viewBox="0 0 24 24" aria-hidden="true">
     <path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/>
   </svg>
 </button>
 <div id="ui-tooltip" class="tooltip" role="tooltip"></div>
 
-<!-- =========================================================
-     ADDED: Toast popup element (Supabase failures)
-========================================================= -->
 <div id="toast" role="status" aria-live="polite">
   <div>
     <div class="toast-title" id="toast-title">Error</div>
@@ -930,11 +908,6 @@ input, select, textarea {
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-  /* =========================================================
-     UPDATED: Counteract browser zoom for zone sizing (best-effort)
-     - sets CSS var --inv-zoom = 1 / devicePixelRatio
-     - makes .zone stay visually the same size when zoom changes
-  ========================================================= */
   function updateInvZoom() {
     const dpr = window.devicePixelRatio || 1;
     document.documentElement.style.setProperty('--inv-zoom', String(1 / dpr));
@@ -946,9 +919,6 @@ document.addEventListener('DOMContentLoaded', () => {
     window.visualViewport.addEventListener('scroll', updateInvZoom);
   }
 
-  /* =========================================================
-     ADDED: Toast helpers (Supabase failure popup)
-  ========================================================= */
   const toastEl = document.getElementById('toast');
   const toastTitleEl = document.getElementById('toast-title');
   const toastMsgEl = document.getElementById('toast-msg');
@@ -989,7 +959,6 @@ document.addEventListener('DOMContentLoaded', () => {
   let collapsed = false;
   const localInsertedSymbols = new Set();
   let calculatorState = null;
-  // Ensure derived UI (bag % + Actual Take) updates after BOTH initial loads (symbols + calculator)
   let symbolsLoaded = false;
   let calculatorLoaded = false;
 
@@ -999,13 +968,10 @@ document.addEventListener('DOMContentLoaded', () => {
     renderLootResult();
   }
 
-  /* =========================================================
-     ADDED: Symbol animation helpers (pop in / pop out)
-  ========================================================= */
   function playPopIn(el) {
     if (!el) return;
     el.classList.remove('pop-in');
-    void el.offsetWidth; // restart animation
+    void el.offsetWidth;
     el.classList.add('pop-in');
     el.addEventListener('animationend', () => {
       el.classList.remove('pop-in');
@@ -1025,13 +991,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function popOutSymbolById(id) {
-    const el = document.querySelector(`.symbol[data-id="${id}"]`);
+    const el = document.querySelector(\`.symbol[data-id="\${id}"]\`);
     if (el) popOutAndRemove(el);
   }
 
-  /* =========================================================
-     ADDED: Tooltip helpers (used for zones + fullscreen button)
-  ========================================================= */
   const tooltip = document.getElementById('ui-tooltip');
   let tooltipTarget = null;
 
@@ -1054,20 +1017,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const margin = 12;
     const r = tooltipTarget.getBoundingClientRect();
-
-    // Default position: above element, centered
     let x = r.left + (r.width / 2);
     let y = r.top - margin;
 
-    // Measure tooltip
     const tw = tooltip.offsetWidth;
     const th = tooltip.offsetHeight;
 
-    // Convert to top-left
     let left = x - (tw / 2);
     let top = y - th;
 
-    // Clamp into viewport
     const vw = window.innerWidth;
     const vh = window.innerHeight;
 
@@ -1081,9 +1039,6 @@ document.addEventListener('DOMContentLoaded', () => {
   window.addEventListener('resize', positionTooltip);
   document.addEventListener('scroll', positionTooltip, true);
 
-  /* =========================================================
-     ADDED: Zone hover tooltips (e.g. "North Storage")
-  ========================================================= */
   zones.forEach(zone => {
     zone.addEventListener('mouseenter', () => {
       showTooltipFor(zone, zone.dataset.name || 'Zone');
@@ -1091,9 +1046,6 @@ document.addEventListener('DOMContentLoaded', () => {
     zone.addEventListener('mouseleave', hideTooltip);
   });
 
-  /* =========================================================
-     ADDED: Fullscreen toggle button (local only)
-  ========================================================= */
   const fsBtn = document.getElementById('fs-btn');
 
   function isFullscreen() {
@@ -1102,22 +1054,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function setFsIcon() {
     if (!fsBtn) return;
-    // Expand icon when NOT fullscreen, compress icon when fullscreen
     fsBtn.innerHTML = isFullscreen()
-      ? `<svg viewBox="0 0 24 24" aria-hidden="true">
+      ? \`<svg viewBox="0 0 24 24" aria-hidden="true">
            <path d="M9 3H5a2 2 0 0 0-2 2v4M15 3h4a2 2 0 0 1 2 2v4M9 21H5a2 2 0 0 1-2-2v-4M15 21h4a2 2 0 0 0 2-2v-4"/>
            <path d="M9 9H7V7M15 9h2V7M9 15H7v2M15 15h2v2"/>
-         </svg>`
-      : `<svg viewBox="0 0 24 24" aria-hidden="true">
+         </svg>\`
+      : \`<svg viewBox="0 0 24 24" aria-hidden="true">
            <path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/>
            <path d="M9 9V5H5M15 9V5h4M9 15v4H5M15 15v4h4"/>
-         </svg>`;
+         </svg>\`;
   }
 
   async function toggleFullscreen() {
     try {
       if (!isFullscreen()) {
-        // Use documentElement so it fills the viewport
         await document.documentElement.requestFullscreen();
       } else {
         await document.exitFullscreen();
@@ -1149,14 +1099,12 @@ document.addEventListener('DOMContentLoaded', () => {
     setFsIcon();
   }
 
-  /* ================= Collapsible table sections ================= */
   function initLootSections() {
     document.querySelectorAll('.loot-section').forEach(section => {
       const header = section.querySelector('.loot-section-header');
       const chevron = section.querySelector('.loot-section-chevron');
       if (!header || !chevron) return;
 
-      // Default CLOSED (also enforced in HTML via .collapsed)
       section.classList.add('collapsed');
 
       header.addEventListener('click', (e) => {
@@ -1182,7 +1130,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   function addNote(n) {
-    if (notesContainer.querySelector(`[data-id="${n.id}"]`)) return;
+    if (notesContainer.querySelector(\`[data-id="\${n.id}"]\`)) return;
     const div = document.createElement('div');
     div.textContent = n.content;
     div.dataset.id = n.id;
@@ -1202,7 +1150,7 @@ document.addEventListener('DOMContentLoaded', () => {
   sb.channel('notes')
     .on('postgres_changes', { event: 'INSERT', table: 'notes' }, payload => addNote(payload.new))
     .on('postgres_changes', { event: 'DELETE', table: 'notes' }, payload => {
-      notesContainer.querySelector(`[data-id="${payload.old.id}"]`)?.remove();
+      notesContainer.querySelector(\`[data-id="\${payload.old.id}"]\`)?.remove();
     })
     .subscribe();
 
@@ -1242,43 +1190,36 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   function renderSymbol(zone, type, id) {
-    if (zone.querySelector(`.symbol[data-id="${id}"]`)) return;
+    if (zone.querySelector(\`.symbol[data-id="\${id}"]\`)) return;
 
     const idx = zone.querySelectorAll('.symbol').length;
-
-    /* UPDATED: max 4 symbols per zone */
     if (idx >= 4) return;
 
     const symbol = document.createElement('div');
     symbol.className = 'symbol';
     symbol.dataset.id = id;
 
-    /* UPDATED: 2x2 grid */
-    const row = Math.floor(idx / 2);   // 0..1
-    const col = idx % 2;              // 0..1
-    symbol.style.top = `${row * 50 + 2}%`;
-    symbol.style.left = `${col * 50 + 2}%`;
+    const row = Math.floor(idx / 2);
+    const col = idx % 2;
+    symbol.style.top = \`\${row * 50 + 2}%\`;
+    symbol.style.left = \`\${col * 50 + 2}%\`;
 
     const icons = {
       Gold: 'https://www.svgrepo.com/show/532436/gold.svg',
       Cash: 'https://www.svgrepo.com/show/175801/dollar-exchange.svg',
       Painting: 'https://www.svgrepo.com/show/535548/painting.svg'
     };
-    symbol.innerHTML = `<img src="${icons[type]}" width="100%" height="100%">`;
+    symbol.innerHTML = \`<img src="\${icons[type]}" width="100%" height="100%">\`;
 
-    // Pop IN on insertion
     playPopIn(symbol);
 
     symbol.onclick = async e => {
       e.stopPropagation();
-
-      // Instant UX: pop out immediately
       popOutAndRemove(symbol);
 
       const { error } = await sb.from('symbols').delete().eq('id', id);
       if (error) {
         showToast('Sync failed', 'Could not delete symbol. Check connection and try again.');
-        // Restore symbol visually
         renderSymbol(zone, type, id);
       }
     };
@@ -1293,7 +1234,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const region = activeZone.dataset.name;
 
-      /* UPDATED: max 4 symbols per zone in DB check */
       const { count, error: countErr } = await sb.from('symbols')
         .select('*', { count: 'exact', head: true })
         .eq('region', region);
@@ -1327,7 +1267,7 @@ document.addEventListener('DOMContentLoaded', () => {
       showToast('Load failed', 'Could not load symbols. Try refreshing.');
     }
     data?.forEach(s => {
-      const zone = document.querySelector(`.zone[data-name="${s.region}"]`);
+      const zone = document.querySelector(\`.zone[data-name="\${s.region}"]\`);
       if (zone) renderSymbol(zone, s.symbol, s.id);
     });
 
@@ -1367,48 +1307,37 @@ document.addEventListener('DOMContentLoaded', () => {
     return !!el.closest('#calculator') && (el.tagName === 'INPUT' || el.tagName === 'SELECT' || el.isContentEditable);
   }
 
-sb.channel('symbols')
-  .on('postgres_changes', { event: 'INSERT', table: 'symbols' }, payload => {
-    setMapSyncing(true);
+  // ✅ FIXED: single clean realtime handler (no duplicate orphan code)
+  sb.channel('symbols')
+    .on('postgres_changes', { event: 'INSERT', table: 'symbols' }, payload => {
+      setMapSyncing(true);
 
-    if (localInsertedSymbols.has(payload.new.id)) {
-      localInsertedSymbols.delete(payload.new.id);
+      if (localInsertedSymbols.has(payload.new.id)) {
+        localInsertedSymbols.delete(payload.new.id);
 
-      // update calculator immediately for local inserts
+        // ✅ update calculator immediately for local inserts
+        if (calculatorState) {
+          renderSecondaryControls();
+          renderLootResult();
+        }
+
+        setMapSyncing(false);
+        return;
+      }
+
+      const zone = document.querySelector(\`.zone[data-name="\${payload.new.region}"]\`);
+      if (zone) renderSymbol(zone, payload.new.symbol, payload.new.id);
+
       if (calculatorState) {
         renderSecondaryControls();
         renderLootResult();
       }
 
       setMapSyncing(false);
-      return;
-    }
+    })
+    .on('postgres_changes', { event: 'DELETE', table: 'symbols' }, payload => {
+      setMapSyncing(true);
 
-    const zone = document.querySelector(`.zone[data-name="${payload.new.region}"]`);
-    if (zone) renderSymbol(zone, payload.new.symbol, payload.new.id);
-
-    if (calculatorState) {
-      renderSecondaryControls();
-      renderLootResult();
-    }
-
-    setMapSyncing(false);
-  })
-  .on('postgres_changes', { event: 'DELETE', table: 'symbols' }, payload => {
-    setMapSyncing(true);
-
-    popOutSymbolById(payload.old.id);
-
-    if (calculatorState) {
-      renderSecondaryControls();
-      renderLootResult();
-    }
-
-    setMapSyncing(false);
-  })
-  .subscribe();
-
-      // Pop OUT then remove (instead of immediate remove)
       popOutSymbolById(payload.old.id);
 
       if (calculatorState) {
@@ -1436,7 +1365,6 @@ sb.channel('symbols')
   const BAG_UNITS_PER_BAG = 3000;
   const BAG_PER_STACK_UNITS = { Cash: 750, Painting: 1500, Gold: 2000 };
 
-  // always included, doesn't use bag space
   const WALL_SAFE_MIN = 20000;
   const WALL_SAFE_MAX = 99000;
 
@@ -1458,7 +1386,7 @@ sb.channel('symbols')
 
   function getBagCapacityUnits() {
     return getPlayerCountForBag() * BAG_UNITS_PER_BAG;
-}
+  }
 
   async function loadCalculator() {
     const { data, error } = await sb.from('calculator_state').select('*').limit(1).maybeSingle();
@@ -1484,25 +1412,25 @@ sb.channel('symbols')
   }
 
   async function updateCalculatorState(updates) {
-  setSyncing(true);
+    setSyncing(true);
 
-  const { data, error } = await sb
-    .from('calculator_state')
-    .update(updates)
-    .eq('id', calculatorState.id)
-    .select()
-    .single();
+    const { data, error } = await sb
+      .from('calculator_state')
+      .update(updates)
+      .eq('id', calculatorState.id)
+      .select()
+      .single();
 
-  if (error) {
-    console.error('calculator_state update failed:', error);
+    if (error) {
+      console.error('calculator_state update failed:', error);
+      setSyncing(false);
+      showToast('Sync failed', `${error.message}${error.details ? ' — ' + error.details : ''}`);
+      return;
+    }
+
+    calculatorState = data;
     setSyncing(false);
-    showToast('Sync failed', `${error.message}${error.details ? ' — ' + error.details : ''}`);
-    return;
   }
-
-  calculatorState = data; // keep local state aligned with DB row
-  setSyncing(false);
-}
 
   function enforceCutLimit() {
     const totalCut = calculatorState.players.reduce((sum,p)=>sum+(parseFloat(p.cut)||0),0);
@@ -1589,7 +1517,6 @@ sb.channel('symbols')
       playerCutsDiv.appendChild(addRow);
     }
 
-    // Player name: Enter/blur to sync
     playerCutsDiv.querySelectorAll('.player-name').forEach(inp => {
       inp.addEventListener('keydown', async e => {
         e.stopPropagation();
@@ -1603,7 +1530,6 @@ sb.channel('symbols')
       });
     });
 
-    // Player cut: Enter/blur to sync (no steppers)
     playerCutsDiv.querySelectorAll('.player-cut').forEach(inp => {
       inp.addEventListener('keydown', async e => {
         e.stopPropagation();
@@ -1617,7 +1543,6 @@ sb.channel('symbols')
       });
     });
 
-    // Remove player: immediate sync
     playerCutsDiv.querySelectorAll('.remove-player').forEach(btn => {
       btn.addEventListener('click', async e => {
         e.stopPropagation();
@@ -1668,18 +1593,17 @@ sb.channel('symbols')
   }
 
   function computeBagUsedUnits(take) {
-    const cashT = Math.round((parseFloat(take.Cash) || 0) * 10);   // tenths
-    const goldT = Math.round((parseFloat(take.Gold) || 0) * 10);   // tenths
-    const painting = Math.floor(parseFloat(take.Painting) || 0);   // whole
+    const cashT = Math.round((parseFloat(take.Cash) || 0) * 10);     // tenths
+    const goldT = Math.round((parseFloat(take.Gold) || 0) * 10);     // tenths
+    const painting = Math.floor(parseFloat(take.Painting) || 0);     // whole
 
-  // Use integer math only
-  const used =
-    cashT * (BAG_PER_STACK_UNITS.Cash / 10) +
-    goldT * (BAG_PER_STACK_UNITS.Gold / 10) +
-    painting * BAG_PER_STACK_UNITS.Painting;
+    const used =
+      cashT * (BAG_PER_STACK_UNITS.Cash / 10) +
+      goldT * (BAG_PER_STACK_UNITS.Gold / 10) +
+      painting * BAG_PER_STACK_UNITS.Painting;
 
-  return Math.max(0, Math.round(used));
-}
+    return Math.max(0, Math.round(used));
+  }
 
   function enforceBagCapacity(changedType) {
     const take = calculatorState.secondary_take || { Cash:0, Painting:0, Gold:0 };
@@ -1700,19 +1624,17 @@ sb.channel('symbols')
     if (changedType === 'Painting') {
       next = Math.floor(next);
     } else {
-      next = Math.max(0, Math.round(next * 10) / 10); // 0.1 precision
+      next = Math.max(0, Math.round(next * 10) / 10);
     }
 
     take[changedType] = Math.max(0, next);
     calculatorState.secondary_take = take;
   }
 
-  /* ========= UPDATED: dynamic suggested secondary loot (bounded knapsack, min value) ========= */
   function computeSuggestedSecondaryTake() {
     const available = getSymbolCounts();
     const capacityUnits = getBagCapacityUnits();
 
-    // min values (you said minimal value is ok)
     const MIN_VALUE = { Cash: 78000, Painting: 176000, Gold: 328000 };
 
     const maxPaint = Math.max(0, Math.floor(available.Painting || 0));
@@ -1729,10 +1651,6 @@ sb.channel('symbols')
              (take.Painting || 0) * MIN_VALUE.Painting;
     }
 
-    // Tie-breakers:
-    // 1) higher min value
-    // 2) if tied, fill bag more
-    // 3) if still tied, prefer more Gold, then more Paintings
     function isBetter(candidate, candidateValue, candidateUsed) {
       if (candidateValue > bestValue) return true;
       if (candidateValue < bestValue) return false;
@@ -1797,7 +1715,6 @@ sb.channel('symbols')
     secondaryLootDiv.innerHTML = `
       <div class="calc-title">Secondary Loot (select what you take)</div>
 
-      <!-- Suggestion row -->
       <div class="calc-row" style="margin-top: 8px;">
         <span class="calc-meta" style="flex:1;">
           <strong>Suggested fill:</strong>
@@ -1876,7 +1793,6 @@ sb.channel('symbols')
       renderLootResult();
     }
 
-    // Apply suggestion
     applyBtn.addEventListener('click', async (e) => {
       e.stopPropagation();
 
@@ -1890,7 +1806,6 @@ sb.channel('symbols')
       await syncSecondaryTakeAndRefresh();
     });
 
-    // Cash: Enter/blur to sync
     cashInp.addEventListener('keydown', async e => {
       e.stopPropagation();
       if (e.key !== 'Enter') return;
@@ -1904,7 +1819,6 @@ sb.channel('symbols')
       await syncSecondaryTakeAndRefresh();
     });
 
-    // Gold: Enter/blur to sync
     goldInp.addEventListener('keydown', async e => {
       e.stopPropagation();
       if (e.key !== 'Enter') return;
@@ -1918,7 +1832,6 @@ sb.channel('symbols')
       await syncSecondaryTakeAndRefresh();
     });
 
-    // Paintings: Enter/blur to sync (whole numbers)
     paintInp.addEventListener('keydown', async e => {
       e.stopPropagation();
       if (e.key !== 'Enter') return;
@@ -1933,19 +1846,14 @@ sb.channel('symbols')
     });
   }
 
-  /* =========================================================
-     ADDED: HUD odometer/rolling number renderer
-     - rolls digits up/down like a car odometer
-  ========================================================= */
-  const hudPrevTextByKey = new Map(); // key -> previous full text
+  // HUD roll stuff + renderLootResult (unchanged from your paste)
+  const hudPrevTextByKey = new Map();
 
   function prefersReducedMotion() {
     return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   }
 
   function extractComparableNumber(str) {
-    // Use the FIRST numeric chunk in the string as a direction hint (good enough for "$min - $max")
-    // returns null if none
     const m = String(str ?? '').match(/-?\d[\d,]*/);
     if (!m) return null;
     const n = parseInt(m[0].replace(/,/g, ''), 10);
@@ -1953,7 +1861,6 @@ sb.channel('symbols')
   }
 
   function buildRollDigitColumn() {
-    // 0..9
     const inner = document.createElement('span');
     inner.className = 'roll-digit-inner';
     for (let i = 0; i <= 9; i++) {
@@ -1969,7 +1876,6 @@ sb.channel('symbols')
     if (immediate) {
       innerEl.style.transition = 'none';
       innerEl.style.transform = `translateY(${-d}em)`;
-      // force reflow then restore transition so future updates animate
       void innerEl.offsetHeight;
       innerEl.style.transition = '';
     } else {
@@ -1983,26 +1889,21 @@ sb.channel('symbols')
     const next = String(nextText ?? '');
     const prev = hudPrevTextByKey.get(key) ?? el.textContent ?? '';
 
-    // Reduced motion: just set text
     if (prefersReducedMotion()) {
       el.textContent = next;
       hudPrevTextByKey.set(key, next);
       return;
     }
 
-    // Direction hint (up for increase, down for decrease)
     const prevNum = extractComparableNumber(prev);
     const nextNum = extractComparableNumber(next);
     const rollUp = (prevNum != null && nextNum != null) ? (nextNum >= prevNum) : true;
 
-    // Build new structure (simple + robust)
     el.innerHTML = '';
     const wrap = document.createElement('span');
     wrap.className = 'roll-number';
     el.appendChild(wrap);
 
-    // Pad digits so columns stay aligned between prev/next (only for digit chars)
-    // We'll align by position in the string itself (including commas/$), so no complex padding.
     const maxLen = Math.max(prev.length, next.length);
     const prevP = prev.padStart(maxLen, ' ');
     const nextP = next.padStart(maxLen, ' ');
@@ -2010,7 +1911,6 @@ sb.channel('symbols')
     for (let i = 0; i < maxLen; i++) {
       const pc = prevP[i];
       const nc = nextP[i];
-
       const isDigit = (c) => c >= '0' && c <= '9';
 
       if (isDigit(nc)) {
@@ -2021,31 +1921,21 @@ sb.channel('symbols')
         digitBox.appendChild(inner);
         wrap.appendChild(digitBox);
 
-        // Start at prev digit (or 0 if none), then animate to next digit.
         const startDigit = isDigit(pc) ? pc : '0';
         setRollDigit(inner, startDigit, true);
 
-        // Ensure the browser has painted the start position before animating.
         requestAnimationFrame(() => {
-          // If direction is down and digits decrease, it will visually roll down
-          // because we move the column "up" less (towards 0). For a stronger
-          // "always roll direction", we can fake it, but this keeps it clean.
           setRollDigit(inner, nc, false);
-
-          // If you want strictly "up on increase / down on decrease" even when a digit goes 9->0 etc,
-          // we can do wraparound columns — but this is the simple odometer feel.
-          void rollUp; // kept for future tweak; currently not forcing wraparound.
+          void rollUp;
         });
       } else {
         const s = document.createElement('span');
         s.className = 'roll-static';
-        // keep spacing for padded leading spaces
         s.textContent = (nc === ' ') ? '\u00A0' : nc;
         wrap.appendChild(s);
       }
     }
 
-    // Remember the actual (un-padded) next string
     hudPrevTextByKey.set(key, next);
   }
 
@@ -2057,7 +1947,7 @@ sb.channel('symbols')
     renderRollingText(hudTotal, totalText, 'hud-total');
 
     hudPlayers.innerHTML = '';
-    (playerLines || []).forEach((line, idx) => {
+    (playerLines || []).forEach((line) => {
       const row = document.createElement('div');
       row.className = 'hud-row';
       row.innerHTML = `
@@ -2067,7 +1957,6 @@ sb.channel('symbols')
       const valEl = row.querySelector('.hud-subvalue');
       hudPlayers.appendChild(row);
 
-      // Key by label so it persists even when rows are recreated
       const key = `player:${line.label}`;
       renderRollingText(valEl, line.value, key);
     });
@@ -2109,14 +1998,12 @@ sb.channel('symbols')
     const players = calculatorState.players || [];
     const playerCount = players.length;
 
-    // Elite challenge (fixed add, depends on difficulty & player count)
     const elitePerPlayer = (difficulty === 'hard') ? 100000 : 50000;
     const eliteTotal = elitePerPlayer * playerCount;
 
     let totalMin = primaryValue + totalSecondaryMin + WALL_SAFE_MIN + eliteTotal;
     let totalMax = primaryValue + totalSecondaryMax + WALL_SAFE_MAX + eliteTotal;
 
-    // Fees (12% total)
     let grandTotalMin = totalMin * 0.88;
     let grandTotalMax = totalMax * 0.88;
 
@@ -2148,7 +2035,6 @@ sb.channel('symbols')
     updateHud(grandTotalMin, grandTotalMax, hudLines);
   }
 
-  // REALTIME: apply updates from other devices
   sb.channel('calculator_state')
     .on('postgres_changes', { event: 'UPDATE', table: 'calculator_state' }, payload => {
       setSyncing(false);
@@ -2176,9 +2062,3 @@ sb.channel('symbols')
 </script>
 </body>
 </html>
-
-
-
-
-
-
