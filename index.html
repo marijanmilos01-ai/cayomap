@@ -150,6 +150,61 @@ input, select, textarea {
   box-shadow: 0 4px 12px rgba(0,0,0,0.5), 0 0 10px rgba(30,30,30,0.5);
 }
 
+/* =========================
+   SPLASH OVERLAY
+========================= */
+#app { opacity: 1; }
+
+.splash {
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+  background: #000;
+  display: grid;
+  place-items: center;
+  opacity: 1;
+  transition: opacity 0.6s ease;
+}
+
+.splash-video {
+  width: 100vw;
+  height: 100vh;
+  object-fit: cover;
+  background: #000;
+}
+
+.splash-hint {
+  position: absolute;
+  bottom: 6vh;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 10px 14px;
+  border-radius: 999px;
+  font-family: 'Mission Script', cursive;
+  font-size: clamp(18px, 2vw, 30px);
+  color: rgba(255,255,255,0.95);
+  background: rgba(0,0,0,0.45);
+  border: 1px solid rgba(255,255,255,0.18);
+  backdrop-filter: blur(6px);
+  pointer-events: none;
+}
+
+/* Hide app until splash finishes */
+body.splash-active #app {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Fade out splash + reveal app */
+body.splash-done #splash {
+  opacity: 0;
+  pointer-events: none;
+}
+body.splash-done #app {
+  opacity: 1;
+  pointer-events: auto;
+}
+
 /* ===============================
    SYMBOLS (UPDATED)
    - 2x2 grid inside zone
@@ -834,6 +889,20 @@ input, select, textarea {
 
 <body>
 
+  <!-- SPLASH SCREEN (goes FIRST) -->
+  <div id="splash" class="splash">
+    <video id="splash-video" class="splash-video" preload="auto" playsinline>
+      <source src="splashscreen.mp4" type="video/mp4">
+    </video>
+
+    <div class="splash-hint">
+      Click or press any key to start
+    </div>
+  </div>
+
+  <!-- APP WRAPPER (everything else goes inside this) -->
+  <div id="app">
+
 <div id="hud">
   <div class="hud-row">
     <span class="hud-label">Total Take:</span>
@@ -990,6 +1059,65 @@ input, select, textarea {
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+
+    /* =========================
+     SPLASH SCREEN LOGIC
+  ========================= */
+  const splash = document.getElementById('splash');
+  const splashVideo = document.getElementById('splash-video');
+  const splashHint = document.querySelector('.splash-hint');
+
+  if (splash && splashVideo) {
+    document.body.classList.add('splash-active');
+
+    let started = false;
+    let finished = false;
+
+    function startSplash() {
+      if (started || finished) return;
+      started = true;
+
+      splashHint?.style.setProperty('display', 'none');
+
+      // Try to play video (must be user-initiated)
+      splashVideo.play().catch(() => {
+        started = false;
+        splashHint?.style.removeProperty('display');
+      });
+
+      // Try fullscreen (may silently fail)
+      try {
+        splashVideo.requestFullscreen?.();
+      } catch {}
+    }
+
+    function finishSplash() {
+      if (finished) return;
+      finished = true;
+
+      document.body.classList.remove('splash-active');
+      document.body.classList.add('splash-done');
+
+      setTimeout(() => {
+        splash.remove();
+      }, 650);
+    }
+
+    // Start on first click or keypress
+    window.addEventListener('pointerdown', startSplash, { once: true });
+    window.addEventListener('keydown', startSplash, { once: true });
+
+    // End splash when video finishes
+    splashVideo.addEventListener('ended', finishSplash);
+
+    // Allow ESC to skip
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && started && !finished) {
+        finishSplash();
+      }
+    });
+  }
+
   /* =========================================================
      UPDATED: Counteract browser zoom for zone sizing (best-effort)
      - sets CSS var --inv-zoom = 1 / devicePixelRatio
@@ -2314,6 +2442,10 @@ if (clearSymbolsBtn) {
   loadSymbols();
 });
 </script>
+
+</div> <!-- end #app -->
+
 </body>
 </html>
+
 
