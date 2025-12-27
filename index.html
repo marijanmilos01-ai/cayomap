@@ -889,16 +889,25 @@ body.splash-done #app {
 
 <body>
 
-  <!-- SPLASH SCREEN (goes FIRST) -->
-  <div id="splash" class="splash">
-    <video id="splash-video" class="splash-video" preload="auto" playsinline>
-      <source src="splashscreen.mp4" type="video/mp4">
-    </video>
+<!-- SPLASH SCREEN (goes FIRST) -->
+<div id="splash" class="splash">
+  <video
+    id="splash-video"
+    class="splash-video"
+    preload="auto"
+    autoplay
+    muted
+    playsinline
+    controls="false"
+    disablepictureinpicture
+  >
+    <source src="splashscreen.mp4" type="video/mp4">
+  </video>
 
-    <div class="splash-hint">
-      Click or press any key to start
-    </div>
+  <div class="splash-hint">
+    Click or press any key to start
   </div>
+</div>
 
   <!-- APP WRAPPER (everything else goes inside this) -->
   <div id="app">
@@ -1060,7 +1069,7 @@ body.splash-done #app {
 <script>
 document.addEventListener('DOMContentLoaded', () => {
 
-    /* =========================
+  /* =========================
      SPLASH SCREEN LOGIC
   ========================= */
   const splash = document.getElementById('splash');
@@ -1069,6 +1078,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (splash && splashVideo) {
     document.body.classList.add('splash-active');
+
+    // Make sure video never shows native controls
+    splashVideo.controls = false;
+    splashVideo.muted = true;         // required for autoplay
+    splashVideo.playsInline = true;
 
     let started = false;
     let finished = false;
@@ -1079,21 +1093,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
       splashHint?.style.setProperty('display', 'none');
 
-      // Try to play video (must be user-initiated)
-      splashVideo.play().catch(() => {
-        started = false;
-        splashHint?.style.removeProperty('display');
-      });
-
-      // Try fullscreen (may silently fail)
-      try {
-        splashVideo.requestFullscreen?.();
-      } catch {}
+      // Play immediately (works because muted)
+      splashVideo.currentTime = 0;
+      const p = splashVideo.play();
+      if (p && typeof p.catch === 'function') {
+        p.catch(() => {
+          // If some browser still blocks it, allow retry on next click/key
+          started = false;
+          splashHint?.style.removeProperty('display');
+        });
+      }
     }
 
     function finishSplash() {
       if (finished) return;
       finished = true;
+
+      // stop video to be safe
+      try { splashVideo.pause(); } catch {}
 
       document.body.classList.remove('splash-active');
       document.body.classList.add('splash-done');
@@ -1102,6 +1119,21 @@ document.addEventListener('DOMContentLoaded', () => {
         splash.remove();
       }, 650);
     }
+
+    // Start on first click/tap OR any key
+    window.addEventListener('pointerdown', startSplash, { once: true });
+    window.addEventListener('keydown', startSplash, { once: true });
+
+    // End splash when the video finishes
+    splashVideo.addEventListener('ended', finishSplash);
+
+    // ESC to skip
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && started && !finished) {
+        finishSplash();
+      }
+    });
+  }
 
     // Start on first click or keypress
     window.addEventListener('pointerdown', startSplash, { once: true });
@@ -2447,5 +2479,6 @@ if (clearSymbolsBtn) {
 
 </body>
 </html>
+
 
 
