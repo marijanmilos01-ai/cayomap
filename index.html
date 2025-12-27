@@ -104,7 +104,7 @@ input, select, textarea {
   background-size:cover;
 }
 
-  /* === ADDED: vignette around map edges (only affects #map-container) === */
+/* === ADDED: vignette around map edges (only affects #map-container) === */
 #map-container::after{
   content:"";
   position:absolute;
@@ -1001,7 +1001,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const hudPlayers = document.getElementById('hud-players');
 
   let activeZone = null;
+
+  /* FIXED: initialize collapsed from DOM so Loot Panel opens on first click */
   let collapsed = infoPanel.classList.contains('collapsed');
+
   const localInsertedSymbols = new Set();
   let calculatorState = null;
   // Ensure derived UI (bag % + Actual Take) updates after BOTH initial loads (symbols + calculator)
@@ -1435,7 +1438,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const bagStatusDiv = document.getElementById('bag-status');
 
   // Bag units: 1 unit = 1/30% (divisible by 3 so Gold is exact)
-const BAG_PER_STACK_UNITS = { Cash: 750, Painting: 1500, Gold: 2000 }; // 25%, 50%, 66.666...%
+  const BAG_PER_STACK_UNITS = { Cash: 750, Painting: 1500, Gold: 2000 }; // 25%, 50%, 66.666...%
 
   // always included, doesn't use bag space
   const WALL_SAFE_MIN = 20000;
@@ -1502,44 +1505,63 @@ const BAG_PER_STACK_UNITS = { Cash: 750, Painting: 1500, Gold: 2000 }; // 25%, 5
     setSyncing(false);
   }
 
-  function enforceCutLimit() {
-  const players = calculatorState.players || [];
-
-  // Step 1: clamp each player to valid values
-  players.forEach(p => {
-    let v = parseFloat(p.cut) || 0;
-    v = Math.min(100, Math.max(15, v));
-    v = Math.floor(v / 5) * 5;
-    p.cut = v;
-  });
-
-  // Step 2: total must not exceed 100%
-  let total = players.reduce((s, p) => s + (parseFloat(p.cut) || 0), 0);
-
-  if (total <= 100) return;
-
-  // Step 3: scale down proportionally
-  const ratio = 100 / total;
-
-  players.forEach(p => {
-    let v = Math.floor((parseFloat(p.cut) || 0) * ratio);
-    v = Math.min(100, Math.max(15, v));
-    v = Math.floor(v / 5) * 5;
-    p.cut = v;
-  });
-
-  // Step 4: final safety pass (remove leftover overflow)
-  let sum = players.reduce((s, p) => s + (parseFloat(p.cut) || 0), 0);
-  while (sum > 100) {
-    const idx = players.reduce(
-      (iMax, p, i, arr) => (p.cut > arr[iMax].cut ? i : iMax),
-      0
-    );
-    if (players[idx].cut <= 15) break;
-    players[idx].cut -= 5;
-    sum -= 5;
+  /* ===== Player cut rules =====
+     - min 15%
+     - steps of 5%
+     - total cannot exceed 100%
+     - if 2+ players: max per player = 100 - 15*(n-1)
+  */
+  function getMaxCutPerPlayer() {
+    const n = (calculatorState?.players || []).length;
+    if (n <= 1) return 100;
+    return Math.max(15, 100 - 15 * (n - 1));
   }
-}
+
+  function enforceCutLimit() {
+    const players = calculatorState.players || [];
+    const maxPer = getMaxCutPerPlayer();
+
+    // Step 1: clamp each player to valid values (15..maxPer, steps of 5)
+    players.forEach(p => {
+      let v = parseFloat(p.cut) || 0;
+      v = Math.min(maxPer, Math.max(15, v));
+      v = Math.floor(v / 5) * 5;
+      v = Math.min(maxPer, Math.max(15, v));
+      p.cut = v;
+    });
+
+    // Step 2: total must not exceed 100%
+    let total = players.reduce((s, p) => s + (parseFloat(p.cut) || 0), 0);
+    if (total <= 100) return;
+
+    // Step 3: scale down proportionally
+    const ratio = 100 / total;
+
+    players.forEach(p => {
+      let v = Math.floor((parseFloat(p.cut) || 0) * ratio);
+      v = Math.min(maxPer, Math.max(15, v));
+      v = Math.floor(v / 5) * 5;
+      v = Math.min(maxPer, Math.max(15, v));
+      p.cut = v;
+    });
+
+    // Step 4: final safety pass (remove leftover overflow)
+    let sum = players.reduce((s, p) => s + (parseFloat(p.cut) || 0), 0);
+    while (sum > 100) {
+      let idx = -1;
+      let best = -1;
+      for (let i = 0; i < players.length; i++) {
+        const v = parseFloat(players[i].cut) || 0;
+        if (v > 15 && v > best) {
+          best = v;
+          idx = i;
+        }
+      }
+      if (idx === -1) break;
+      players[idx].cut -= 5;
+      sum -= 5;
+    }
+  }
 
   function parseIntOnly(str) {
     const cleaned = String(str ?? '').replace(/[^0-9]/g, '');
@@ -1548,12 +1570,12 @@ const BAG_PER_STACK_UNITS = { Cash: 750, Painting: 1500, Gold: 2000 }; // 25%, 5
     let n = parseInt(cleaned, 10);
     if (!Number.isFinite(n)) n = 15;
 
-    // enforce 15–100 and steps of 5
+    // enforce 15–100 and steps of 5 (final clamp happens in commit/enforce)
     n = Math.min(100, Math.max(15, n));
     n = Math.round(n / 5) * 5;
 
     return n;
-}
+  }
 
   function parseDecimalInput(str) {
     if (str == null) return 0;
@@ -1575,13 +1597,14 @@ const BAG_PER_STACK_UNITS = { Cash: 750, Painting: 1500, Gold: 2000 }; // 25%, 5
 
   async function commitPlayerCut(idx, raw) {
     let v = parseIntOnly(raw);
+    const maxPer = getMaxCutPerPlayer();
 
-    // clamp to game rules: 15% minimum, 100% max
-    v = Math.min(100, Math.max(15, v));
+    // clamp to game rules: 15% minimum, maxPer maximum
+    v = Math.min(maxPer, Math.max(15, v));
 
     // enforce 5% steps
     v = Math.round(v / 5) * 5;
-    v = Math.min(100, Math.max(15, v));
+    v = Math.min(maxPer, Math.max(15, v));
 
     calculatorState.players[idx].cut = v;
     enforceCutLimit();
@@ -1710,7 +1733,7 @@ const BAG_PER_STACK_UNITS = { Cash: 750, Painting: 1500, Gold: 2000 }; // 25%, 5
   }
 
   function computeBagUsedUnits(take) {
-  // Use tenths as integers to avoid float errors (cash/gold allow 0.1)
+    // Use tenths as integers to avoid float errors (cash/gold allow 0.1)
     const cashT = Math.round((parseFloat(take.Cash) || 0) * 10);
     const goldT = Math.round((parseFloat(take.Gold) || 0) * 10);
     const painting = Math.floor(parseFloat(take.Painting) || 0);
@@ -1720,9 +1743,8 @@ const BAG_PER_STACK_UNITS = { Cash: 750, Painting: 1500, Gold: 2000 }; // 25%, 5
       Math.round((goldT * BAG_PER_STACK_UNITS.Gold) / 10) +
       (painting * BAG_PER_STACK_UNITS.Painting);
 
-  return Math.max(0, used);
-}
-
+    return Math.max(0, used);
+  }
 
   function enforceBagCapacity(changedType) {
     const take = calculatorState.secondary_take || { Cash:0, Painting:0, Gold:0 };
@@ -2070,14 +2092,8 @@ const BAG_PER_STACK_UNITS = { Cash: 750, Painting: 1500, Gold: 2000 }; // 25%, 5
 
         // Ensure the browser has painted the start position before animating.
         requestAnimationFrame(() => {
-          // If direction is down and digits decrease, it will visually roll down
-          // because we move the column "up" less (towards 0). For a stronger
-          // "always roll direction", we can fake it, but this keeps it clean.
           setRollDigit(inner, nc, false);
-
-          // If you want strictly "up on increase / down on decrease" even when a digit goes 9->0 etc,
-          // we can do wraparound columns — but this is the simple odometer feel.
-          void rollUp; // kept for future tweak; currently not forcing wraparound.
+          void rollUp;
         });
       } else {
         const s = document.createElement('span');
@@ -2219,8 +2235,3 @@ const BAG_PER_STACK_UNITS = { Cash: 750, Painting: 1500, Gold: 2000 }; // 25%, 5
 </script>
 </body>
 </html>
-
-
-
-
-
