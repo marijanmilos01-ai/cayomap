@@ -1674,12 +1674,14 @@ if (clearSymbolsBtn) {
   });
   clearSymbolsBtn.addEventListener('mouseleave', hideTooltip);
 
-  // Click action
+  // Prevent focus/selection quirks (helps keep fullscreen stable on some browsers)
+  clearSymbolsBtn.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+  });
+
+  // Click action (NO confirm dialog -> won't exit fullscreen)
   clearSymbolsBtn.addEventListener('click', async (e) => {
     e.stopPropagation();
-
-    const ok = confirm('Delete ALL symbols for everyone?');
-    if (!ok) return;
 
     setMapSyncing(true);
 
@@ -1697,7 +1699,7 @@ if (clearSymbolsBtn) {
     setMapSyncing(false);
     showToast('Done', 'All symbols deleted.');
   });
-}
+
 
   function isCalculatorEditing() {
     const el = document.activeElement;
@@ -2558,6 +2560,7 @@ if (clearSymbolsBtn) {
 
 </body>
 </html>
+
 
 
 
