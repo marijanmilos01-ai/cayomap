@@ -1257,7 +1257,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   function addNote(n) {
-    if (notesContainer.querySelector(\`[data-id="\${n.id}"]\`)) return;
+    if (notesContainer.querySelector('[data-id="' + n.id + '"]')) return;
     const div = document.createElement('div');
     div.textContent = n.content;
     div.dataset.id = n.id;
@@ -1277,7 +1277,9 @@ document.addEventListener('DOMContentLoaded', () => {
   sb.channel('notes')
     .on('postgres_changes', { event: 'INSERT', table: 'notes' }, payload => addNote(payload.new))
     .on('postgres_changes', { event: 'DELETE', table: 'notes' }, payload => {
-      notesContainer.querySelector(\`[data-id="\${payload.old.id}"]\`)?.remove();
+      const toRemove = notesContainer.querySelector('[data-id="' + payload.old.id + '"]');
+      if (toRemove) toRemove.remove();
+
     })
     .subscribe();
 
@@ -2320,5 +2322,6 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
+
 
 
