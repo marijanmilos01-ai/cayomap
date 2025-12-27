@@ -829,6 +829,38 @@ body.splash-done #app {
 }
 
 /* =========================================================
+   ADDED: Floating UI Button(bottom-right)
+========================================================= */
+#ui-main-btn {
+  width: 54px;
+  height: 54px;
+  border-radius: 999px;
+
+  background: rgba(40,40,40,0.55);
+  border: 1px solid rgba(255,255,255,0.22);
+  backdrop-filter: blur(4px);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+#ui-main-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.55);
+}
+
+#ui-main-btn svg {
+  width: 26px;
+  height: 26px;
+  stroke: rgba(255,255,255,0.95);
+  fill: none;
+}
+
+/* =========================================================
    ADDED: Floating fullscreen button (bottom-right)
 ========================================================= */
 #fs-btn {
@@ -2524,6 +2556,7 @@ if (clearSymbolsBtn) {
 
 </body>
 </html>
+
 
 
 
