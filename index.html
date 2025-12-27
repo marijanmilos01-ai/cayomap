@@ -738,53 +738,6 @@ input, select, textarea {
 }
 
 /* =========================================================
-   Floating clear symbols button (bottom-right, above FS)
-========================================================= */
-#clear-symbols-btn {
-  position: fixed;
-  right: max(var(--ui-pad), env(safe-area-inset-right));
-  bottom: calc(max(var(--ui-pad), env(safe-area-inset-bottom)) + 64px);
-  z-index: 60;
-
-  width: 54px;
-  height: 54px;
-  border-radius: 999px;
-  cursor: pointer;
-
-  border: 1px solid rgba(255,255,255,0.22);
-  background: rgba(40,40,40,0.55);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.5), 0 0 10px rgba(30,30,30,0.35);
-  backdrop-filter: blur(4px);
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease;
-}
-#clear-symbols-btn:hover {
-  transform: translateY(-2px);
-  border-color: rgba(255,255,255,0.6);
-  background: rgba(50,50,50,0.65);
-  box-shadow: 0 6px 16px rgba(0,0,0,0.55), 0 0 12px rgba(255,255,255,0.15);
-}
-#clear-symbols-btn:active {
-  transform: translateY(0);
-}
-#clear-symbols-btn svg {
-  width: 26px;
-  height: 26px;
-  opacity: 0.95;
-  fill: none;
-  stroke: rgba(255,255,255,0.92);
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-/* ensure cursor matches */
-#clear-symbols-btn { cursor: var(--hover-cursor); }
-
-/* =========================================================
    ADDED: Toast popup (Supabase failure)
 ========================================================= */
 #toast {
@@ -967,16 +920,6 @@ input, select, textarea {
   <button data-symbol="Painting">Painting</button>
 </div>
 
-<!-- Floating clear symbols button (above fullscreen) -->
-<button id="clear-symbols-btn" type="button" aria-label="Clear all symbols">
-  <svg viewBox="0 0 24 24" aria-hidden="true">
-    <path d="M3 6h18"/>
-    <path d="M8 6V4h8v2"/>
-    <path d="M6 6l1 16h10l1-16"/>
-    <path d="M10 11v7M14 11v7"/>
-  </svg>
-</button>
-
 <!-- =========================================================
      ADDED: floating fullscreen button + tooltip element
 ========================================================= -->
@@ -1100,7 +1043,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function popOutSymbolById(id) {
-    const el = document.querySelector('.symbol[data-id="' + id + '"]');
+    const el = document.querySelector(`.symbol[data-id="${id}"]`);
     if (el) popOutAndRemove(el);
   }
 
@@ -1257,7 +1200,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   function addNote(n) {
-    if (notesContainer.querySelector('[data-id="' + n.id + '"]')) return;
+    if (notesContainer.querySelector(`[data-id="${n.id}"]`)) return;
     const div = document.createElement('div');
     div.textContent = n.content;
     div.dataset.id = n.id;
@@ -1277,9 +1220,7 @@ document.addEventListener('DOMContentLoaded', () => {
   sb.channel('notes')
     .on('postgres_changes', { event: 'INSERT', table: 'notes' }, payload => addNote(payload.new))
     .on('postgres_changes', { event: 'DELETE', table: 'notes' }, payload => {
-      const toRemove = notesContainer.querySelector('[data-id="' + payload.old.id + '"]');
-      if (toRemove) toRemove.remove();
-
+      notesContainer.querySelector(`[data-id="${payload.old.id}"]`)?.remove();
     })
     .subscribe();
 
@@ -1319,7 +1260,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   function renderSymbol(zone, type, id) {
-    if (zone.querySelector(\`.symbol[data-id="\${id}"]\`)) return;
+    if (zone.querySelector(`.symbol[data-id="${id}"]`)) return;
 
     const idx = zone.querySelectorAll('.symbol').length;
 
@@ -1333,15 +1274,15 @@ document.addEventListener('DOMContentLoaded', () => {
     /* UPDATED: 2x2 grid */
     const row = Math.floor(idx / 2);   // 0..1
     const col = idx % 2;              // 0..1
-    symbol.style.top = \`\${row * 50 + 2}%\`;
-    symbol.style.left = \`\${col * 50 + 2}%\`;
+    symbol.style.top = `${row * 50 + 2}%`;
+    symbol.style.left = `${col * 50 + 2}%`;
 
     const icons = {
       Gold: 'https://www.svgrepo.com/show/532436/gold.svg',
       Cash: 'https://www.svgrepo.com/show/175801/dollar-exchange.svg',
       Painting: 'https://www.svgrepo.com/show/535548/painting.svg'
     };
-    symbol.innerHTML = \`<img src="\${icons[type]}" width="100%" height="100%">\`;
+    symbol.innerHTML = `<img src="${icons[type]}" width="100%" height="100%">`;
 
     // Pop IN on insertion
     playPopIn(symbol);
@@ -1404,7 +1345,7 @@ document.addEventListener('DOMContentLoaded', () => {
       showToast('Load failed', 'Could not load symbols. Try refreshing.');
     }
     data?.forEach(s => {
-      const zone = document.querySelector(\`.zone[data-name="\${s.region}"]\`);
+      const zone = document.querySelector(`.zone[data-name="${s.region}"]`);
       if (zone) renderSymbol(zone, s.symbol, s.id);
     });
 
@@ -1444,51 +1385,6 @@ document.addEventListener('DOMContentLoaded', () => {
     return !!el.closest('#calculator') && (el.tagName === 'INPUT' || el.tagName === 'SELECT' || el.isContentEditable);
   }
 
-  /* =========================================================
-     Clear all symbols button (one request)
-  ========================================================= */
-  const clearSymbolsBtn = document.getElementById('clear-symbols-btn');
-
-  async function clearAllSymbols() {
-    // no-op if empty (optional but nice)
-    const any = document.querySelector('.symbol');
-    if (!any) {
-      showToast('Nothing to clear', 'There are no symbols on the map.');
-      return;
-    }
-
-    if (!confirm('Clear ALL symbols from the map?')) return;
-
-    setMapSyncing(true);
-
-    // Optional: instant UX (pop out locally right away)
-    document.querySelectorAll('.symbol').forEach(popOutAndRemove);
-
-    // ONE request: delete all rows
-    const { error } = await sb.from('symbols')
-      .delete()
-      .neq('id', -1); // "match everything" filter
-
-    if (error) {
-      showToast('Sync failed', 'Could not clear symbols. Try again.');
-      // restore truth if optimistic removal ran
-      await loadSymbols();
-    }
-
-    setMapSyncing(false);
-  }
-
-  clearSymbolsBtn?.addEventListener('click', (e) => {
-    e.stopPropagation();
-    clearAllSymbols();
-  });
-
-  // Tooltip matches your existing tooltip system
-  clearSymbolsBtn?.addEventListener('mouseenter', () => {
-    showTooltipFor(clearSymbolsBtn, 'Clear all symbols');
-  });
-  clearSymbolsBtn?.addEventListener('mouseleave', hideTooltip);
-
   sb.channel('symbols')
     .on('postgres_changes', { event: 'INSERT', table: 'symbols' }, payload => {
       setMapSyncing(true);
@@ -1506,7 +1402,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      const zone = document.querySelector(\`.zone[data-name="\${payload.new.region}"]\`);
+      const zone = document.querySelector(`.zone[data-name="${payload.new.region}"]`);
       if (zone) renderSymbol(zone, payload.new.symbol, payload.new.id);
 
       if (calculatorState) {
@@ -2113,6 +2009,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function extractComparableNumber(str) {
+    // Use the FIRST numeric chunk in the string as a direction hint (good enough for "$min - $max")
+    // returns null if none
     const m = String(str ?? '').match(/-?\d[\d,]*/);
     if (!m) return null;
     const n = parseInt(m[0].replace(/,/g, ''), 10);
@@ -2120,6 +2018,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function buildRollDigitColumn() {
+    // 0..9
     const inner = document.createElement('span');
     inner.className = 'roll-digit-inner';
     for (let i = 0; i <= 9; i++) {
@@ -2135,6 +2034,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (immediate) {
       innerEl.style.transition = 'none';
       innerEl.style.transform = `translateY(${-d}em)`;
+      // force reflow then restore transition so future updates animate
       void innerEl.offsetHeight;
       innerEl.style.transition = '';
     } else {
@@ -2148,21 +2048,26 @@ document.addEventListener('DOMContentLoaded', () => {
     const next = String(nextText ?? '');
     const prev = hudPrevTextByKey.get(key) ?? el.textContent ?? '';
 
+    // Reduced motion: just set text
     if (prefersReducedMotion()) {
       el.textContent = next;
       hudPrevTextByKey.set(key, next);
       return;
     }
 
+    // Direction hint (up for increase, down for decrease)
     const prevNum = extractComparableNumber(prev);
     const nextNum = extractComparableNumber(next);
     const rollUp = (prevNum != null && nextNum != null) ? (nextNum >= prevNum) : true;
 
+    // Build new structure (simple + robust)
     el.innerHTML = '';
     const wrap = document.createElement('span');
     wrap.className = 'roll-number';
     el.appendChild(wrap);
 
+    // Pad digits so columns stay aligned between prev/next (only for digit chars)
+    // We'll align by position in the string itself (including commas/$), so no complex padding.
     const maxLen = Math.max(prev.length, next.length);
     const prevP = prev.padStart(maxLen, ' ');
     const nextP = next.padStart(maxLen, ' ');
@@ -2181,9 +2086,11 @@ document.addEventListener('DOMContentLoaded', () => {
         digitBox.appendChild(inner);
         wrap.appendChild(digitBox);
 
+        // Start at prev digit (or 0 if none), then animate to next digit.
         const startDigit = isDigit(pc) ? pc : '0';
         setRollDigit(inner, startDigit, true);
 
+        // Ensure the browser has painted the start position before animating.
         requestAnimationFrame(() => {
           setRollDigit(inner, nc, false);
           void rollUp;
@@ -2191,11 +2098,13 @@ document.addEventListener('DOMContentLoaded', () => {
       } else {
         const s = document.createElement('span');
         s.className = 'roll-static';
+        // keep spacing for padded leading spaces
         s.textContent = (nc === ' ') ? '\u00A0' : nc;
         wrap.appendChild(s);
       }
     }
 
+    // Remember the actual (un-padded) next string
     hudPrevTextByKey.set(key, next);
   }
 
@@ -2217,6 +2126,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const valEl = row.querySelector('.hud-subvalue');
       hudPlayers.appendChild(row);
 
+      // Key by label so it persists even when rows are recreated
       const key = `player:${line.label}`;
       renderRollingText(valEl, line.value, key);
     });
@@ -2258,12 +2168,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const players = calculatorState.players || [];
     const playerCount = players.length;
 
+    // Elite challenge (fixed add, depends on difficulty & player count)
     const elitePerPlayer = (difficulty === 'hard') ? 100000 : 50000;
     const eliteTotal = elitePerPlayer * playerCount;
 
     let totalMin = primaryValue + totalSecondaryMin + WALL_SAFE_MIN + eliteTotal;
     let totalMax = primaryValue + totalSecondaryMax + WALL_SAFE_MAX + eliteTotal;
 
+    // Fees (12% total)
     let grandTotalMin = totalMin * 0.88;
     let grandTotalMax = totalMax * 0.88;
 
@@ -2295,6 +2207,7 @@ document.addEventListener('DOMContentLoaded', () => {
     updateHud(grandTotalMin, grandTotalMax, hudLines);
   }
 
+  // REALTIME: apply updates from other devices
   sb.channel('calculator_state')
     .on('postgres_changes', { event: 'UPDATE', table: 'calculator_state' }, payload => {
       setSyncing(false);
@@ -2322,6 +2235,3 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
-
-
-
