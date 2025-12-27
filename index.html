@@ -959,7 +959,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const hudPlayers = document.getElementById('hud-players');
 
   let activeZone = null;
-  let collapsed = false;
+  let collapsed = infoPanel.classList.contains('collapsed');
   const localInsertedSymbols = new Set();
   let calculatorState = null;
   let symbolsLoaded = false;
@@ -2013,14 +2013,55 @@ document.addEventListener('DOMContentLoaded', () => {
     const players = calculatorState.players || [];
     const playerCount = players.length;
 
+    const players = calculatorState.players || [];
+    const playerCount = players.length;
+    
     const elitePerPlayer = (difficulty === 'hard') ? 100000 : 50000;
     const eliteTotal = elitePerPlayer * playerCount;
 
-    let totalMin = primaryValue + totalSecondaryMin + WALL_SAFE_MIN + eliteTotal;
-    let totalMax = primaryValue + totalSecondaryMax + WALL_SAFE_MAX + eliteTotal;
+    // Base pot (NO elite inside the cut-split pool)
+    let baseTotalMin = primaryValue + totalSecondaryMin + WALL_SAFE_MIN;
+    let baseTotalMax = primaryValue + totalSecondaryMax + WALL_SAFE_MAX;
 
-    let grandTotalMin = totalMin * 0.88;
-    let grandTotalMax = totalMax * 0.88;
+    // Apply fees to the base pot only
+    let grandBaseMin = baseTotalMin * 0.88;
+    let grandBaseMax = baseTotalMax * 0.88;
+
+    // What you show as "Total Take" should include elite totals (since it's real money gained)
+    let grandTotalMin = grandBaseMin + eliteTotal;
+    let grandTotalMax = grandBaseMax + eliteTotal;
+
+    let html = `<strong>Actual Take:</strong><br>`;
+    html += `<span style="opacity:0.8;">(includes Wall Safe: $${WALL_SAFE_MIN.toLocaleString()}–$${WALL_SAFE_MAX.toLocaleString()})</span><br>`;
+    html += `<span style="opacity:0.8;">(includes Elite Challenge: $${elitePerPlayer.toLocaleString()} each — total $${eliteTotal.toLocaleString()})</span><br>`;
+
+    const hudLines = [];
+      players.forEach(p => {
+        const cutRaw = parseFloat(p.cut) || 0;
+        const cut = cutRaw / 100;
+
+    // Split base pot by cut...
+    const minBaseTake = grandBaseMin * cut;
+    const maxBaseTake = grandBaseMax * cut;
+
+    // ...then add fixed elite per player (NOT scaled by cut)
+    const minTake = Math.floor(minBaseTake + elitePerPlayer);
+    const maxTake = Math.floor(maxBaseTake + elitePerPlayer);
+
+    html += `${p.name}: $${minTake.toLocaleString()} - $${maxTake.toLocaleString()}<br>`;
+
+    const cutPct = Math.round(cutRaw * 10) / 10;
+    hudLines.push({
+      label: `${p.name} (${cutPct}%):`,
+      value: (minTake === maxTake)
+        ? `$${minTake.toLocaleString()}`
+        : `$${minTake.toLocaleString()} - $${maxTake.toLocaleString()}`
+  });
+});
+
+lootResultDiv.innerHTML = html;
+updateHud(grandTotalMin, grandTotalMax, hudLines);
+
 
     let html = `<strong>Actual Take:</strong><br>`;
     html += `<span style="opacity:0.8;">(includes Wall Safe: $${WALL_SAFE_MIN.toLocaleString()}–$${WALL_SAFE_MAX.toLocaleString()})</span><br>`;
@@ -2077,6 +2118,7 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
+
 
 
 
