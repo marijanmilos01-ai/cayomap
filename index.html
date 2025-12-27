@@ -258,19 +258,37 @@ body.splash-done #app {
   }
 }
 
-/* ===== MERGED BUTTONS===== */
+/* ===== UI FLOAT (single button → expands on hover) ===== */
 #ui-float {
   position: fixed;
   right: max(var(--ui-pad), env(safe-area-inset-right));
   bottom: max(var(--ui-pad), env(safe-area-inset-bottom));
+  z-index: 60;
+
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+/* container that holds the actual buttons */
+#ui-float .ui-float-menu {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  z-index: 60;
+
+  opacity: 0;
+  transform: translateY(8px);
+  pointer-events: none;
+
+  transition: opacity 160ms ease, transform 160ms ease;
 }
-  
-  #ui-float button {
-  margin: 0;
+
+/* show buttons on hover or focus */
+#ui-float:hover .ui-float-menu,
+#ui-float:focus-within .ui-float-menu {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
 }
 
 /* ===== SYMBOL PANEL ANIMATIONS ===== */
@@ -2468,6 +2486,7 @@ if (clearSymbolsBtn) {
 
 </body>
 </html>
+
 
 
 
