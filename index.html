@@ -268,6 +268,10 @@ body.splash-done #app {
   gap: 10px;
   z-index: 60;
 }
+  
+  #ui-float button {
+  margin: 0;
+}
 
 /* ===== SYMBOL PANEL ANIMATIONS ===== */
 .panel {
@@ -1035,27 +1039,35 @@ body.splash-done #app {
 
 <!-- Floating UI cluster (bottom-right) -->
 <div id="ui-float">
-  <!-- Delete all symbols -->
-  <button id="clear-symbols-btn" type="button" aria-label="Delete All Symbols">
+  <!-- Main button (always visible) -->
+  <button id="ui-float-main" type="button" aria-label="Open menu" aria-expanded="false">
     <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M3 6h18"/>
-      <path d="M8 6V4h8v2"/>
-      <path d="M6 6l1 16h10l1-16"/>
-      <path d="M10 11v6M14 11v6"/>
+      <path d="M5 12h.01M12 12h.01M19 12h.01"
+            stroke="rgba(255,255,255,0.92)" stroke-width="3" stroke-linecap="round"/>
     </svg>
   </button>
 
-  <!-- Fullscreen -->
-  <button id="fs-btn" type="button" aria-label="Toggle Fullscreen Mode">
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/>
-    </svg>
-  </button>
+  <!-- Hidden menu (shows on hover/tap) -->
+  <div class="ui-float-menu">
+    <button id="clear-symbols-btn" type="button" aria-label="Delete All Symbols">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M3 6h18"/>
+        <path d="M8 6V4h8v2"/>
+        <path d="M6 6l1 16h10l1-16"/>
+        <path d="M10 11v6M14 11v6"/>
+      </svg>
+    </button>
+
+    <button id="fs-btn" type="button" aria-label="Toggle Fullscreen Mode">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/>
+      </svg>
+    </button>
+  </div>
 </div>
 
 <!-- Tooltip stays separate -->
 <div id="ui-tooltip" class="tooltip" role="tooltip"></div>
-
 
 <!-- =========================================================
      ADDED: Toast popup element (Supabase failures)
@@ -2456,6 +2468,7 @@ if (clearSymbolsBtn) {
 
 </body>
 </html>
+
 
 
 
