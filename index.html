@@ -171,6 +171,7 @@ input, select, textarea {
   height: 100vh;
   object-fit: cover;
   background: #000;
+  pointer-events: none;
 }
 
 .splash-hint {
@@ -895,11 +896,11 @@ body.splash-done #app {
     id="splash-video"
     class="splash-video"
     preload="auto"
-    autoplay
     muted
     playsinline
-    controls="false"
+    autoplay
     disablepictureinpicture
+    controlslist="nodownload noplaybackrate noremoteplayback"
   >
     <source src="splashscreen.mp4" type="video/mp4">
   </video>
@@ -1069,86 +1070,64 @@ body.splash-done #app {
 <script>
 document.addEventListener('DOMContentLoaded', () => {
 
-  /* =========================
-     SPLASH SCREEN LOGIC
-  ========================= */
-  const splash = document.getElementById('splash');
-  const splashVideo = document.getElementById('splash-video');
-  const splashHint = document.querySelector('.splash-hint');
+/* =========================
+   SPLASH SCREEN LOGIC
+========================= */
+const splash = document.getElementById('splash');
+const splashVideo = document.getElementById('splash-video');
+const splashHint = document.querySelector('.splash-hint');
 
-  if (splash && splashVideo) {
-    document.body.classList.add('splash-active');
+if (splash && splashVideo) {
+  document.body.classList.add('splash-active');
 
-    // Make sure video never shows native controls
-    splashVideo.controls = false;
-    splashVideo.muted = true;         // required for autoplay
-    splashVideo.playsInline = true;
+  // Make sure controls never show
+  splashVideo.controls = false;
+  splashVideo.removeAttribute('controls');
+  splashVideo.loop = false;
+  splashVideo.muted = true;
+  splashVideo.playsInline = true;
 
-    let started = false;
-    let finished = false;
+  let started = false;
+  let finished = false;
 
-    function startSplash() {
-      if (started || finished) return;
-      started = true;
+  function finishSplash() {
+    if (finished) return;
+    finished = true;
 
-      splashHint?.style.setProperty('display', 'none');
+    try { splashVideo.pause(); } catch {}
 
-      // Play immediately (works because muted)
-      splashVideo.currentTime = 0;
-      const p = splashVideo.play();
-      if (p && typeof p.catch === 'function') {
-        p.catch(() => {
-          // If some browser still blocks it, allow retry on next click/key
-          started = false;
-          splashHint?.style.removeProperty('display');
-        });
-      }
-    }
+    document.body.classList.remove('splash-active');
+    document.body.classList.add('splash-done');
 
-    function finishSplash() {
-      if (finished) return;
-      finished = true;
+    setTimeout(() => splash.remove(), 650);
+  }
 
-      // stop video to be safe
-      try { splashVideo.pause(); } catch {}
+  function startSplash() {
+    if (started || finished) return;
+    started = true;
 
-      document.body.classList.remove('splash-active');
-      document.body.classList.add('splash-done');
+    splashHint?.style.setProperty('display', 'none');
 
-      setTimeout(() => {
-        splash.remove();
-      }, 650);
-    }
-
-    // Start on first click/tap OR any key
-    window.addEventListener('pointerdown', startSplash, { once: true });
-    window.addEventListener('keydown', startSplash, { once: true });
-
-    // End splash when the video finishes
-    splashVideo.addEventListener('ended', finishSplash);
-
-    // ESC to skip
-    window.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && started && !finished) {
-        finishSplash();
-      }
+    splashVideo.currentTime = 0;
+    splashVideo.play().catch(() => {
+      // If a browser blocks it, allow retry
+      started = false;
+      splashHint?.style.removeProperty('display');
     });
   }
 
-    // Start on first click or keypress
-    window.addEventListener('pointerdown', startSplash, { once: true });
-    window.addEventListener('keydown', startSplash, { once: true });
+  // Start on first click/tap OR any key
+  window.addEventListener('pointerdown', startSplash, { once: true });
+  window.addEventListener('keydown', startSplash, { once: true });
 
-    // End splash when video finishes
-    splashVideo.addEventListener('ended', finishSplash);
+  // Finish when video ends
+  splashVideo.addEventListener('ended', finishSplash);
 
-    // Allow ESC to skip
-    window.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && started && !finished) {
-        finishSplash();
-      }
-    });
-  }
+  // ESC to skip
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !finished) finishSplash();
+  });
+}
 
   /* =========================================================
      UPDATED: Counteract browser zoom for zone sizing (best-effort)
@@ -2479,6 +2458,7 @@ if (clearSymbolsBtn) {
 
 </body>
 </html>
+
 
 
 
