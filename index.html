@@ -283,12 +283,28 @@ body.splash-done #app {
   transition: opacity 160ms ease, transform 160ms ease;
 }
 
-/* show buttons on hover or focus */
+/* show buttons on hover */
 #ui-float:hover .ui-float-menu,
 #ui-float:focus-within .ui-float-menu {
   opacity: 1;
   transform: translateY(0);
   pointer-events: auto;
+}
+  /* ===== Mobile: tap to open (no hover on touch screens) ===== */
+@media (hover: none) and (pointer: coarse) {
+  /* disable hover behavior on mobile */
+  #ui-float:hover .ui-float-menu {
+    opacity: 0;
+    transform: translateY(8px);
+    pointer-events: none;
+  }
+
+  /* open only when ui-float has .open */
+  #ui-float.open .ui-float-menu {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
 }
 
 /* ===== SYMBOL PANEL ANIMATIONS ===== */
@@ -1057,11 +1073,14 @@ body.splash-done #app {
 
 <!-- Floating UI cluster (bottom-right) -->
 <div id="ui-float">
-  <!-- Main button (always visible) -->
-  <button id="ui-float-main" type="button" aria-label="Open menu" aria-expanded="false">
+
+  <!-- MAIN button (always visible) -->
+  <button id="ui-main-btn" type="button" aria-label="Open menu">
     <svg viewBox="0 0 24 24" aria-hidden="true">
       <path d="M5 12h.01M12 12h.01M19 12h.01"
-            stroke="rgba(255,255,255,0.92)" stroke-width="3" stroke-linecap="round"/>
+            stroke="rgba(255,255,255,0.92)"
+            stroke-width="3"
+            stroke-linecap="round"/>
     </svg>
   </button>
 
@@ -1082,6 +1101,7 @@ body.splash-done #app {
       </svg>
     </button>
   </div>
+
 </div>
 
 <!-- Tooltip stays separate -->
@@ -1227,6 +1247,24 @@ if (splash && splashVideo) {
     if (!symbolsLoaded || !calculatorLoaded) return;
     renderSecondaryControls();
     renderLootResult();
+  }
+
+  /* =========================================================
+     Mobile friendly Buttons
+  ========================================================= */
+  const uiFloat = document.getElementById('ui-float');
+  const uiMainBtn = document.getElementById('ui-main-btn');
+
+  if (uiFloat && uiMainBtn) {
+    uiMainBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      uiFloat.classList.toggle('open');
+    });
+
+    // Close menu when clicking anywhere else
+    document.addEventListener('click', () => {
+      uiFloat.classList.remove('open');
+    });
   }
 
   /* =========================================================
@@ -2486,6 +2524,7 @@ if (clearSymbolsBtn) {
 
 </body>
 </html>
+
 
 
 
