@@ -104,6 +104,21 @@ input, select, textarea {
   background-size:cover;
 }
 
+  /* === ADDED: vignette around map edges (only affects #map-container) === */
+#map-container::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  z-index: 5; /* stays above map background, below panels (which are z-index 20+) */
+  background: radial-gradient(
+    ellipse at center,
+    rgba(0,0,0,0) 60%,
+    rgba(0,0,0,0.65) 82%,
+    rgba(0,0,0,0.90) 100%
+  );
+}
+
 /* ===============================
    ZONES (UPDATED)
    - fixed pixel size
@@ -986,7 +1001,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const hudPlayers = document.getElementById('hud-players');
 
   let activeZone = null;
-  let collapsed = false;
+  let collapsed = infoPanel.classList.contains('collapsed');
   const localInsertedSymbols = new Set();
   let calculatorState = null;
   // Ensure derived UI (bag % + Actual Take) updates after BOTH initial loads (symbols + calculator)
@@ -2151,4 +2166,5 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
+
 
