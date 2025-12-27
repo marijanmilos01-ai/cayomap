@@ -1157,11 +1157,11 @@ body.splash-done #app {
 document.addEventListener('DOMContentLoaded', () => {
 
 /* =========================
-   SPLASH SCREEN LOGIC
+   SPLASH SCREEN LOGIC (FIXED)
 ========================= */
 const splash = document.getElementById('splash');
 const splashVideo = document.getElementById('splash-video');
-const splashHint = document.querySelector('.splash-hint');
+let splashHint = document.querySelector('.splash-hint');
 
 if (splash && splashVideo) {
   document.body.classList.add('splash-active');
@@ -1176,6 +1176,14 @@ if (splash && splashVideo) {
   let started = false;
   let finished = false;
 
+  // If you don't have a .splash-hint element in HTML, create one
+  if (!splashHint) {
+    splashHint = document.createElement('div');
+    splashHint.className = 'splash-hint';
+    splashHint.textContent = 'Click / Tap to Start';
+    splash.appendChild(splashHint);
+  }
+
   function finishSplash() {
     if (finished) return;
     finished = true;
@@ -1188,27 +1196,47 @@ if (splash && splashVideo) {
     setTimeout(() => splash.remove(), 650);
   }
 
-  function startSplash() {
+  async function startSplash() {
     if (started || finished) return;
     started = true;
 
-    splashHint?.style.setProperty('display', 'none');
+    splashHint.style.display = 'none';
 
-    splashVideo.currentTime = 0;
-    splashVideo.play().catch(() => {
-      // If a browser blocks it, allow retry
+    try {
+      splashVideo.currentTime = 0;
+      await splashVideo.play();
+      // playing succeeded; wait for ended event
+    } catch (err) {
+      // Autoplay blocked -> user needs to interact (keep hint visible)
       started = false;
-      splashHint?.style.removeProperty('display');
-    });
+      splashHint.style.display = '';
+    }
   }
 
   // Finish when video ends
   splashVideo.addEventListener('ended', finishSplash);
 
+  // If video errors, don't trap user on splash
+  splashVideo.addEventListener('error', finishSplash);
+
   // ESC to skip
   window.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && !finished) finishSplash();
   });
+
+  // Try to autoplay immediately
+  startSplash();
+
+  // Start on first user gesture (covers autoplay-blocked browsers)
+  const gestureStart = () => startSplash();
+  splash.addEventListener('pointerdown', gestureStart);
+  splash.addEventListener('click', gestureStart);
+  window.addEventListener('keydown', gestureStart, { once: true });
+
+  // Absolute failsafe: never let splash trap you forever
+  setTimeout(() => {
+    if (!finished) finishSplash();
+  }, 12000);
 }
 
   /* =========================================================
@@ -2559,3 +2587,4 @@ if (clearSymbolsBtn) {
 
 </body>
 </html>
+
