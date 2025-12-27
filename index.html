@@ -935,9 +935,12 @@ document.addEventListener('DOMContentLoaded', () => {
     toastTimer = setTimeout(() => toastEl.classList.remove('show'), ms);
   }
 
-  toastCloseBtn?.addEventListener('click', () => {
-    toastEl?.classList.remove('show');
+  if (toastCloseBtn) {
+  toastCloseBtn.addEventListener('click', () => {
+    if (toastEl) toastEl.classList.remove('show');
   });
+}
+
 
   const sb = supabase.createClient(
     'https://qanrnafvvnmimewtxrxv.supabase.co',
@@ -1143,17 +1146,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function loadNotes() {
     const { data, error } = await sb.from('notes').select('*');
-    if (error) showToast('Load failed', 'Could not load notes. Try refreshing.');
-    data?.forEach(addNote);
+    
+    if (error) {
+      showToast('Load failed', 'Could not load notes. Try refreshing.');
+      return;
+    }
+    
+    if (data && data.length) {
+      data.forEach(addNote);
+    }
   }
 
   sb.channel('notes')
-    .on('postgres_changes', { event: 'INSERT', table: 'notes' }, payload => addNote(payload.new))
+    .on('postgres_changes', { event: 'INSERT', table: 'notes' }, payload => {
+      addNote(payload.new);
+    })
     .on('postgres_changes', { event: 'DELETE', table: 'notes' }, payload => {
-      notesContainer.querySelector(\`[data-id="\${payload.old.id}"]\`)?.remove();
+      const el = notesContainer.querySelector(`[data-id="${payload.old.id}"]`);
+      if (el) el.remove();
     })
     .subscribe();
-
+  
   loadNotes();
 
   /* ================= SYMBOLS LOGIC ================= */
@@ -1380,7 +1393,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   function getPlayerCountForBag() {
-    const n = (calculatorState?.players || []).length;
+    const n = ((calculatorState && calculatorState.players) ? calculatorState.players : []).length;
     return Math.max(1, n);
   }
 
@@ -1573,7 +1586,8 @@ document.addEventListener('DOMContentLoaded', () => {
   function getSymbolCounts() {
     const counts = { Cash:0, Painting:0, Gold:0 };
     document.querySelectorAll('.symbol').forEach(s => {
-      const img = s.querySelector('img')?.src.toLowerCase();
+      const imgEl = s.querySelector('img');
+      const img = imgEl && imgEl.src ? imgEl.src.toLowerCase() : '';
       if (img?.includes('dollar')) counts.Cash++;
       if (img?.includes('painting')) counts.Painting++;
       if (img?.includes('gold')) counts.Gold++;
@@ -2062,3 +2076,4 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
+
