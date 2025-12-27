@@ -1388,9 +1388,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (localInsertedSymbols.has(payload.new.id)) {
         localInsertedSymbols.delete(payload.new.id);
+
+        // IMPORTANT: update loot availability immediately on the same client
+        if (calculatorState) {
+          renderSecondaryControls();
+          renderLootResult();
+        }
+
         setMapSyncing(false);
         return;
       }
+
       const zone = document.querySelector(`.zone[data-name="${payload.new.region}"]`);
       if (zone) renderSymbol(zone, payload.new.symbol, payload.new.id);
 
@@ -1426,9 +1434,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const secondaryLootDiv = document.getElementById('secondary-loot');
   const bagStatusDiv = document.getElementById('bag-status');
 
-  // Deterministic bag math in "bag units" (1 unit = 0.1%)
-  // capacity is dynamic: 1 player=100% (1000 units), 2=200% (2000), 3=300% (3000)
-  const BAG_PER_STACK_UNITS = { Cash: 250, Painting: 500, Gold: 667 };
+  // Bag units: 1 unit = 1/30% (divisible by 3 so Gold is exact)
+const BAG_PER_STACK_UNITS = { Cash: 750, Painting: 1500, Gold: 2000 }; // 25%, 50%, 66.666...%
 
   // always included, doesn't use bag space
   const WALL_SAFE_MIN = 20000;
@@ -1451,7 +1458,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function getBagCapacityUnits() {
-    return getPlayerCountForBag() * 1000;
+    return getPlayerCountForBag() * 3000;
   }
 
   async function loadCalculator() {
@@ -1496,19 +1503,41 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function enforceCutLimit() {
-  const totalCut = calculatorState.players.reduce((sum,p)=>sum+(parseFloat(p.cut)||0),0);
-  if (totalCut > 300 && totalCut > 0) {
-    const ratio = 300 / totalCut;
-    calculatorState.players.forEach(p => {
-      let v = Math.floor((parseFloat(p.cut) || 0) * ratio);
+  const players = calculatorState.players || [];
 
-      // enforce GTA rules: 15%–100%, steps of 5
-      v = Math.min(100, Math.max(15, v));
-      v = Math.round(v / 5) * 5;
-      v = Math.min(100, Math.max(15, v));
+  // Step 1: clamp each player to valid values
+  players.forEach(p => {
+    let v = parseFloat(p.cut) || 0;
+    v = Math.min(100, Math.max(15, v));
+    v = Math.floor(v / 5) * 5;
+    p.cut = v;
+  });
 
-      p.cut = v;
-    });
+  // Step 2: total must not exceed 100%
+  let total = players.reduce((s, p) => s + (parseFloat(p.cut) || 0), 0);
+
+  if (total <= 100) return;
+
+  // Step 3: scale down proportionally
+  const ratio = 100 / total;
+
+  players.forEach(p => {
+    let v = Math.floor((parseFloat(p.cut) || 0) * ratio);
+    v = Math.min(100, Math.max(15, v));
+    v = Math.floor(v / 5) * 5;
+    p.cut = v;
+  });
+
+  // Step 4: final safety pass (remove leftover overflow)
+  let sum = players.reduce((s, p) => s + (parseFloat(p.cut) || 0), 0);
+  while (sum > 100) {
+    const idx = players.reduce(
+      (iMax, p, i, arr) => (p.cut > arr[iMax].cut ? i : iMax),
+      0
+    );
+    if (players[idx].cut <= 15) break;
+    players[idx].cut -= 5;
+    sum -= 5;
   }
 }
 
@@ -1681,17 +1710,19 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function computeBagUsedUnits(take) {
-    const cash = (parseFloat(take.Cash) || 0);
-    const gold = (parseFloat(take.Gold) || 0);
-    const painting = (parseFloat(take.Painting) || 0);
+  // Use tenths as integers to avoid float errors (cash/gold allow 0.1)
+    const cashT = Math.round((parseFloat(take.Cash) || 0) * 10);
+    const goldT = Math.round((parseFloat(take.Gold) || 0) * 10);
+    const painting = Math.floor(parseFloat(take.Painting) || 0);
 
     const used =
-      Math.round(cash * BAG_PER_STACK_UNITS.Cash) +
-      Math.round(gold * BAG_PER_STACK_UNITS.Gold) +
-      Math.round(painting * BAG_PER_STACK_UNITS.Painting);
+      Math.round((cashT * BAG_PER_STACK_UNITS.Cash) / 10) +
+      Math.round((goldT * BAG_PER_STACK_UNITS.Gold) / 10) +
+      (painting * BAG_PER_STACK_UNITS.Painting);
 
-    return Math.max(0, used);
-  }
+  return Math.max(0, used);
+}
+
 
   function enforceBagCapacity(changedType) {
     const take = calculatorState.secondary_take || { Cash:0, Painting:0, Gold:0 };
@@ -1803,8 +1834,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const take = calculatorState.secondary_take || { Cash:0, Painting:0, Gold:0 };
 
     const suggested = computeSuggestedSecondaryTake();
-    const suggestedUsedPct = computeBagUsedUnits(suggested) / 10;
-    const capPct = getBagCapacityUnits() / 10;
+    const suggestedUsedPct = computeBagUsedUnits(suggested) / 30;
+    const capPct = getBagCapacityUnits() / 30;
 
     secondaryLootDiv.innerHTML = `
       <div class="calc-title">Secondary Loot (select what you take)</div>
@@ -1824,7 +1855,7 @@ document.addEventListener('DOMContentLoaded', () => {
       <div class="calc-row">
         <span class="calc-meta">Cash</span>
         <span class="calc-meta">available: ${available.Cash}</span>
-        <span class="calc-meta">bag: ${(BAG_PER_STACK_UNITS.Cash/10).toFixed(1)}%</span>
+        <span class="calc-meta">bag: ${(BAG_PER_STACK_UNITS.Cash/30).toFixed(1)}%</span>
         <input id="take-cash" class="calc-input" type="text" inputmode="decimal" autocomplete="off" spellcheck="false"
                value="${take.Cash}" style="width:90px;">
         <span class="calc-meta">(Enter to sync)</span>
@@ -1833,7 +1864,7 @@ document.addEventListener('DOMContentLoaded', () => {
       <div class="calc-row">
         <span class="calc-meta">Gold</span>
         <span class="calc-meta">available: ${available.Gold}</span>
-        <span class="calc-meta">bag: ${(BAG_PER_STACK_UNITS.Gold/10).toFixed(1)}%</span>
+        <span class="calc-meta">bag: ${(BAG_PER_STACK_UNITS.Gold/30).toFixed(1)}%</span>
         <input id="take-gold" class="calc-input" type="text" inputmode="decimal" autocomplete="off" spellcheck="false"
                value="${take.Gold}" style="width:90px;">
         <span class="calc-meta">(Enter to sync)</span>
@@ -1842,7 +1873,7 @@ document.addEventListener('DOMContentLoaded', () => {
       <div class="calc-row">
         <span class="calc-meta">Paintings</span>
         <span class="calc-meta">available: ${available.Painting}</span>
-        <span class="calc-meta">bag: ${(BAG_PER_STACK_UNITS.Painting/10).toFixed(0)}%</span>
+        <span class="calc-meta">bag: ${(BAG_PER_STACK_UNITS.Painting/30).toFixed(0)}%</span>
         <input id="take-painting" class="calc-input" type="text" inputmode="numeric" autocomplete="off" spellcheck="false"
                value="${Math.floor(take.Painting||0)}" style="width:90px;">
         <span class="calc-meta">(Enter to sync)</span>
@@ -2091,12 +2122,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const take = calculatorState.secondary_take || { Cash:0, Painting:0, Gold:0 };
 
     const BAG_CAPACITY_UNITS = getBagCapacityUnits();
-    const capPct = BAG_CAPACITY_UNITS / 10;
+    const capPct = BAG_CAPACITY_UNITS / 30;
 
     const usedUnits = computeBagUsedUnits(take);
-    const usedPct = usedUnits / 10;
+    const usedPct = usedUnits / 30;
     const leftUnits = Math.max(0, BAG_CAPACITY_UNITS - usedUnits);
-    const leftPct = leftUnits / 10;
+    const leftPct = leftUnits / 30;
     const bagsFull = usedUnits >= BAG_CAPACITY_UNITS;
 
     bagStatusDiv.innerHTML = bagsFull
@@ -2188,6 +2219,7 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
+
 
 
 
