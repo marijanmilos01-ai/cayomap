@@ -994,7 +994,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function popOutSymbolById(id) {
-    const el = document.querySelector(\`.symbol[data-id="\${id}"]\`);
+    const el = document.querySelector(`.symbol[data-id="${id}"]`);
     if (el) popOutAndRemove(el);
   }
 
@@ -1133,7 +1133,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   function addNote(n) {
-    if (notesContainer.querySelector(\`[data-id="\${n.id}"]\`)) return;
+    if (notesContainer.querySelector(`[data-id="${n.id}"]`)) return;
     const div = document.createElement('div');
     div.textContent = n.content;
     div.dataset.id = n.id;
@@ -1203,7 +1203,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   function renderSymbol(zone, type, id) {
-    if (zone.querySelector(\`.symbol[data-id="\${id}"]\`)) return;
+    if (zone.querySelector(`.symbol[data-id="${id}"]`)) return;
 
     const idx = zone.querySelectorAll('.symbol').length;
     if (idx >= 4) return;
@@ -1214,15 +1214,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const row = Math.floor(idx / 2);
     const col = idx % 2;
-    symbol.style.top = \`\${row * 50 + 2}%\`;
-    symbol.style.left = \`\${col * 50 + 2}%\`;
+    symbol.style.top = `${row * 50 + 2}%`;
+    symbol.style.left = `${col * 50 + 2}%`;
 
     const icons = {
       Gold: 'https://www.svgrepo.com/show/532436/gold.svg',
       Cash: 'https://www.svgrepo.com/show/175801/dollar-exchange.svg',
       Painting: 'https://www.svgrepo.com/show/535548/painting.svg'
     };
-    symbol.innerHTML = \`<img src="\${icons[type]}" width="100%" height="100%">\`;
+    symbol.innerHTML = `<img src="${icons[type]}" width="100%" height="100%">`;
 
     playPopIn(symbol);
 
@@ -1280,7 +1280,7 @@ document.addEventListener('DOMContentLoaded', () => {
       showToast('Load failed', 'Could not load symbols. Try refreshing.');
     }
     data?.forEach(s => {
-      const zone = document.querySelector(\`.zone[data-name="\${s.region}"]\`);
+      const zone = document.querySelector(`.zone[data-name="${s.region}"]`);
       if (zone) renderSymbol(zone, s.symbol, s.id);
     });
 
@@ -1338,7 +1338,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      const zone = document.querySelector(\`.zone[data-name="\${payload.new.region}"]\`);
+      const zone = document.querySelector(`.zone[data-name="${payload.new.region}"]`);
       if (zone) renderSymbol(zone, payload.new.symbol, payload.new.id);
 
       if (calculatorState) {
@@ -1588,9 +1588,9 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.symbol').forEach(s => {
       const imgEl = s.querySelector('img');
       const img = imgEl && imgEl.src ? imgEl.src.toLowerCase() : '';
-      if (img?.includes('dollar')) counts.Cash++;
-      if (img?.includes('painting')) counts.Painting++;
-      if (img?.includes('gold')) counts.Gold++;
+      if (img && img.indexOf('dollar') !== -1) counts.Cash++;
+      if (img && img.indexOf('painting') !== -1) counts.Painting++;
+      if (img && img.indexOf('gold') !== -1) counts.Gold++;
     });
     return counts;
   }
@@ -2076,4 +2076,5 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
+
 
