@@ -764,6 +764,7 @@ input, select, textarea {
 #toast button:hover {
   background: rgba(255,255,255,0.12);
 }
+
 /* ===== VIGNETTE OVERLAY (map edge darkening) ===== */
 #vignette {
   position: fixed;
@@ -780,7 +781,6 @@ input, select, textarea {
     rgba(0,0,0,0.80) 100%
   );
 }
-  
 </style>
 </head>
 
@@ -897,8 +897,8 @@ input, select, textarea {
 <div id="map-container">
   <div class="zone" style="left:50%;top:50%;" data-name="Office"></div>
   <div class="zone" style="left:45%;top:48%;" data-name="Vault"></div>
-  <div class="zone" style="left:54%;top:45%;" data-name="North Storage"></div>
-  <div class="zone" style="left:67%;top:55%;" data-name="West Storage"></div>
+  <div class="zone" style="left:54%;top:45%;" data-name="West Storage"></div>
+  <div class="zone" style="left:67%;top:55%;" data-name="North Storage"></div>
   <div class="zone" style="left:48%;top:67%;" data-name="South Storage"></div>
 </div>
 
@@ -955,11 +955,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   if (toastCloseBtn) {
-  toastCloseBtn.addEventListener('click', () => {
-    if (toastEl) toastEl.classList.remove('show');
-  });
-}
-
+    toastCloseBtn.addEventListener('click', () => {
+      if (toastEl) toastEl.classList.remove('show');
+    });
+  }
 
   const sb = supabase.createClient(
     'https://qanrnafvvnmimewtxrxv.supabase.co',
@@ -1013,7 +1012,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function popOutSymbolById(id) {
-    const el = document.querySelector(`.symbol[data-id="${id}"]`);
+    const el = document.querySelector(\`.symbol[data-id="\${id}"]\`);
     if (el) popOutAndRemove(el);
   }
 
@@ -1075,18 +1074,18 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function setFsIcon() {
-  if (!fsBtn) return;
+    if (!fsBtn) return;
 
-  fsBtn.innerHTML = isFullscreen()
-    ? `<svg viewBox="0 0 24 24" aria-hidden="true">
-         <path d="M9 3H5a2 2 0 0 0-2 2v4M15 3h4a2 2 0 0 1 2 2v4M9 21H5a2 2 0 0 1-2-2v-4M15 21h4a2 2 0 0 0 2-2v-4"/>
-         <path d="M9 9H7V7M15 9h2V7M9 15H7v2M15 15h2v2"/>
-       </svg>`
-    : `<svg viewBox="0 0 24 24" aria-hidden="true">
-         <path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/>
-         <path d="M9 9V5H5M15 9V5h4M9 15v4H5M15 15v4h4"/>
-       </svg>`;
-}
+    fsBtn.innerHTML = isFullscreen()
+      ? `<svg viewBox="0 0 24 24" aria-hidden="true">
+           <path d="M9 3H5a2 2 0 0 0-2 2v4M15 3h4a2 2 0 0 1 2 2v4M9 21H5a2 2 0 0 1-2-2v-4M15 21h4a2 2 0 0 0 2-2v-4"/>
+           <path d="M9 9H7V7M15 9h2V7M9 15H7v2M15 15h2v2"/>
+         </svg>`
+      : `<svg viewBox="0 0 24 24" aria-hidden="true">
+           <path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/>
+           <path d="M9 9V5H5M15 9V5h4M9 15v4H5M15 15v4h4"/>
+         </svg>`;
+  }
 
   async function toggleFullscreen() {
     try {
@@ -1153,7 +1152,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   function addNote(n) {
-    if (notesContainer.querySelector(`[data-id="${n.id}"]`)) return;
+    if (notesContainer.querySelector(\`[data-id="\${n.id}"]\`)) return;
     const div = document.createElement('div');
     div.textContent = n.content;
     div.dataset.id = n.id;
@@ -1166,12 +1165,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function loadNotes() {
     const { data, error } = await sb.from('notes').select('*');
-    
+
     if (error) {
       showToast('Load failed', 'Could not load notes. Try refreshing.');
       return;
     }
-    
+
     if (data && data.length) {
       data.forEach(addNote);
     }
@@ -1182,11 +1181,11 @@ document.addEventListener('DOMContentLoaded', () => {
       addNote(payload.new);
     })
     .on('postgres_changes', { event: 'DELETE', table: 'notes' }, payload => {
-      const el = notesContainer.querySelector(`[data-id="${payload.old.id}"]`);
+      const el = notesContainer.querySelector(\`[data-id="\${payload.old.id}"]\`);
       if (el) el.remove();
     })
     .subscribe();
-  
+
   loadNotes();
 
   /* ================= SYMBOLS LOGIC ================= */
@@ -1223,7 +1222,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   function renderSymbol(zone, type, id) {
-    if (zone.querySelector(`.symbol[data-id="${id}"]`)) return;
+    if (zone.querySelector(\`.symbol[data-id="\${id}"]\`)) return;
 
     const idx = zone.querySelectorAll('.symbol').length;
     if (idx >= 4) return;
@@ -1234,15 +1233,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const row = Math.floor(idx / 2);
     const col = idx % 2;
-    symbol.style.top = `${row * 50 + 2}%`;
-    symbol.style.left = `${col * 50 + 2}%`;
+    symbol.style.top = \`\${row * 50 + 2}%\`;
+    symbol.style.left = \`\${col * 50 + 2}%\`;
 
     const icons = {
       Gold: 'https://www.svgrepo.com/show/532436/gold.svg',
       Cash: 'https://www.svgrepo.com/show/175801/dollar-exchange.svg',
       Painting: 'https://www.svgrepo.com/show/535548/painting.svg'
     };
-    symbol.innerHTML = `<img src="${icons[type]}" width="100%" height="100%">`;
+    symbol.innerHTML = \`<img src="\${icons[type]}" width="100%" height="100%">\`;
 
     playPopIn(symbol);
 
@@ -1300,7 +1299,7 @@ document.addEventListener('DOMContentLoaded', () => {
       showToast('Load failed', 'Could not load symbols. Try refreshing.');
     }
     data?.forEach(s => {
-      const zone = document.querySelector(`.zone[data-name="${s.region}"]`);
+      const zone = document.querySelector(\`.zone[data-name="\${s.region}"]\`);
       if (zone) renderSymbol(zone, s.symbol, s.id);
     });
 
@@ -1340,7 +1339,6 @@ document.addEventListener('DOMContentLoaded', () => {
     return !!el.closest('#calculator') && (el.tagName === 'INPUT' || el.tagName === 'SELECT' || el.isContentEditable);
   }
 
-  // ✅ FIXED: single clean realtime handler (no duplicate orphan code)
   sb.channel('symbols')
     .on('postgres_changes', { event: 'INSERT', table: 'symbols' }, payload => {
       setMapSyncing(true);
@@ -1348,7 +1346,6 @@ document.addEventListener('DOMContentLoaded', () => {
       if (localInsertedSymbols.has(payload.new.id)) {
         localInsertedSymbols.delete(payload.new.id);
 
-        // ✅ update calculator immediately for local inserts
         if (calculatorState) {
           renderSecondaryControls();
           renderLootResult();
@@ -1358,7 +1355,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      const zone = document.querySelector(`.zone[data-name="${payload.new.region}"]`);
+      const zone = document.querySelector(\`.zone[data-name="\${payload.new.region}"]\`);
       if (zone) renderSymbol(zone, payload.new.symbol, payload.new.id);
 
       if (calculatorState) {
@@ -1392,9 +1389,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const secondaryLootDiv = document.getElementById('secondary-loot');
   const bagStatusDiv = document.getElementById('bag-status');
 
-  // Deterministic bag math in "bag units"
-  // 1 bag = 3000 units (each unit = 1/30%)
-  // This represents 2/3 exactly: Gold stack = 2000 units.
   const BAG_UNITS_PER_BAG = 3000;
   const BAG_PER_STACK_UNITS = { Cash: 750, Painting: 1500, Gold: 2000 };
 
@@ -1880,7 +1874,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // HUD roll stuff + renderLootResult (unchanged from your paste)
+  /* ================= HUD ROLL + HUD UPDATE ================= */
   const hudPrevTextByKey = new Map();
 
   function prefersReducedMotion() {
@@ -1996,6 +1990,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  /* ================= FIXED: renderLootResult (NO DUPLICATES) ================= */
   function renderLootResult() {
     if (!calculatorState) return;
 
@@ -2032,67 +2027,43 @@ document.addEventListener('DOMContentLoaded', () => {
     const players = calculatorState.players || [];
     const playerCount = players.length;
 
+    // Elite is FIXED PER PLAYER (not cut-scaled)
     const elitePerPlayer = (difficulty === 'hard') ? 100000 : 50000;
     const eliteTotal = elitePerPlayer * playerCount;
 
-    // Base pot (NO elite inside the cut-split pool)
-    let baseTotalMin = primaryValue + totalSecondaryMin + WALL_SAFE_MIN;
-    let baseTotalMax = primaryValue + totalSecondaryMax + WALL_SAFE_MAX;
+    // Base pot (NO elite inside cut pool)
+    const baseTotalMin = primaryValue + totalSecondaryMin + WALL_SAFE_MIN;
+    const baseTotalMax = primaryValue + totalSecondaryMax + WALL_SAFE_MAX;
 
-    // Apply fees to the base pot only
-    let grandBaseMin = baseTotalMin * 0.88;
-    let grandBaseMax = baseTotalMax * 0.88;
+    // Fees apply to base pot only
+    const grandBaseMin = baseTotalMin * 0.88;
+    const grandBaseMax = baseTotalMax * 0.88;
 
-    // What you show as "Total Take" should include elite totals (since it's real money gained)
-    let grandTotalMin = grandBaseMin + eliteTotal;
-    let grandTotalMax = grandBaseMax + eliteTotal;
+    // Display total includes elite
+    const grandTotalMin = grandBaseMin + eliteTotal;
+    const grandTotalMax = grandBaseMax + eliteTotal;
 
     let html = `<strong>Actual Take:</strong><br>`;
     html += `<span style="opacity:0.8;">(includes Wall Safe: $${WALL_SAFE_MIN.toLocaleString()}–$${WALL_SAFE_MAX.toLocaleString()})</span><br>`;
     html += `<span style="opacity:0.8;">(includes Elite Challenge: $${elitePerPlayer.toLocaleString()} each — total $${eliteTotal.toLocaleString()})</span><br>`;
 
     const hudLines = [];
-      players.forEach(p => {
-        const cutRaw = parseFloat(p.cut) || 0;
-        const cut = cutRaw / 100;
-
-    // Split base pot by cut...
-    const minBaseTake = grandBaseMin * cut;
-    const maxBaseTake = grandBaseMax * cut;
-
-    // ...then add fixed elite per player (NOT scaled by cut)
-    const minTake = Math.floor(minBaseTake + elitePerPlayer);
-    const maxTake = Math.floor(maxBaseTake + elitePerPlayer);
-
-    html += `${p.name}: $${minTake.toLocaleString()} - $${maxTake.toLocaleString()}<br>`;
-
-    const cutPct = Math.round(cutRaw * 10) / 10;
-    hudLines.push({
-      label: `${p.name} (${cutPct}%):`,
-      value: (minTake === maxTake)
-        ? `$${minTake.toLocaleString()}`
-        : `$${minTake.toLocaleString()} - $${maxTake.toLocaleString()}`
-  });
-});
-
-lootResultDiv.innerHTML = html;
-updateHud(grandTotalMin, grandTotalMax, hudLines);
-
-
-    html = `<strong>Actual Take:</strong><br>`;
-    html += `<span style="opacity:0.8;">(includes Wall Safe: $${WALL_SAFE_MIN.toLocaleString()}–$${WALL_SAFE_MAX.toLocaleString()})</span><br>`;
-    html += `<span style="opacity:0.8;">(includes Elite Challenge: $${eliteTotal.toLocaleString()})</span><br>`;
 
     players.forEach(p => {
       const cutRaw = parseFloat(p.cut) || 0;
       const cut = cutRaw / 100;
-      const minTake = Math.floor(grandTotalMin * cut);
-      const maxTake = Math.floor(grandTotalMax * cut);
+
+      // Split base pot by cut...
+      const minBaseTake = grandBaseMin * cut;
+      const maxBaseTake = grandBaseMax * cut;
+
+      // ...then add fixed elite per player (NOT scaled by cut)
+      const minTake = Math.floor(minBaseTake + elitePerPlayer);
+      const maxTake = Math.floor(maxBaseTake + elitePerPlayer);
 
       html += `${p.name}: $${minTake.toLocaleString()} - $${maxTake.toLocaleString()}<br>`;
 
       const cutPct = Math.round(cutRaw * 10) / 10;
-
       hudLines.push({
         label: `${p.name} (${cutPct}%):`,
         value: (minTake === maxTake)
@@ -2132,9 +2103,6 @@ updateHud(grandTotalMin, grandTotalMax, hudLines);
 </script>
 </body>
 </html>
-
-
-
 
 
 
