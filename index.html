@@ -1424,36 +1424,41 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  /* ================= DELETE ALL SYMBOLS BUTTON =================
-   Paste this RIGHT AFTER function setMapSyncing(on) { ... }
-============================================================== */
+/* ================= DELETE ALL SYMBOLS BUTTON ================= */
 
-  const clearSymbolsBtn = document.getElementById('clear-symbols-btn');
+const clearSymbolsBtn = document.getElementById('clear-symbols-btn');
 
-    if (clearSymbolsBtn) {
-      clearSymbolsBtn.addEventListener('click', async (e) => {
-        e.stopPropagation();
+if (clearSymbolsBtn) {
+  // Tooltip (add ONCE)
+  clearSymbolsBtn.addEventListener('mouseenter', () => {
+    showTooltipFor(clearSymbolsBtn, 'Delete all symbols');
+  });
+  clearSymbolsBtn.addEventListener('mouseleave', hideTooltip);
 
-      const ok = confirm('Delete ALL symbols for everyone?');
-      if (!ok) return;
+  // Click action
+  clearSymbolsBtn.addEventListener('click', async (e) => {
+    e.stopPropagation();
 
-      setMapSyncing(true);
+    const ok = confirm('Delete ALL symbols for everyone?');
+    if (!ok) return;
 
-      const { error } = await sb.from('symbols').delete().neq('id', 0);
+    setMapSyncing(true);
 
-      if (error) {
-        showToast('Sync failed', 'Could not delete symbols.');
-        setMapSyncing(false);
-        return;
-      }
-  
-    // Animate local symbols out immediately (realtime will also arrive)
-      document.querySelectorAll('.symbol').forEach(el => popOutAndRemove(el));
+    const { error } = await sb.from('symbols').delete().neq('id', 0);
 
-        setMapSyncing(false);
-        showToast('Done', 'All symbols deleted.');
-      });
+    if (error) {
+      showToast('Sync failed', 'Could not delete symbols.');
+      setMapSyncing(false);
+      return;
     }
+
+    // Animate local symbols out immediately (realtime will also arrive)
+    document.querySelectorAll('.symbol').forEach(el => popOutAndRemove(el));
+
+    setMapSyncing(false);
+    showToast('Done', 'All symbols deleted.');
+  });
+}
 
   function isCalculatorEditing() {
     const el = document.activeElement;
@@ -2311,3 +2316,4 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
+
