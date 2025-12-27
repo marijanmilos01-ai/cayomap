@@ -1254,7 +1254,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
     noteInput.value = '';
-  }
+  });
 
   function addNote(n) {
     if (notesContainer.querySelector(\`[data-id="\${n.id}"]\`)) return;
@@ -2320,4 +2320,5 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
+
 
