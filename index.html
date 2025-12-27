@@ -2083,7 +2083,7 @@ updateHud(grandTotalMin, grandTotalMax, hudLines);
     html += `<span style="opacity:0.8;">(includes Wall Safe: $${WALL_SAFE_MIN.toLocaleString()}–$${WALL_SAFE_MAX.toLocaleString()})</span><br>`;
     html += `<span style="opacity:0.8;">(includes Elite Challenge: $${eliteTotal.toLocaleString()})</span><br>`;
 
-    const hudLines = [];
+    const hudLines = 0;
 
     players.forEach(p => {
       const cutRaw = parseFloat(p.cut) || 0;
@@ -2134,6 +2134,7 @@ updateHud(grandTotalMin, grandTotalMax, hudLines);
 </script>
 </body>
 </html>
+
 
 
 
