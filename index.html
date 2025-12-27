@@ -1012,7 +1012,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function popOutSymbolById(id) {
-    const el = document.querySelector(\`.symbol[data-id="\${id}"]\`);
+    const el = document.querySelector(`.symbol[data-id="${id}"]`);
     if (el) popOutAndRemove(el);
   }
 
@@ -2103,6 +2103,7 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
+
 
 
 
