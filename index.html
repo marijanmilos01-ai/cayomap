@@ -258,6 +258,17 @@ body.splash-done #app {
   }
 }
 
+/* ===== MERGED BUTTONS===== */
+#ui-float {
+  position: fixed;
+  right: max(var(--ui-pad), env(safe-area-inset-right));
+  bottom: max(var(--ui-pad), env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 60;
+}
+
 /* ===== SYMBOL PANEL ANIMATIONS ===== */
 .panel {
   position:absolute;
@@ -312,11 +323,6 @@ body.splash-done #app {
   
 /* ===== CLEAR BUTTON ===== */
 #clear-symbols-btn {
-  position: fixed;
-  right: max(var(--ui-pad), env(safe-area-inset-right));
-  bottom: calc(max(var(--ui-pad), env(safe-area-inset-bottom)) + 64px);
-  z-index: 60;
-
   width: 54px;
   height: 54px;
   border-radius: 999px;
@@ -788,11 +794,6 @@ body.splash-done #app {
    ADDED: Floating fullscreen button (bottom-right)
 ========================================================= */
 #fs-btn {
-  position: fixed;
-  right: max(var(--ui-pad), env(safe-area-inset-right));
-  bottom: max(var(--ui-pad), env(safe-area-inset-bottom));
-  z-index: 60;
-
   width: 54px;
   height: 54px;
   border-radius: 999px;
@@ -1041,16 +1042,30 @@ body.splash-done #app {
     <path d="M10 11v6M14 11v6"/>
   </svg>
 </button>
-<!-- =========================================================
-     ADDED: floating fullscreen button + tooltip element
-========================================================= -->
-<button id="fs-btn" type="button" aria-label="Toggle Fullscreen Mode">
-  <!-- default icon will be set by JS as well, but keeping a safe initial glyph -->
-  <svg viewBox="0 0 24 24" aria-hidden="true">
-    <path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/>
-  </svg>
-</button>
+    
+<!-- Floating UI cluster (bottom-right) -->
+<div id="ui-float">
+  <!-- Delete all symbols -->
+  <button id="clear-symbols-btn" type="button" aria-label="Delete All Symbols">
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M3 6h18"/>
+      <path d="M8 6V4h8v2"/>
+      <path d="M6 6l1 16h10l1-16"/>
+      <path d="M10 11v6M14 11v6"/>
+    </svg>
+  </button>
+
+  <!-- Fullscreen -->
+  <button id="fs-btn" type="button" aria-label="Toggle Fullscreen Mode">
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/>
+    </svg>
+  </button>
+</div>
+
+<!-- Tooltip stays separate -->
 <div id="ui-tooltip" class="tooltip" role="tooltip"></div>
+
 
 <!-- =========================================================
      ADDED: Toast popup element (Supabase failures)
@@ -2451,6 +2466,7 @@ if (clearSymbolsBtn) {
 
 </body>
 </html>
+
 
 
 
