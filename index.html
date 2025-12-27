@@ -266,28 +266,30 @@ body.splash-done #app {
   z-index: 60;
 
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
+  flex-direction: column-reverse; /* main button at bottom */
+  align-items: center;
 }
 
 /* container that holds the actual buttons */
-#ui-float .ui-float-menu {
+.ui-float-menu {
   display: flex;
   flex-direction: column;
   gap: 10px;
 
+  margin-bottom: 10px;
+
   opacity: 0;
-  transform: translateY(8px);
+  transform: translateY(10px);
   pointer-events: none;
 
-  transition: opacity 160ms ease, transform 160ms ease;
+  transition: opacity 180ms ease, transform 180ms ease;
 }
 
 /* show buttons on hover */
 #ui-float:hover .ui-float-menu,
 #ui-float:focus-within .ui-float-menu {
   opacity: 1;
-  transform: translateY(0);
+  transform: translateY(-10px);
   pointer-events: auto;
 }
   /* ===== Mobile: tap to open (no hover on touch screens) ===== */
@@ -2556,6 +2558,7 @@ if (clearSymbolsBtn) {
 
 </body>
 </html>
+
 
 
 
