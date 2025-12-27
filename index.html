@@ -764,10 +764,29 @@ input, select, textarea {
 #toast button:hover {
   background: rgba(255,255,255,0.12);
 }
+/* ===== VIGNETTE OVERLAY (map edge darkening) ===== */
+#vignette {
+  position: fixed;
+  inset: 0;
+  z-index: 15;            /* above map, below panels (info-panel is 20, hud 40) */
+  pointer-events: none;
+
+  /* tweak these stops to taste */
+  background: radial-gradient(
+    ellipse at center,
+    rgba(0,0,0,0) 55%,
+    rgba(0,0,0,0.25) 72%,
+    rgba(0,0,0,0.55) 88%,
+    rgba(0,0,0,0.80) 100%
+  );
+}
+  
 </style>
 </head>
 
 <body>
+
+<div id="vignette" aria-hidden="true"></div>
 
 <div id="hud">
   <div class="hud-row">
@@ -2118,6 +2137,7 @@ updateHud(grandTotalMin, grandTotalMax, hudLines);
 </script>
 </body>
 </html>
+
 
 
 
