@@ -253,6 +253,42 @@ input, select, textarea {
   box-shadow: 0 0 8px #fff;
   transform: translateY(-2px);
 }
+  
+/* ===== CLEAR BUTTON ===== */
+#clear-symbols-btn {
+  position: fixed;
+  right: max(var(--ui-pad), env(safe-area-inset-right));
+  bottom: calc(max(var(--ui-pad), env(safe-area-inset-bottom)) + 64px);
+  z-index: 60;
+
+  width: 54px;
+  height: 54px;
+  border-radius: 999px;
+
+  background: rgba(40,40,40,0.55);
+  border: 1px solid rgba(255,255,255,0.22);
+  backdrop-filter: blur(4px);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+#clear-symbols-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.55);
+}
+
+#clear-symbols-btn svg {
+  width: 26px;
+  height: 26px;
+  stroke: rgba(255,255,255,0.95);
+  fill: none;
+  stroke-width: 2;
+}
 
 /* ===== INFO PANEL ===== */
 /* CHANGED: absolute -> fixed, and responsive widths/offsets */
@@ -920,6 +956,15 @@ input, select, textarea {
   <button data-symbol="Painting">Painting</button>
 </div>
 
+<!-- NEW: delete all symbols button (above fullscreen) -->
+<button id="clear-symbols-btn" type="button" aria-label="Delete All Symbols">
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M3 6h18"/>
+    <path d="M8 6V4h8v2"/>
+    <path d="M6 6l1 16h10l1-16"/>
+    <path d="M10 11v6M14 11v6"/>
+  </svg>
+</button>
 <!-- =========================================================
      ADDED: floating fullscreen button + tooltip element
 ========================================================= -->
@@ -1378,6 +1423,37 @@ document.addEventListener('DOMContentLoaded', () => {
       syncTextMap.textContent = 'Map synced';
     }
   }
+
+  /* ================= DELETE ALL SYMBOLS BUTTON =================
+   Paste this RIGHT AFTER function setMapSyncing(on) { ... }
+============================================================== */
+
+  const clearSymbolsBtn = document.getElementById('clear-symbols-btn');
+
+    if (clearSymbolsBtn) {
+      clearSymbolsBtn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+
+      const ok = confirm('Delete ALL symbols for everyone?');
+      if (!ok) return;
+
+      setMapSyncing(true);
+
+      const { error } = await sb.from('symbols').delete().neq('id', 0);
+
+      if (error) {
+        showToast('Sync failed', 'Could not delete symbols.');
+        setMapSyncing(false);
+        return;
+      }
+  
+    // Animate local symbols out immediately (realtime will also arrive)
+      document.querySelectorAll('.symbol').forEach(el => popOutAndRemove(el));
+
+        setMapSyncing(false);
+        showToast('Done', 'All symbols deleted.');
+      });
+    }
 
   function isCalculatorEditing() {
     const el = document.activeElement;
