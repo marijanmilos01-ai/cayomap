@@ -1116,10 +1116,6 @@ if (splash && splashVideo) {
     });
   }
 
-  // Start on first click/tap OR any key
-  window.addEventListener('pointerdown', startSplash, { once: true });
-  window.addEventListener('keydown', startSplash, { once: true });
-
   // Finish when video ends
   splashVideo.addEventListener('ended', finishSplash);
 
@@ -2458,6 +2454,7 @@ if (clearSymbolsBtn) {
 
 </body>
 </html>
+
 
 
 
