@@ -1008,7 +1008,7 @@ body.splash-done #app {
 </div>
 
 <div id="info-panel" class="collapsed">
-  <div id="info-header">Loot Panel ▼</div>
+  <div id="info-header">Loot Panel</div>
   <div id="info-content">
 
     <!-- default collapsed -->
@@ -1583,7 +1583,7 @@ if (splash && splashVideo) {
     e.stopPropagation();
     collapsed = !collapsed;
     infoPanel.classList.toggle('collapsed', collapsed);
-    infoHeader.innerHTML = collapsed ? 'Loot Panel ▼' : 'Loot Panel ▲';
+    infoHeader.innerHTML = collapsed ? 'Loot Panel' : 'Loot Panel';
   });
 
   function renderSymbol(zone, type, id) {
@@ -2603,6 +2603,7 @@ if (clearSymbolsBtn) {
 
 </body>
 </html>
+
 
 
 
