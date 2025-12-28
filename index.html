@@ -434,7 +434,7 @@ body.splash-done #app {
 }
 
 #info-panel.collapsed {
-  width: var(--panel-width-collapsed);
+  width: fit-content;
   top: clamp(10px, 2.5vw, 30px);
   left: clamp(10px, 2.5vw, 30px);
 }
@@ -445,6 +445,8 @@ body.splash-done #app {
   cursor: pointer;
   font-weight: normal;
   transition: background 0.2s ease;
+  display: inline-block;
+  white-space: nowrap;
 }
 #info-header:hover {
   background: rgba(30,30,30,0.7);
@@ -2603,6 +2605,7 @@ if (clearSymbolsBtn) {
 
 </body>
 </html>
+
 
 
 
