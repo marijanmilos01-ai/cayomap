@@ -1049,6 +1049,59 @@ body.splash-done #app {
 }
 
 /* =========================================================
+   MAP BUTTON – MATCH MAIN FLOATING BUTTON STYLE
+========================================================= */
+#map-main-btn {
+  width: 54px;
+  height: 54px;
+  border-radius: 999px;
+  background: rgba(40,40,40,0.55);
+  border: 1px solid rgba(255,255,255,0.22);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+#map-main-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.55);
+}
+
+#map-main-btn svg {
+  width: 26px;
+  height: 26px;
+  stroke: rgba(255,255,255,0.95);
+  fill: none;
+}
+
+/* Map option buttons (C / S / G / K) */
+#ui-map .ui-float-menu button {
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  background: rgba(40,40,40,0.55);
+  border: 1px solid rgba(255,255,255,0.22);
+  backdrop-filter: blur(4px);
+  color: #fff;
+  font-weight: 600;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+#ui-map .ui-float-menu button:hover {
+  transform: translateY(-2px);
+  background: rgba(60,60,60,0.75);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.5);
+}
+
+/* =========================================================
    ADDED: Toast popup (Supabase failure)
 ========================================================= */
 #toast {
@@ -3026,4 +3079,5 @@ if (clearSymbolsBtn) {
 
 </body>
 </html>
+
 
