@@ -100,8 +100,12 @@ input, select, textarea {
   position:relative;
   width:100vw;
   height:100vh;
-  background:url('compound_map.png') no-repeat center center;
+
+  /* was: background:url('compound_map.png') ... */
+  background: var(--map-bg, url('compound_map.png')) no-repeat center center;
+
   background-size:cover;
+  transition: background-image 180ms ease;
 }
 
 /* === ADDED: vignette around map edges (only affects #map-container) === */
@@ -278,19 +282,37 @@ body.splash-done #app {
   }
 }
 
-/* ===== UI FLOAT (single button → expands on hover) ===== */
-#ui-float {
+/* =========================================================
+   FLOATING UI CONTAINER (MAP + MAIN MENU)
+========================================================= */
+
+/* Wrapper that holds BOTH floating bubbles */
+#ui-float-row {
   position: fixed;
   right: max(var(--ui-pad), env(safe-area-inset-right));
   bottom: max(var(--ui-pad), env(safe-area-inset-bottom));
   z-index: 60;
 
   display: flex;
-  flex-direction: column-reverse; /* main button at bottom */
+  flex-direction: row;
+  gap: 10px;                /* spacing between the two bubbles */
+  align-items: flex-end;    /* align bottoms */
+}
+
+/* =========================================================
+   INDIVIDUAL FLOATING BUTTON GROUP
+========================================================= */
+#ui-float,
+#ui-map {
+  position: static;         /* wrapper handles positioning */
+  display: flex;
+  flex-direction: column-reverse;
   align-items: center;
 }
 
-/* container that holds the actual buttons */
+/* =========================================================
+   DROPDOWN MENU (shared)
+========================================================= */
 .ui-float-menu {
   display: flex;
   flex-direction: column;
@@ -305,24 +327,29 @@ body.splash-done #app {
   transition: opacity 180ms ease, transform 180ms ease;
 }
 
-/* show buttons on hover */
+/* Show menu on hover (desktop) */
 #ui-float:hover .ui-float-menu,
-#ui-float:focus-within .ui-float-menu {
+#ui-float:focus-within .ui-float-menu,
+#ui-map:hover .ui-float-menu,
+#ui-map:focus-within .ui-float-menu {
   opacity: 1;
   transform: translateY(-10px);
   pointer-events: auto;
 }
-  /* ===== Mobile: tap to open (no hover on touch screens) ===== */
+
+/* =========================================================
+   MOBILE: tap-to-open behavior
+========================================================= */
 @media (hover: none) and (pointer: coarse) {
-  /* disable hover behavior on mobile */
-  #ui-float:hover .ui-float-menu {
+  #ui-float:hover .ui-float-menu,
+  #ui-map:hover .ui-float-menu {
     opacity: 0;
     transform: translateY(8px);
     pointer-events: none;
   }
 
-  /* open only when ui-float has .open */
-  #ui-float.open .ui-float-menu {
+  #ui-float.open .ui-float-menu,
+  #ui-map.open .ui-float-menu {
     opacity: 1;
     transform: translateY(0);
     pointer-events: auto;
@@ -1244,34 +1271,61 @@ body.splash-done #app {
 </div>
 
 <!-- Floating UI cluster (bottom-right) -->
-<div id="ui-float">
+<div id="ui-float-row">
 
-  <!-- MAIN button (always visible) -->
-  <button id="ui-main-btn" type="button" aria-label="Open menu">
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M5 12h.01M12 12h.01M19 12h.01"
-            stroke="rgba(255,255,255,0.92)"
-            stroke-width="3"
-            stroke-linecap="round"/>
-    </svg>
-  </button>
+  <!-- NEW: Map menu (LEFT bubble) -->
+  <div id="ui-map">
 
-  <!-- Hidden menu (shows on hover/tap) -->
-  <div class="ui-float-menu">
-    <button id="clear-symbols-btn" type="button" aria-label="Delete All Symbols">
+    <!-- Map MAIN button -->
+    <button id="map-main-btn" type="button" aria-label="Change map background">
       <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M3 6h18"/>
-        <path d="M8 6V4h8v2"/>
-        <path d="M6 6l1 16h10l1-16"/>
-        <path d="M10 11v6M14 11v6"/>
+        <path d="M12 2 3 7l9 5 9-5-9-5Z" fill="none" stroke="rgba(255,255,255,0.92)" stroke-width="2" stroke-linejoin="round"/>
+        <path d="M3 12l9 5 9-5" fill="none" stroke="rgba(255,255,255,0.92)" stroke-width="2" stroke-linejoin="round"/>
+        <path d="M3 17l9 5 9-5" fill="none" stroke="rgba(255,255,255,0.92)" stroke-width="2" stroke-linejoin="round"/>
       </svg>
     </button>
 
-    <button id="fs-btn" type="button" aria-label="Toggle Fullscreen Mode">
+    <!-- Map options (shows on hover/tap) -->
+    <div class="ui-float-menu">
+      <button class="map-btn" type="button" data-map="compound" aria-label="Compound Map">C</button>
+      <button class="map-btn" type="button" data-map="satellite" aria-label="Satellite Map">S</button>
+      <button class="map-btn" type="button" data-map="guards" aria-label="Guards Map">G</button>
+      <button class="map-btn" type="button" data-map="kosatka" aria-label="Kosatka Map">K</button>
+    </div>
+
+  </div>
+
+  <!-- EXISTING: Your current menu (RIGHT bubble) -->
+  <div id="ui-float">
+
+    <!-- MAIN button (always visible) -->
+    <button id="ui-main-btn" type="button" aria-label="Open menu">
       <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/>
+        <path d="M5 12h.01M12 12h.01M19 12h.01"
+              stroke="rgba(255,255,255,0.92)"
+              stroke-width="3"
+              stroke-linecap="round"/>
       </svg>
     </button>
+
+    <!-- Hidden menu (shows on hover/tap) -->
+    <div class="ui-float-menu">
+      <button id="clear-symbols-btn" type="button" aria-label="Delete All Symbols">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M3 6h18"/>
+          <path d="M8 6V4h8v2"/>
+          <path d="M6 6l1 16h10l1-16"/>
+          <path d="M10 11v6M14 11v6"/>
+        </svg>
+      </button>
+
+      <button id="fs-btn" type="button" aria-label="Toggle Fullscreen Mode">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/>
+        </svg>
+      </button>
+    </div>
+
   </div>
 
 </div>
@@ -1293,6 +1347,39 @@ body.splash-done #app {
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+
+  /* =========================
+     MAP BUTTONS (ADD THIS)
+  ========================= */
+  const mapContainer = document.getElementById('map-container');
+  const mapButtons = document.querySelectorAll('.map-btn');
+  const uiMap = document.getElementById('ui-map');
+
+  mapButtons.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+
+      const map = btn.dataset.map; // compound / satellite / guards / kosatka
+
+      // IMPORTANT: your CSS uses --map-bg, so we set that:
+      document.documentElement.style.setProperty('--map-bg', `url('${map}_map.png')`);
+
+      // close menu on mobile after tapping
+      uiMap?.classList.remove('open');
+    });
+  });
+
+  // Mobile tap-to-open for the MAP bubble
+  const mapMainBtn = document.getElementById('map-main-btn');
+  if (uiMap && mapMainBtn) {
+    mapMainBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      uiMap.classList.toggle('open');
+    });
+
+    // clicking elsewhere closes it
+    document.addEventListener('click', () => uiMap.classList.remove('open'));
+  }
 
  /* =========================================================
    ADDED: Click SFX (no files) for interactive elements only
@@ -2939,6 +3026,4 @@ if (clearSymbolsBtn) {
 
 </body>
 </html>
-
-
 
