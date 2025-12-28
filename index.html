@@ -1294,6 +1294,158 @@ body.splash-done #app {
 <script>
 document.addEventListener('DOMContentLoaded', () => {
 
+ /* =========================================================
+   ADDED: Click SFX (no files) for interactive elements only
+   - Uses Web Audio API
+   - Plays ONLY when clicking interactive UI
+   - Respects reduced-motion users and won’t spam on drags
+========================================================= */
+
+const CLICK_SFX = (() => {
+  let ctx = null;
+  let lastTs = 0;
+
+  // "Interactive" selector list (keep in sync with your cursor list)
+  const INTERACTIVE_SEL = [
+    'a',
+    'button',
+    '[role="button"]',
+    '.zone',
+    '.symbol',
+    '#panel button',
+    '#info-header',
+    '.loot-section-header',
+    '#fs-btn',
+    '#clear-symbols-btn',
+    '#ui-main-btn',
+    'input',
+    'select',
+    'textarea'
+  ].join(',');
+
+  function prefersReducedMotion() {
+    return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  }
+
+  function ensureCtx() {
+    if (prefersReducedMotion()) return null;
+
+    if (!ctx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      ctx = new AC();
+    }
+    // Some browsers start suspended until a gesture
+    if (ctx.state === 'suspended') {
+      // resume() must be in a user gesture; our handler is.
+      ctx.resume().catch(() => {});
+    }
+    return ctx;
+  }
+
+  function isInteractiveTarget(target) {
+    if (!target) return false;
+    const el = target.closest?.(INTERACTIVE_SEL);
+    if (!el) return false;
+
+    // Ignore disabled controls
+    if (el.matches('button:disabled, input:disabled, select:disabled, textarea:disabled')) return false;
+
+    // If it's hidden/inert-ish, skip
+    const style = window.getComputedStyle(el);
+    if (style.pointerEvents === 'none' || style.visibility === 'hidden') return false;
+
+    return true;
+  }
+
+  // Tiny synthesized "click": short noise tick + a fast downward blip
+  function playClick() {
+    const ac = ensureCtx();
+    if (!ac) return;
+
+    const now = ac.currentTime;
+
+    // Throttle a bit (prevents double-fires on some mobile browsers)
+    const ms = performance.now();
+    if (ms - lastTs < 25) return;
+    lastTs = ms;
+
+    const out = ac.createGain();
+    out.gain.value = 0.0001;
+    out.connect(ac.destination);
+
+    // Overall envelope (super short)
+    out.gain.setValueAtTime(0.0001, now);
+    out.gain.exponentialRampToValueAtTime(0.20, now + 0.004);
+    out.gain.exponentialRampToValueAtTime(0.0001, now + 0.040);
+
+    // Noise tick
+    const noiseBuf = ac.createBuffer(1, Math.floor(ac.sampleRate * 0.02), ac.sampleRate);
+    const data = noiseBuf.getChannelData(0);
+    for (let i = 0; i < data.length; i++) {
+      // quick decaying noise
+      const t = i / data.length;
+      data[i] = (Math.random() * 2 - 1) * Math.pow(1 - t, 3);
+    }
+    const noise = ac.createBufferSource();
+    noise.buffer = noiseBuf;
+
+    const noiseHP = ac.createBiquadFilter();
+    noiseHP.type = 'highpass';
+    noiseHP.frequency.value = 1200;
+
+    noise.connect(noiseHP).connect(out);
+    noise.start(now);
+    noise.stop(now + 0.02);
+
+    // Blip oscillator (adds "UI click" character)
+    const osc = ac.createOscillator();
+    osc.type = 'square';
+
+    const oscGain = ac.createGain();
+    oscGain.gain.value = 0.0001;
+
+    osc.connect(oscGain).connect(out);
+
+    osc.frequency.setValueAtTime(520, now);
+    osc.frequency.exponentialRampToValueAtTime(180, now + 0.028);
+
+    oscGain.gain.setValueAtTime(0.0001, now);
+    oscGain.gain.exponentialRampToValueAtTime(0.10, now + 0.003);
+    oscGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.030);
+
+    osc.start(now);
+    osc.stop(now + 0.035);
+  }
+
+  function install() {
+    // Use pointerdown so it feels instant; only primary button/tap
+    document.addEventListener('pointerdown', (e) => {
+      if (e.button != null && e.button !== 0) return; // left click only
+      if (!isInteractiveTarget(e.target)) return;
+
+      // Optional: skip click sfx when user is typing in calculator fields
+      // (remove this if you DO want sounds for inputs)
+      const ae = document.activeElement;
+      if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA') && ae === e.target) return;
+
+      playClick();
+    }, { capture: true, passive: true });
+
+    // Also allow keyboard activation to click-sound (Enter/Space on focused buttons)
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      const t = e.target;
+      if (!isInteractiveTarget(t)) return;
+      playClick();
+    }, { capture: true });
+  }
+
+  return { install };
+})();
+
+CLICK_SFX.install();
+ 
 /* =========================
    SPLASH SCREEN LOGIC (FIXED)
 ========================= */
@@ -2787,5 +2939,6 @@ if (clearSymbolsBtn) {
 
 </body>
 </html>
+
 
 
