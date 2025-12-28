@@ -407,7 +407,40 @@ body.splash-done #app {
   box-shadow: 0 0 8px #fff;
   transform: translateY(-2px);
 }
-  
+
+/* ===== APPLY SUGGESTED (MENU) BUTTON ===== */
+#apply-suggested-menu-btn{
+  width: 54px;
+  height: 54px;
+  border-radius: 999px;
+
+  background: rgba(40,40,40,0.55);
+  border: 1px solid rgba(255,255,255,0.22);
+  backdrop-filter: blur(4px);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+#apply-suggested-menu-btn:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.55);
+}
+
+#apply-suggested-menu-btn svg{
+  width: 26px;
+  height: 26px;
+  stroke: rgba(255,255,255,0.95);
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+ 
 /* ===== CLEAR BUTTON ===== */
 #clear-symbols-btn {
   width: 54px;
@@ -1363,6 +1396,15 @@ body.splash-done #app {
 
     <!-- Hidden menu (shows on hover/tap) -->
     <div class="ui-float-menu">
+      <button id="apply-suggested-menu-btn" type="button" aria-label="Apply Suggested Loot">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <!-- simple bag icon -->
+          <path d="M9 7V6a3 3 0 0 1 6 0v1" />
+          <path d="M7 7h10l1.5 3.5-1.2 9.5a2 2 0 0 1-2 1.8H8.7a2 2 0 0 1-2-1.8L5.5 10.5 7 7Z" />
+          <path d="M9.5 12.5c.8 1 1.6 1.5 2.5 1.5s1.7-.5 2.5-1.5" />
+        </svg>
+      </button>  
+      
       <button id="clear-symbols-btn" type="button" aria-label="Delete All Symbols">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M3 6h18"/>
@@ -1457,6 +1499,7 @@ const CLICK_SFX = (() => {
     '.loot-section-header',
     '#fs-btn',
     '#clear-symbols-btn',
+    '#apply-suggested-menu-btn', 
     '#ui-main-btn',
     'input',
     'select',
@@ -1745,6 +1788,14 @@ if (splash && splashVideo) {
      Mobile friendly Buttons
   ========================================================= */
   const uiFloat = document.getElementById('ui-float');
+  const applySuggestedMenuBtn = document.getElementById('apply-suggested-menu-btn'); 
+  
+  if (applySuggestedMenuBtn) {
+    applySuggestedMenuBtn.addEventListener('click', () => {
+      applySuggestedSecondaryLoot();
+    });
+  }
+
   const uiMainBtn = document.getElementById('ui-main-btn');
 
   if (uiFloat && uiMainBtn) {
@@ -2120,6 +2171,27 @@ if (splash && splashVideo) {
       syncTextMap.textContent = 'Map synced';
     }
   }
+
+/* ================= APPLY SUGGESTED (FLOATING MENU BUTTON) ================= */
+
+const applySuggestedMenuBtn = document.getElementById('apply-suggested-menu-btn');
+
+if (applySuggestedMenuBtn) {
+  // Tooltip
+  applySuggestedMenuBtn.addEventListener('mouseenter', () => {
+    showTooltipFor(applySuggestedMenuBtn, 'Apply suggested loot');
+  });
+  applySuggestedMenuBtn.addEventListener('mouseleave', hideTooltip);
+
+  // Click action
+  applySuggestedMenuBtn.addEventListener('click', async (e) => {
+    e.stopPropagation();
+    await applySuggestedSecondaryLoot();
+
+    // close menu on mobile after tapping
+    uiFloat?.classList.remove('open');
+  });
+}  
 
 /* ================= DELETE ALL SYMBOLS BUTTON ================= */
 
@@ -2627,6 +2699,27 @@ if (clearSymbolsBtn) {
     return best;
   }
 
+  // NEW: shared "apply suggested loot" so both buttons do the same thing
+async function applySuggestedSecondaryLoot() {
+  if (!calculatorState) return;
+
+  // Compute fresh suggestion based on current symbols + player count
+  const suggested = computeSuggestedSecondaryTake();
+
+  calculatorState.secondary_take = {
+    Cash: suggested.Cash,
+    Gold: suggested.Gold,
+    Painting: suggested.Painting
+  };
+
+  clampSecondaryToAvailable();
+  await updateCalculatorState({ secondary_take: calculatorState.secondary_take });
+
+  // Re-render UI
+  renderSecondaryControls();
+  renderLootResult();
+}
+
   function renderSecondaryControls() {
     if (!calculatorState) return;
 
@@ -2723,17 +2816,9 @@ if (clearSymbolsBtn) {
 
     // Apply suggestion
     applyBtn.addEventListener('click', async (e) => {
-      e.stopPropagation();
-
-      calculatorState.secondary_take = {
-        Cash: suggested.Cash,
-        Gold: suggested.Gold,
-        Painting: suggested.Painting
-      };
-      clampSecondaryToAvailable();
-
-      await syncSecondaryTakeAndRefresh();
-    });
+  e.stopPropagation();
+  await applySuggestedSecondaryLoot();
+});
 
     // Cash: Enter/blur to sync
     cashInp.addEventListener('keydown', async e => {
@@ -3079,5 +3164,6 @@ if (clearSymbolsBtn) {
 
 </body>
 </html>
+
 
 
