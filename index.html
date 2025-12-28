@@ -58,7 +58,7 @@ html, body {
 
   /* Loot panel width scaling */
   --panel-width-open: clamp(260px, 22vw, 460px);
-  --panel-width-collapsed: clamp(160px, 14vw, 240px);
+  --panel-width-collapsed: clamp(160px, 10vw, 240px);
 
   /* ===============================
      ZONE SIZE (UPDATED)
@@ -434,7 +434,7 @@ body.splash-done #app {
 }
 
 #info-panel.collapsed {
-  width: fit-content;
+  width: var(--panel-width-collapsed);
   top: clamp(10px, 2.5vw, 30px);
   left: clamp(10px, 2.5vw, 30px);
 }
@@ -445,8 +445,6 @@ body.splash-done #app {
   cursor: pointer;
   font-weight: normal;
   transition: background 0.2s ease;
-  display: inline-block;
-  white-space: nowrap;
 }
 #info-header:hover {
   background: rgba(30,30,30,0.7);
@@ -2605,6 +2603,7 @@ if (clearSymbolsBtn) {
 
 </body>
 </html>
+
 
 
 
