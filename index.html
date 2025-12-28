@@ -852,7 +852,13 @@ body.splash-done #app {
   opacity: 0.95;
 }
 
+.hud-bags-title {
+  align-self: flex-start;
+  margin-left: 0;
+}
+
 .hud-bag-bar{
+  display: block; /* ✅ helps sizing behave consistently */
   width: clamp(120px, 14vw, 220px);
   height: clamp(14px, 1.6vw, 22px);
 
@@ -869,12 +875,13 @@ body.splash-done #app {
 }
 
 .hud-bag-fill{
+  display: block; /* ✅ IMPORTANT: inline spans ignore width */
   height: 100%;
   width: 0%;
   background: rgba(255,255,255,0.95);
   position: relative;
 
-  transition: width 360ms var(--hud-roll-ease), background-color 180ms ease;
+  transition: width 360ms var(--hud-roll-ease), background 180ms ease;
 
   box-shadow: inset 0 0 0 rgba(0,0,0,0);
 }
@@ -911,7 +918,7 @@ body.splash-done #app {
   box-shadow:
     0 0 12px rgba(179,233,183,0.45),
     0 0 22px rgba(179,233,183,0.18);
-}  
+}
 
 /* =========================================================
    ADDED: Shared tooltip style (for zones + fullscreen button)
@@ -2759,6 +2766,7 @@ if (clearSymbolsBtn) {
 
 </body>
 </html>
+
 
 
 
