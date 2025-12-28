@@ -2610,51 +2610,62 @@ if (clearSymbolsBtn) {
     });
   }
 
-  function updateHudBags(totalUsedPct, bagCount) {
-  const bars = document.getElementById('hud-bag-bars');
-  if (!bars) return;
+ function updateHudBags(totalUsedPct, bagCount) {
+  const container = document.getElementById('hud-bag-bars');
+  if (!container) return;
 
   const n = Math.max(1, bagCount || 1);
   const used = Math.max(0, totalUsedPct || 0);
 
-  bars.innerHTML = '';
-
-  for (let i = 1; i <= n; i++) {
-    // totalUsedPct is overall bag percent across all bags
-    // bag #i gets the slice: [ (i-1)*100 .. i*100 ]
-    const fillPct = Math.max(0, Math.min(100, used - (i - 1) * 100));
-
+  // Create or remove bars to match player count
+  while (container.children.length < n) {
     const row = document.createElement('div');
     row.className = 'hud-bag-row';
 
     const label = document.createElement('span');
     label.className = 'hud-bag-label';
-    label.textContent = `Bag #${i}:`;
+    label.textContent = `Bag #${container.children.length + 1}:`;
 
     const bar = document.createElement('span');
     bar.className = 'hud-bag-bar';
 
     const fill = document.createElement('span');
     fill.className = 'hud-bag-fill';
-    fill.style.width = `${fillPct}%`;
-
-    // full turns green + glows
-    if (fillPct >= 100) {
-      fill.classList.add('full');
-    } else {
-      // sweep animation (restart each update)
-      fill.classList.add('sweep');
-      requestAnimationFrame(() => {
-        fill.classList.remove('sweep');
-        void fill.offsetWidth; // reflow to restart animation
-        fill.classList.add('sweep');
-      });
-    }
+    fill.style.width = '0%';
 
     bar.appendChild(fill);
     row.appendChild(label);
     row.appendChild(bar);
-    bars.appendChild(row);
+    container.appendChild(row);
+  }
+
+  while (container.children.length > n) {
+    container.removeChild(container.lastChild);
+  }
+
+  // Animate fill amounts
+  for (let i = 0; i < n; i++) {
+    const row = container.children[i];
+    const fill = row.querySelector('.hud-bag-fill');
+
+    const fillPct = Math.max(0, Math.min(100, used - i * 100));
+    const prev = parseFloat(fill.dataset.prev || '0');
+
+    fill.dataset.prev = fillPct;
+    fill.style.width = `${fillPct}%`;
+
+    if (fillPct >= 100) {
+      fill.classList.add('full');
+    } else {
+      fill.classList.remove('full');
+    }
+
+    // animate only when increasing
+    if (fillPct > prev) {
+      fill.classList.remove('sweep');
+      void fill.offsetWidth; // force reflow
+      fill.classList.add('sweep');
+    }
   }
 }
 
@@ -2766,6 +2777,7 @@ if (clearSymbolsBtn) {
 
 </body>
 </html>
+
 
 
 
