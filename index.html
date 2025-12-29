@@ -96,32 +96,16 @@ input, select, textarea {
   cursor: var(--hover-cursor);
 }
 
-#map-container{
-  position: relative;
-  width: 100vw;
-  height: 100vh;
-  overflow: hidden;
-}
+#map-container {
+  position:relative;
+  width:100vw;
+  height:100vh;
 
-/* a “window” you can pan inside */
-#map-viewport{
-  position:absolute;
-  inset:0;
-  overflow:hidden;
-}
-
-/* the zoomed/panned world (background + zones) */
-#map-world{
-  position:absolute;
-  inset:0;
-
+  /* was: background:url('compound_map.png') ... */
   background: var(--map-bg, url('compound_map.png')) no-repeat center center;
-  background-size: cover;
-  transition: background-image 180ms ease;
 
-  transform-origin: 0 0;
-  transform: translate(var(--pan-x, 0px), var(--pan-y, 0px)) scale(var(--map-zoom, 1));
-  will-change: transform;
+  background-size:cover;
+  transition: background-image 180ms ease;
 }
 
 /* === ADDED: vignette around map edges (only affects #map-container) === */
@@ -166,7 +150,7 @@ input, select, textarea {
   transition: all 0.3s ease;
 
   /* counteract browser zoom (best-effort via devicePixelRatio) */
-  transform: scale(calc(var(--inv-zoom) * (1 / var(--map-zoom, 1))));
+  transform: scale(var(--inv-zoom));
   transform-origin: top left;
 }
 .zone:hover {
@@ -1356,20 +1340,14 @@ body.splash-done #app {
 </div> <!-- end #info-panel -->
 
 <div id="map-container">
-  <div id="map-viewport">
-    <div id="map-world">
 
-      <!-- zones stay here so they move with the map -->
-      <div class="zone" style="left:50%;top:50%;" data-name="Office"></div>
-      <div class="zone" style="left:45%;top:48%;" data-name="Vault"></div>
-      <div class="zone" style="left:54%;top:45%;" data-name="West Storage"></div>
-      <div class="zone" style="left:67%;top:55%;" data-name="North Storage"></div>
-      <div class="zone" style="left:48%;top:67%;" data-name="South Storage"></div>
-
-    </div>
-  </div>
+  <!-- UPDATED: removed width/height %; zones are now fixed pixel squares via CSS -->
+  <div class="zone" style="left:50%;top:50%;" data-name="Office"></div>
+  <div class="zone" style="left:45%;top:48%;" data-name="Vault"></div>
+  <div class="zone" style="left:54%;top:45%;" data-name="West Storage"></div>
+  <div class="zone" style="left:67%;top:55%;" data-name="North Storage"></div>
+  <div class="zone" style="left:48%;top:67%;" data-name="South Storage"></div>
 </div>
-
 
 <div id="panel" class="panel">
   <h3 id="panel-title"></h3>
@@ -1471,88 +1449,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const mapContainer = document.getElementById('map-container');
   const mapButtons = document.querySelectorAll('.map-btn');
   const uiMap = document.getElementById('ui-map');
-
-  let mapZoom = 1;
-  let panX = 0;
-  let panY = 0;
-  
-  const mapViewport = document.getElementById('map-viewport');
-
-  function applyMapTransform() {
-    document.documentElement.style.setProperty('--map-zoom', String(mapZoom));
-    document.documentElement.style.setProperty('--pan-x', `${panX}px`);
-    document.documentElement.style.setProperty('--pan-y', `${panY}px`);
-
-    // keep tooltip aligned if visible
-    if (typeof positionTooltip === 'function') positionTooltip();
-  }
-
-  // ===== Middle-mouse drag pan =====
-let isPanning = false;
-let panLastX = 0;
-let panLastY = 0;
-
-mapViewport.addEventListener('pointerdown', (e) => {
-  // Middle mouse only
-  if (e.button !== 1) return;
-
-  e.preventDefault(); // stops autoscroll “wheel” behavior in many browsers
-  isPanning = true;
-  panLastX = e.clientX;
-  panLastY = e.clientY;
-
-  mapViewport.setPointerCapture(e.pointerId);
-  mapViewport.style.cursor = 'grabbing';
-}, { passive: false });
-
-mapViewport.addEventListener('pointermove', (e) => {
-  if (!isPanning) return;
-
-  const dx = e.clientX - panLastX;
-  const dy = e.clientY - panLastY;
-  panLastX = e.clientX;
-  panLastY = e.clientY;
-
-  panX += dx;
-  panY += dy;
-
-  applyMapTransform();
-});
-
-function stopPan() {
-  if (!isPanning) return;
-  isPanning = false;
-  mapViewport.style.cursor = '';
-}
-
-mapViewport.addEventListener('pointerup', stopPan);
-mapViewport.addEventListener('pointercancel', stopPan);
-
-// Optional: prevent the browser “autoscroll” icon on middle click in some browsers
-mapViewport.addEventListener('auxclick', (e) => {
-  if (e.button === 1) e.preventDefault();
-}, { passive: false });
-
-
-  mapViewport.addEventListener('wheel', (e) => {
-    e.preventDefault();
-
-    const rect = mapViewport.getBoundingClientRect();
-    const mx = e.clientX - rect.left;
-    const my = e.clientY - rect.top;
-
-    const zoomFactor = Math.exp(-e.deltaY * 0.0012);
-    const next = Math.min(2.75, Math.max(0.75, mapZoom * zoomFactor));
-
-    const scaleChange = next / mapZoom;
-    panX = mx - (mx - panX) * scaleChange;
-    panY = my - (my - panY) * scaleChange;
-
-    mapZoom = next;
-    applyMapTransform();
-  }, { passive: false });
-
-  applyMapTransform();
 
   mapButtons.forEach(btn => {
     btn.addEventListener('click', (e) => {
@@ -3266,8 +3162,6 @@ async function applySuggestedSecondaryLoot() {
 
 </body>
 </html>
-
-
 
 
 
