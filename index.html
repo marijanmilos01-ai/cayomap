@@ -1487,6 +1487,53 @@ document.addEventListener('DOMContentLoaded', () => {
     if (typeof positionTooltip === 'function') positionTooltip();
   }
 
+  // ===== Middle-mouse drag pan =====
+let isPanning = false;
+let panLastX = 0;
+let panLastY = 0;
+
+mapViewport.addEventListener('pointerdown', (e) => {
+  // Middle mouse only
+  if (e.button !== 1) return;
+
+  e.preventDefault(); // stops autoscroll “wheel” behavior in many browsers
+  isPanning = true;
+  panLastX = e.clientX;
+  panLastY = e.clientY;
+
+  mapViewport.setPointerCapture(e.pointerId);
+  mapViewport.style.cursor = 'grabbing';
+}, { passive: false });
+
+mapViewport.addEventListener('pointermove', (e) => {
+  if (!isPanning) return;
+
+  const dx = e.clientX - panLastX;
+  const dy = e.clientY - panLastY;
+  panLastX = e.clientX;
+  panLastY = e.clientY;
+
+  panX += dx;
+  panY += dy;
+
+  applyMapTransform();
+});
+
+function stopPan() {
+  if (!isPanning) return;
+  isPanning = false;
+  mapViewport.style.cursor = '';
+}
+
+mapViewport.addEventListener('pointerup', stopPan);
+mapViewport.addEventListener('pointercancel', stopPan);
+
+// Optional: prevent the browser “autoscroll” icon on middle click in some browsers
+mapViewport.addEventListener('auxclick', (e) => {
+  if (e.button === 1) e.preventDefault();
+}, { passive: false });
+
+
   mapViewport.addEventListener('wheel', (e) => {
     e.preventDefault();
 
@@ -3219,6 +3266,7 @@ async function applySuggestedSecondaryLoot() {
 
 </body>
 </html>
+
 
 
 
