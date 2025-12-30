@@ -3120,28 +3120,32 @@ async function applySuggestedSecondaryLoot() {
     const players = calculatorState.players || [];
     const playerCount = players.length;
 
-    // Elite challenge (fixed add, depends on difficulty & player count)
     const players = calculatorState.players || [];
     const playerCount = Math.max(1, players.length);
 
-    // Elite challenge bonus (NOT subject to fees, NOT affected by cut %)
-    const elitePerPlayer = (difficulty === 'hard') ? 100000 : 50000;
+// Elite challenge bonus (NOT subject to fees, NOT affected by cut %)
+const elitePerPlayer = (difficulty === 'hard') ? 100000 : 50000;
+const eliteTotal = elitePerPlayer * playerCount;
 
-    // Heist take BEFORE fees (do NOT include Elite here)
-    const heistMin = primaryValue + totalSecondaryMin + WALL_SAFE_MIN;
-    const heistMax = primaryValue + totalSecondaryMax + WALL_SAFE_MAX;
+// Heist take BEFORE fees (do NOT include Elite here)
+const heistMin = primaryValue + totalSecondaryMin + WALL_SAFE_MIN;
+const heistMax = primaryValue + totalSecondaryMax + WALL_SAFE_MAX;
 
-    // Apply fees ONLY to heist take
-    const heistAfterFeesMin = heistMin * 0.88;
-    const heistAfterFeesMax = heistMax * 0.88;
+// Apply fees ONLY to heist take
+const heistAfterFeesMin = heistMin * 0.88;
+const heistAfterFeesMax = heistMax * 0.88;
 
-    let html = `<strong>Actual Take:</strong><br>`;
-    html += `<span style="opacity:0.8;">(includes Wall Safe: $${WALL_SAFE_MIN.toLocaleString()}–$${WALL_SAFE_MAX.toLocaleString()})</span><br>`;
-    html += `<span style="opacity:0.8;">(includes Elite Challenge: $${eliteTotal.toLocaleString()})</span><br>`;
+// Grand total (HUD Total Take) = heist after fees + elite total (elite is not taxed)
+const grandTotalMin = heistAfterFeesMin + eliteTotal;
+const grandTotalMax = heistAfterFeesMax + eliteTotal;
 
-    const hudLines = [];
+let html = `<strong>Actual Take:</strong><br>`;
+html += `<span style="opacity:0.8;">(includes Wall Safe: $${WALL_SAFE_MIN.toLocaleString()}–$${WALL_SAFE_MAX.toLocaleString()})</span><br>`;
+html += `<span style="opacity:0.8;">(includes Elite Challenge: $${eliteTotal.toLocaleString()})</span><br>`;
 
-    players.forEach(p => {
+const hudLines = [];
+
+players.forEach(p => {
   const cutRaw = parseFloat(p.cut) || 0;
   const cut = cutRaw / 100;
 
@@ -3162,6 +3166,10 @@ async function applySuggestedSecondaryLoot() {
       : `$${minTake.toLocaleString()} - $${maxTake.toLocaleString()}`
   });
 });
+
+lootResultDiv.innerHTML = html;
+updateHud(grandTotalMin, grandTotalMax, hudLines);
+
 
       // HUD: show Primary / Secondary take
     if (hudPrimary) {
@@ -3216,3 +3224,4 @@ async function applySuggestedSecondaryLoot() {
 
 </body>
 </html>
+
