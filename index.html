@@ -3121,15 +3121,19 @@ async function applySuggestedSecondaryLoot() {
     const playerCount = players.length;
 
     // Elite challenge (fixed add, depends on difficulty & player count)
+    const players = calculatorState.players || [];
+    const playerCount = Math.max(1, players.length);
+
+    // Elite challenge bonus (NOT subject to fees, NOT affected by cut %)
     const elitePerPlayer = (difficulty === 'hard') ? 100000 : 50000;
-    const eliteTotal = elitePerPlayer * playerCount;
 
-    let totalMin = primaryValue + totalSecondaryMin + WALL_SAFE_MIN + eliteTotal;
-    let totalMax = primaryValue + totalSecondaryMax + WALL_SAFE_MAX + eliteTotal;
+    // Heist take BEFORE fees (do NOT include Elite here)
+    const heistMin = primaryValue + totalSecondaryMin + WALL_SAFE_MIN;
+    const heistMax = primaryValue + totalSecondaryMax + WALL_SAFE_MAX;
 
-    // Fees (12% total)
-    let grandTotalMin = totalMin * 0.88;
-    let grandTotalMax = totalMax * 0.88;
+    // Apply fees ONLY to heist take
+    const heistAfterFeesMin = heistMin * 0.88;
+    const heistAfterFeesMax = heistMax * 0.88;
 
     let html = `<strong>Actual Take:</strong><br>`;
     html += `<span style="opacity:0.8;">(includes Wall Safe: $${WALL_SAFE_MIN.toLocaleString()}–$${WALL_SAFE_MAX.toLocaleString()})</span><br>`;
@@ -3138,22 +3142,27 @@ async function applySuggestedSecondaryLoot() {
     const hudLines = [];
 
     players.forEach(p => {
-      const cutRaw = parseFloat(p.cut) || 0;
-      const cut = cutRaw / 100;
-      const minTake = Math.floor(grandTotalMin * cut);
-      const maxTake = Math.floor(grandTotalMax * cut);
+  const cutRaw = parseFloat(p.cut) || 0;
+  const cut = cutRaw / 100;
 
-      html += `${p.name}: $${minTake.toLocaleString()} - $${maxTake.toLocaleString()}<br>`;
+  const minTake = Math.floor(heistAfterFeesMin * cut) + elitePerPlayer;
+  const maxTake = Math.floor(heistAfterFeesMax * cut) + elitePerPlayer;
 
-      const cutPct = Math.round(cutRaw * 10) / 10;
+  // MAIN PLAYER LINE
+  html += `<div><strong>${p.name} (${cutRaw}%):</strong> $${minTake.toLocaleString()} - $${maxTake.toLocaleString()}</div>`;
 
-      hudLines.push({
-        label: `${p.name} (${cutPct}%):`,
-        value: (minTake === maxTake)
-          ? `$${minTake.toLocaleString()}`
-          : `$${minTake.toLocaleString()} - $${maxTake.toLocaleString()}`
-      });
-    });
+  // ELITE BONUS LINE (always shown, not part of cut)
+  html += `<div style="margin-left:14px; opacity:0.85;">Elite Challenge: $${elitePerPlayer.toLocaleString()}</div>`;
+
+  // HUD
+  hudLines.push({
+    label: `${p.name} (${cutRaw}%):`,
+    value: (minTake === maxTake)
+      ? `$${minTake.toLocaleString()}`
+      : `$${minTake.toLocaleString()} - $${maxTake.toLocaleString()}`
+  });
+});
+
       // HUD: show Primary / Secondary take
     if (hudPrimary) {
       renderRollingText(
@@ -3207,10 +3216,3 @@ async function applySuggestedSecondaryLoot() {
 
 </body>
 </html>
-
-
-
-
-
-
-
