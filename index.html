@@ -3117,11 +3117,8 @@ async function applySuggestedSecondaryLoot() {
       totalSecondaryMax += qty * range[1];
     });
 
-    const players = calculatorState.players || [];
-    const playerCount = players.length;
-
-    const players = calculatorState.players || [];
-    const playerCount = Math.max(1, players.length);
+const players = calculatorState.players || [];
+const playerCount = Math.max(1, players.length);
 
 // Elite challenge bonus (NOT subject to fees, NOT affected by cut %)
 const elitePerPlayer = (difficulty === 'hard') ? 100000 : 50000;
@@ -3224,4 +3221,5 @@ updateHud(grandTotalMin, grandTotalMax, hudLines);
 
 </body>
 </html>
+
 
