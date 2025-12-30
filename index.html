@@ -254,6 +254,16 @@ body.splash-done #app {
   box-shadow: 0 0 10px rgba(255,255,255,0.9);
   background-color: rgba(255, 255, 255, 1);
 }
+  /* Horizontal scroll on small screens (4:3 etc) */
+.hscroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Keep tables from squishing too hard */
+.hscroll .loot-table {
+  min-width: 520px; /* tweak if you want */
+}
 
 /* =========================================================
    ADDED: Pop-in / pop-out animations for insertable symbols
@@ -1220,6 +1230,17 @@ body.splash-done #app {
     <span class="hud-label">Total Take:</span>
     <span class="hud-value" id="hud-total">$0</span>
   </div>
+
+  <!-- NEW: Primary/Secondary take -->
+  <div class="hud-row">
+    <span class="hud-label">Primary Take:</span>
+    <span class="hud-subvalue" id="hud-primary">$0</span>
+  </div>
+  <div class="hud-row">
+    <span class="hud-label">Secondary Take:</span>
+    <span class="hud-subvalue" id="hud-secondary">$0</span>
+  </div>
+
   <div class="hud-divider"></div>
   <div id="hud-players"></div>
 
@@ -1242,7 +1263,8 @@ body.splash-done #app {
         <div class="loot-section-title">Primary Loot Table</div>
         <div class="loot-section-chevron">▼</div>
       </div>
-      <div class="loot-section-body">
+     <div class="loot-section-body">
+      <div class="hscroll">
         <table class="loot-table">
           <tr><th>Primary Loot</th><th>Normal</th><th>Hard</th><td>Rarity &lt;72H</td><td>Rarity &gt;72H</td></tr>
           <tr><td>Tequila</td><td>$630k</td><td>$693k</td><td>47.6%</td><td>25%</td></tr>
@@ -1260,8 +1282,9 @@ body.splash-done #app {
         <div class="loot-section-title">Secondary Loot Table</div>
         <div class="loot-section-chevron">▼</div>
       </div>
-      <div class="loot-section-body">
-        <table class="loot-table">
+   <div class="loot-section-body">
+     <div class="hscroll">
+       <table class="loot-table">
           <tr><th>Secondary Loot</th><th>Bag %</th><th>Value Stack</th></tr>
           <tr><td>Wall Safe</td><td>0%</td><td>$20k–$99k</td></tr>
           <tr><td>Cash</td><td>25%</td><td>$78k–$89k</td></tr>
@@ -1617,11 +1640,12 @@ const CLICK_SFX = (() => {
 
     // Also allow keyboard activation to click-sound (Enter/Space on focused buttons)
     document.addEventListener('keydown', (e) => {
-      if (e.key !== 'Enter' && e.key !== ' ') return;
-      const t = e.target;
-      if (!isInteractiveTarget(t)) return;
-      playClick();
-    }, { capture: true });
+  if (e.key !== 'Enter') return; // ✅ no Spacebar sound anymore
+  const t = e.target;
+  if (!isInteractiveTarget(t)) return;
+  playClick();
+}, { capture: true });
+
   }
 
   return { install };
@@ -1766,6 +1790,8 @@ if (splash && splashVideo) {
 
   const hudTotal = document.getElementById('hud-total');
   const hudPlayers = document.getElementById('hud-players');
+  const hudPrimary = document.getElementById('hud-primary');
+  const hudSecondary = document.getElementById('hud-secondary');
 
   let activeZone = null;
 
@@ -3126,6 +3152,23 @@ async function applySuggestedSecondaryLoot() {
           : `$${minTake.toLocaleString()} - $${maxTake.toLocaleString()}`
       });
     });
+      // HUD: show Primary / Secondary take
+    if (hudPrimary) {
+      renderRollingText(
+        hudPrimary,
+        `$${Math.floor(primaryValue || 0).toLocaleString()}`,
+        'hud-primary'
+      );
+    }
+    
+    if (hudSecondary) {
+      const secText =
+        totalSecondaryMin === totalSecondaryMax
+        ? `$${Math.floor(totalSecondaryMin || 0).toLocaleString()}`
+        : `$${Math.floor(totalSecondaryMin || 0).toLocaleString()} - $${Math.floor(totalSecondaryMax || 0).toLocaleString()}`;
+      
+      erRollingText(hudSecondary, secText, 'hud-secondary');
+    }
 
     lootResultDiv.innerHTML = html;
     updateHud(grandTotalMin, grandTotalMax, hudLines);
@@ -3162,6 +3205,7 @@ async function applySuggestedSecondaryLoot() {
 
 </body>
 </html>
+
 
 
 
