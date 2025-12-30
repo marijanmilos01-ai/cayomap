@@ -1275,6 +1275,7 @@ body.splash-done #app {
         </table>
       </div>
     </div>
+  </div>
 
     <!-- default collapsed -->
     <div class="loot-section collapsed" data-section="secondary">
@@ -1293,7 +1294,8 @@ body.splash-done #app {
         </table>
       </div>
     </div>
-
+  </div>
+    
     <!-- default collapsed -->
     <div class="loot-section collapsed" data-section="fee">
       <div class="loot-section-header">
@@ -3167,7 +3169,7 @@ async function applySuggestedSecondaryLoot() {
         ? `$${Math.floor(totalSecondaryMin || 0).toLocaleString()}`
         : `$${Math.floor(totalSecondaryMin || 0).toLocaleString()} - $${Math.floor(totalSecondaryMax || 0).toLocaleString()}`;
       
-      erRollingText(hudSecondary, secText, 'hud-secondary');
+      renderRollingText(hudSecondary, secText, 'hud-secondary');
     }
 
     lootResultDiv.innerHTML = html;
@@ -3205,6 +3207,7 @@ async function applySuggestedSecondaryLoot() {
 
 </body>
 </html>
+
 
 
 
