@@ -3129,28 +3129,34 @@ async function applySuggestedSecondaryLoot() {
   }
 
   function updateHud(grandTotalMin, grandTotalMax, playerLines) {
-    const totalText = (grandTotalMin === grandTotalMax)
-      ? `$${Math.floor(grandTotalMin).toLocaleString()}`
-      : `$${Math.floor(grandTotalMin).toLocaleString()} - $${Math.floor(grandTotalMax).toLocaleString()}`;
+  const totalText = (grandTotalMin === grandTotalMax)
+    ? `$${Math.floor(grandTotalMin).toLocaleString()}`
+    : `$${Math.floor(grandTotalMin).toLocaleString()} - $${Math.floor(grandTotalMax).toLocaleString()}`;
 
-    renderRollingText(hudTotal, totalText, 'hud-total');
+  renderRollingText(hudTotal, totalText, 'hud-total');
 
-    hudPlayers.innerHTML = '';
-    (playerLines || []).forEach((line, idx) => {
-      const row = document.createElement('div');
-      row.className = 'hud-row';
-      row.innerHTML = `
-        <span class="hud-label">${line.label}</span>
-        <span class="hud-subvalue"></span>
-      `;
-      const valEl = row.querySelector('.hud-subvalue');
-      hudPlayers.appendChild(row);
+  // rebuild rows (ok), but use stable keys by index
+  hudPlayers.innerHTML = '';
 
-      // Key by label so it persists even when rows are recreated
-      const key = `player:${line.label}`;
-      renderRollingText(valEl, line.value, key);
-    });
-  }
+  (playerLines || []).forEach((line, idx) => {
+    const row = document.createElement('div');
+    row.className = 'hud-row';
+
+    const labelEl = document.createElement('span');
+    labelEl.className = 'hud-label';
+    labelEl.textContent = line.label;
+
+    const valEl = document.createElement('span');
+    valEl.className = 'hud-subvalue';
+
+    row.appendChild(labelEl);
+    row.appendChild(valEl);
+    hudPlayers.appendChild(row);
+
+    // ✅ stable key even if the label text changes
+    renderRollingText(valEl, line.value, `player:${idx}`);
+  });
+}
 
  function updateHudBags(totalUsedPct, bagCount) {
   const container = document.getElementById('hud-bag-bars');
@@ -3364,10 +3370,6 @@ if (hudElite) {
   );
 }
 
-    lootResultDiv.innerHTML = html;
-    updateHud(grandTotalMin, grandTotalMax, hudLines);
-  }
-
   // REALTIME: apply updates from other devices
   sb.channel('calculator_state')
     .on('postgres_changes', { event: 'UPDATE', table: 'calculator_state' }, payload => {
@@ -3423,6 +3425,7 @@ document.addEventListener('keydown', (e) => {
 
 </body>
 </html>
+
 
 
 
