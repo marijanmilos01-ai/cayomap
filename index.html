@@ -2831,6 +2831,10 @@ async function applySuggestedSecondaryLoot() {
     Painting: suggested.Painting
   };
 
+  // 🔧 ensures precision + full bag usage
+  calculatorState.secondary_take.Cash =
+    Math.round(calculatorState.secondary_take.Cash * 1000) / 1000;
+
   clampSecondaryToAvailable();
   await updateCalculatorState({ secondary_take: calculatorState.secondary_take });
 
@@ -3391,6 +3395,7 @@ document.addEventListener('keydown', (e) => {
 
 </body>
 </html>
+
 
 
 
