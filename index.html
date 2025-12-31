@@ -2141,18 +2141,23 @@ const USERNAME_KEY = 'cayo_username';
 function getOrCreateUsername() {
   let name = localStorage.getItem(USERNAME_KEY);
 
-  if (!name) {
-    name = prompt('Pick a username (shown to others):');
-    if (!name || !name.trim()) {
-      name = 'Guest' + Math.floor(Math.random() * 1000);
-    }
-    localStorage.setItem(USERNAME_KEY, name.trim());
+  if (!name || !name.trim()) {
+    const entered = prompt('Pick a username (shown to others):');
+
+    // If user pressed Esc, DO NOT save Guest. Just keep it unset.
+    if (entered === null) return null;
+
+    // If user typed nothing, also keep it unset.
+    if (!entered.trim()) return null;
+
+    name = entered.trim();
+    localStorage.setItem(USERNAME_KEY, name);
   }
 
   return name;
 }
 
-const username = getOrCreateUsername();
+const username = getOrCreateUsername() || ('Guest' + Math.floor(Math.random() * 1000));
 const presenceChannel = sb.channel('active-users', {
   config: { presence: { key: myUserId } }
 });
@@ -3944,4 +3949,5 @@ document.addEventListener('keydown', (e) => {
 
 </body>
 </html>
+
 
