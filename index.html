@@ -1013,6 +1013,31 @@ body.splash-done #app {
     0 0 22px rgba(179,233,183,0.18);
 }
 
+/* ==============================
+   HUD bag loot list collapse/expand
+   - hidden by default
+   - shows when hovering the HUD
+============================== */
+
+#hud-bag-loot {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+
+  transform: translateY(-6px);
+  transition: max-height 220ms ease, opacity 220ms ease, transform 220ms ease;
+
+  pointer-events: none; /* do not “catch” hover */
+  margin-top: 6px;
+}
+
+/* Expand when hovering the whole HUD */
+#hud:hover #hud-bag-loot {
+  max-height: 120px;
+  opacity: 1;
+  transform: translateY(0);
+}
+
 /* =========================================================
    ADDED: Shared tooltip style (for zones + fullscreen button)
 ========================================================= */
@@ -1266,7 +1291,7 @@ body.splash-done #app {
       <span class="hud-subvalue" id="hud-secondary">$0</span>
     </div>
     <div class="hud-row">
-      <span class="hud-label">Elite Take:</span>
+      <span class="hud-label">Elite Take Total:</span>
       <span class="hud-subvalue" id="hud-elite">$0</span>
     </div>
   </div>
@@ -1275,13 +1300,16 @@ body.splash-done #app {
   <div id="hud-players"></div>
 
   <!-- Loot bag bars (auto adds 1 per player) -->
-  <div id="hud-bags">
-    <div class="hud-row hud-bags-title">
-      <span class="hud-label">Loot Bags:</span>
-    </div>
-    <div id="hud-bag-bars"></div>
+  <<div id="hud-bags">
+  <div class="hud-row hud-bags-title">
+    <span class="hud-label">Loot Bags:</span>
   </div>
- </div> 
+
+  <div id="hud-bag-bars"></div>
+
+  <!-- NEW: what’s inside the bags (collapsed by default) -->
+  <div id="hud-bag-loot"></div>
+</div>
 
 <div id="info-panel" class="collapsed">
   <div id="info-header">Loot Panel</div>
@@ -3086,6 +3114,26 @@ async function applySuggestedSecondaryLoot() {
     container.removeChild(container.lastChild);
   }
 
+  function updateHudBagLoot(take) {
+  const el = document.getElementById('hud-bag-loot');
+  if (!el) return;
+
+  const cash = parseFloat(take?.Cash) || 0;
+  const gold = parseFloat(take?.Gold) || 0;
+  const painting = Math.floor(parseFloat(take?.Painting) || 0);
+
+  const fmt = (n) => (Number.isInteger(n) ? String(n) : n.toFixed(1));
+
+  const parts = [];
+  if (gold > 0) parts.push(`${fmt(gold)}x Gold`);
+  if (cash > 0) parts.push(`${fmt(cash)}x Cash`);
+  if (painting > 0) parts.push(`${painting}x Painting`);
+
+  el.innerHTML = parts.length
+    ? `<div class="hud-row"><span class="hud-bag-label">${parts.join(', ')}</span></div>`
+    : `<div class="hud-row"><span class="hud-bag-label" style="opacity:0.75;">No secondary selected</span></div>`;
+}
+
   // Animate fill amounts
   for (let i = 0; i < n; i++) {
     const row = container.children[i];
@@ -3124,6 +3172,7 @@ async function applySuggestedSecondaryLoot() {
     const usedPct = usedUnits / 30;
     const bagCount = getPlayerCountForBag();
     updateHudBags(usedPct, bagCount);
+    updateHudBagLoot(take);
     const leftUnits = Math.max(0, BAG_CAPACITY_UNITS - usedUnits);
     const leftPct = leftUnits / 30;
     const bagsFull = usedUnits >= BAG_CAPACITY_UNITS;
@@ -3261,6 +3310,7 @@ if (hudElite) {
 
 </body>
 </html>
+
 
 
 
