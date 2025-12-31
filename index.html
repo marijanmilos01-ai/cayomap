@@ -1742,7 +1742,11 @@ body.splash-done #app {
     <div class="toast-title" id="toast-title">Error</div>
     <div class="toast-msg" id="toast-msg">Something went wrong.</div>
   </div>
-  <button type="button" id="toast-close">Close</button>
+
+  <div style="display:flex; gap:10px; align-items:center;">
+    <button type="button" id="toast-action" style="display:none;">Undo</button>
+    <button type="button" id="toast-close">Close</button>
+  </div>
 </div>
 
 <!-- Confirm Delete All Symbols -->
@@ -2049,33 +2053,58 @@ if (splash && splashVideo) {
     window.visualViewport.addEventListener('scroll', updateInvZoom);
   }
 
-  /* =========================================================
-     ADDED: Toast helpers (Supabase failure popup)
-  ========================================================= */
-  const toastEl = document.getElementById('toast');
-  const toastTitleEl = document.getElementById('toast-title');
-  const toastMsgEl = document.getElementById('toast-msg');
-  const toastCloseBtn = document.getElementById('toast-close');
-  let toastTimer = null;
+ /* =========================================================
+   TOAST + UNDO SUPPORT
+========================================================= */
+const toastEl = document.getElementById('toast');
+const toastTitleEl = document.getElementById('toast-title');
+const toastMsgEl = document.getElementById('toast-msg');
+const toastCloseBtn = document.getElementById('toast-close');
+const toastActionBtn = document.getElementById('toast-action');
 
-  function showToast(title, message, ms = 3500) {
-    if (!toastEl) return;
-    toastTitleEl.textContent = title || 'Notice';
-    toastMsgEl.textContent = message || '';
-    toastEl.classList.add('show');
+let toastTimer = null;
+let lastUndo = null;
 
-    if (toastTimer) clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => toastEl.classList.remove('show'), ms);
+function clearUndo() {
+  lastUndo = null;
+  if (toastActionBtn) {
+    toastActionBtn.style.display = 'none';
+    toastActionBtn.onclick = null;
+  }
+}
+
+function setUndo(label, fn) {
+  lastUndo = { label, fn };
+}
+
+function showToast(title, message, ms = 3500) {
+  if (!toastEl) return;
+
+  toastTitleEl.textContent = title || 'Notice';
+  toastMsgEl.textContent = message || '';
+
+  if (toastActionBtn && lastUndo?.fn) {
+    toastActionBtn.style.display = '';
+    toastActionBtn.textContent = lastUndo.label || 'Undo';
+
+    toastActionBtn.onclick = async () => {
+      const action = lastUndo;
+      clearUndo();
+      try {
+        await action.fn();
+        showToast('Undone', 'Your last action was reverted.', 2500);
+      } catch {
+        showToast('Undo failed', 'Could not undo the last action.');
+      }
+    };
+  } else if (toastActionBtn) {
+    toastActionBtn.style.display = 'none';
   }
 
-  toastCloseBtn?.addEventListener('click', () => {
-    toastEl?.classList.remove('show');
-  });
+  toastEl.classList.add('show');
 
-  const sb = supabase.createClient(
-    'https://qanrnafvvnmimewtxrxv.supabase.co',
-    'sb_publishable_8F3cI7ZKCgpxv6UfaRJn7A_r1s17TmC'
-  );
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout
 
   /* =========================
    ACTIVE USERS (Presence bubble)
@@ -2493,22 +2522,51 @@ document.querySelectorAll('.map-btn').forEach(btn => {
     // Pop IN on insertion
     playPopIn(symbol);
 
-    symbol.onclick = async e => {
-      e.stopPropagation();
+symbol.onclick = async e => {
+  e.stopPropagation();
 
-      // Instant UX: pop out immediately
-      popOutAndRemove(symbol);
+  const region = zone.dataset.name;
 
-      const { error } = await sb.from('symbols').delete().eq('id', id);
-      if (error) {
-        showToast('Sync failed', 'Could not delete symbol. Check connection and try again.');
-        // Restore symbol visually
-        renderSymbol(zone, type, id);
-      }
-    };
+  // ✅ Setup undo FIRST (so even instant pop-out still has an undo)
+  setUndo('Undo', async () => {
+    setMapSyncing(true);
 
-    zone.appendChild(symbol);
+    const { data: inserted, error: undoErr } = await sb
+      .from('symbols')
+      .insert({ region, symbol: type })
+      .select()
+      .single();
+
+    setMapSyncing(false);
+
+    if (undoErr || !inserted) {
+      showToast('Undo failed', 'Could not restore the symbol.');
+      throw undoErr || new Error('Undo insert failed');
+    }
+
+    showToast('Restored', `${type} restored to ${region}.`, 2500);
+  });
+
+  // Instant UX: pop out immediately
+  popOutAndRemove(symbol);
+
+  const { error } = await sb.from('symbols').delete().eq('id', id);
+
+  if (error) {
+    showToast('Sync failed', 'Could not delete symbol. Check connection and try again.');
+
+    // If delete failed, undo should not be offered anymore
+    // (otherwise user would "undo" something that never deleted)
+    // So clear it safely if your toast code supports it:
+    // clearUndo();
+
+    // Restore symbol visually
+    renderSymbol(zone, type, id);
+    return;
   }
+
+  showToast('Deleted', `${type} removed from ${region}.`, 2500);
+};
 
   panel.querySelectorAll('button').forEach(btn => {
     btn.addEventListener('click', async e => {
@@ -2529,19 +2587,34 @@ document.querySelectorAll('.map-btn').forEach(btn => {
       if (count >= 4) return;
 
       const { data, error } = await sb.from('symbols')
-        .insert({ region, symbol: btn.dataset.symbol })
-        .select()
-        .single();
+  .insert({ region, symbol: btn.dataset.symbol })
+  .select()
+  .single();
 
-      if (error) {
-        showToast('Sync failed', 'Could not add symbol. Check connection and try again.');
-        return;
-      }
+if (error) {
+  showToast('Sync failed', 'Could not add symbol. Check connection and try again.');
+  return;
+}
 
-      if (data) {
-        localInsertedSymbols.add(data.id);
-        renderSymbol(activeZone, data.symbol, data.id);
-      }
+if (data) {
+  localInsertedSymbols.add(data.id);
+  renderSymbol(activeZone, data.symbol, data.id);
+
+  setUndo('Undo', async () => {
+    setMapSyncing(true);
+
+    const { error: undoErr } = await sb.from('symbols').delete().eq('id', data.id);
+
+    setMapSyncing(false);
+
+    if (undoErr) {
+      showToast('Undo failed', 'Could not undo that change.');
+      throw undoErr;
+    }
+  });
+
+  showToast('Placed', `${data.symbol} added to ${region}.`, 2500);
+}
     });
   });
 
@@ -2604,39 +2677,88 @@ if (applySuggestedMenuBtn) {
   });
 }  
 
-/* ================= DELETE ALL SYMBOLS BUTTON (WITH CONFIRM) ================= */
+/* ================= DELETE ALL SYMBOLS (WITH CONFIRM + UNDO) ================= */
 
 const clearSymbolsBtn = document.getElementById('clear-symbols-btn');
-
-// Confirm modal elements (must exist in HTML)
 const confirmDeleteModal = document.getElementById('confirm-delete-modal');
 const confirmDeleteOk = document.getElementById('confirm-delete-ok');
 const confirmDeleteCancel = document.getElementById('confirm-delete-cancel');
 
 if (clearSymbolsBtn) {
-  // Tooltip (add ONCE)
+
+  // Tooltip
   clearSymbolsBtn.addEventListener('mouseenter', () => {
     showTooltipFor(clearSymbolsBtn, 'Delete all symbols');
   });
   clearSymbolsBtn.addEventListener('mouseleave', hideTooltip);
 
-  // Prevent focus/selection quirks (helps keep fullscreen stable on some browsers)
-  clearSymbolsBtn.addEventListener('pointerdown', (e) => {
-    e.preventDefault();
-  });
+  // Prevent focus weirdness
+  clearSymbolsBtn.addEventListener('pointerdown', e => e.preventDefault());
 
-  // Open confirm modal instead of deleting immediately
+  // OPEN CONFIRM MODAL
   clearSymbolsBtn.addEventListener('click', (e) => {
     e.stopPropagation();
-    hideTooltip();
 
-    // If modal isn't present, fallback to toast + do nothing (safe)
-    if (!confirmDeleteModal || !confirmDeleteOk || !confirmDeleteCancel) {
-      showToast('Missing confirm UI', 'Confirm modal not found in HTML.');
+    if (!confirmDeleteModal) {
+      showToast('Error', 'Confirm dialog missing.');
       return;
     }
 
     confirmDeleteModal.classList.add('show');
+  });
+}
+
+/* ================= CONFIRM MODAL ACTIONS ================= */
+
+if (confirmDeleteOk && confirmDeleteCancel) {
+
+  // CANCEL
+  confirmDeleteCancel.addEventListener('click', () => {
+    confirmDeleteModal.classList.remove('show');
+  });
+
+  // CONFIRM DELETE
+  confirmDeleteOk.addEventListener('click', async () => {
+    confirmDeleteModal.classList.remove('show');
+
+    // 1️⃣ Snapshot current symbols for undo
+    const { data: snapshot, error: snapErr } = await sb.from('symbols').select('*');
+
+    if (snapErr) {
+      showToast('Error', 'Unable to prepare undo.');
+      return;
+    }
+
+    // 2️⃣ Register undo action
+    if (snapshot?.length) {
+      setUndo('Undo', async () => {
+        setMapSyncing(true);
+
+        await sb.from('symbols').delete().neq('id', 0);
+        await sb.from('symbols').insert(
+          snapshot.map(s => ({ region: s.region, symbol: s.symbol }))
+        );
+
+        setMapSyncing(false);
+        showToast('Restored', 'All symbols restored.');
+      });
+    }
+
+    // 3️⃣ Delete all symbols
+    setMapSyncing(true);
+    const { error } = await sb.from('symbols').delete().neq('id', 0);
+
+    if (error) {
+      showToast('Sync failed', 'Could not delete symbols.');
+      setMapSyncing(false);
+      return;
+    }
+
+    // 4️⃣ Animate removal
+    document.querySelectorAll('.symbol').forEach(el => popOutAndRemove(el));
+
+    setMapSyncing(false);
+    showToast('Deleted', 'All symbols removed.');
   });
 }
 
@@ -3755,9 +3877,3 @@ document.addEventListener('keydown', (e) => {
 
 </body>
 </html>
-
-
-
-
-
-
