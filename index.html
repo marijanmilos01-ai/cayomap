@@ -2135,29 +2135,64 @@ if (!myUserId) {
   localStorage.setItem(ACTIVE_USER_ID_KEY, myUserId);
 }
 
+// ===== Username (human-readable name) =====
+const USERNAME_KEY = 'cayo_username';
+
+function getOrCreateUsername() {
+  let name = localStorage.getItem(USERNAME_KEY);
+
+  if (!name) {
+    name = prompt('Pick a username (shown to others):');
+    if (!name || !name.trim()) {
+      name = 'Guest' + Math.floor(Math.random() * 1000);
+    }
+    localStorage.setItem(USERNAME_KEY, name.trim());
+  }
+
+  return name;
+}
+
+const username = getOrCreateUsername();
 const presenceChannel = sb.channel('active-users', {
   config: { presence: { key: myUserId } }
 });
 
 function updateActiveUsersUI() {
   const state = presenceChannel.presenceState();
-  const count = Object.keys(state).length;
+
+  // state is an object like:
+  // { key1: [ { username: "Bob", online_at: "..." } ],
+  //   key2: [ { username: "Lisa", online_at: "..." } ] }
+
+  const users = Object.values(state)
+    .flat()
+    .map(p => (p && p.username ? String(p.username) : 'Anonymous'));
+
+  // Remove duplicates (same user can have multiple connections)
+  const uniqueUsers = [...new Set(users)];
+  const count = uniqueUsers.length;
 
   if (!activeUsersBadge) return;
 
   const prev = parseInt(activeUsersBadge.textContent || '0', 10);
   activeUsersBadge.textContent = String(count);
 
-  // Trigger pulse only if number actually changed
+  // pulse animation if changed
   if (count !== prev) {
     activeUsersBadge.classList.remove('pulse');
-    void activeUsersBadge.offsetWidth; // force reflow
+    void activeUsersBadge.offsetWidth;
     activeUsersBadge.classList.add('pulse');
   }
 
+  // tooltip text
   if (activeUsersBtn) {
-    activeUsersBtn.dataset.tip =
-      count === 1 ? '1 Active User' : `${count} Active Users`;
+    if (count === 0) {
+      activeUsersBtn.dataset.tip = 'No Active Users';
+    } else if (count === 1) {
+      activeUsersBtn.dataset.tip = `Online: ${uniqueUsers[0]}`;
+    } else {
+      activeUsersBtn.dataset.tip = `Online (${count}): ${uniqueUsers.join(', ')}`;
+    }
   }
 }
 
@@ -2179,11 +2214,14 @@ presenceChannel
   .on('presence', { event: 'join' }, updateActiveUsersUI)
   .on('presence', { event: 'leave' }, updateActiveUsersUI)
   .subscribe(async (status) => {
-    if (status === 'SUBSCRIBED') {
-      await presenceChannel.track({ online_at: new Date().toISOString() });
-      updateActiveUsersUI();
-    }
-  });
+  if (status === 'SUBSCRIBED') {
+    await presenceChannel.track({
+      online_at: new Date().toISOString(),
+      username: username
+    });
+    updateActiveUsersUI();
+  }
+});
 
 window.addEventListener('beforeunload', () => {
   try { presenceChannel.untrack(); } catch {}
@@ -3887,8 +3925,3 @@ document.addEventListener('keydown', (e) => {
 
 </body>
 </html>
-
-
-
-
-
