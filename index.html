@@ -1651,9 +1651,9 @@ body.splash-done #app {
 <div id="map-container">
 
   <!-- UPDATED: removed width/height %; zones are now fixed pixel squares via CSS -->
-  <div class="zone" data-name="Office" data-x="0.50" data-y="0.50"></div>
-  <div class="zone" data-name="Vault" data-x="0.45" data-y="0.48"></div>
-  <div class="zone" data-name="West Storage" data-x="0.54" data-y="0.45"></div>
+  <div class="zone" data-name="Office"        data-x="0.50" data-y="0.50"></div>
+  <div class="zone" data-name="Vault"         data-x="0.45" data-y="0.48"></div>
+  <div class="zone" data-name="West Storage"  data-x="0.54" data-y="0.45"></div>
   <div class="zone" data-name="North Storage" data-x="0.67" data-y="0.55"></div>
   <div class="zone" data-name="South Storage" data-x="0.48" data-y="0.67"></div>
 
@@ -1785,26 +1785,22 @@ body.splash-done #app {
     'sb_publishable_8F3cI7ZKCgpxv6UfaRJn7A_r1s17TmC'
   );
 
-  /* =========================
-     MAP BUTTONS (ADD THIS)
-  ========================= */
-  const mapContainer = document.getElementById('map-container');
-  const mapButtons = document.querySelectorAll('.map-btn');
-  const uiMap = document.getElementById('ui-map');
+ /* =========================
+   MAP BUTTONS (FIXED)
+========================= */
+const mapButtons = document.querySelectorAll('.map-btn');
+const uiMap = document.getElementById('ui-map');
 
-  mapButtons.forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
+mapButtons.forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
 
-      const map = btn.dataset.map; // compound / satellite / guards / kosatka
+    const map = btn.dataset.map; // compound / satellite / guards / kosatka
+    setMap(`${map}_map.png`);    // ✅ updates CSS + currentMapSrc + repositions zones
 
-      // IMPORTANT: your CSS uses --map-bg, so we set that:
-      document.documentElement.style.setProperty('--map-bg', `url('${map}_map.png')`);
-
-      // close menu on mobile after tapping
-      uiMap?.classList.remove('open');
-    });
+    uiMap?.classList.remove('open'); // close menu on mobile
   });
+});
 
   // Mobile tap-to-open for the MAP bubble
   const mapMainBtn = document.getElementById('map-main-btn');
@@ -2071,22 +2067,40 @@ if (splash && splashVideo) {
     window.visualViewport.addEventListener('scroll', updateInvZoom);
   }
 
-  // --- zone placement that matches background-size: cover ---
-let currentMapSrc = 'compound_map.png';
+/* =========================================================
+   BLOCK 3 (REPLACE WITH THIS)
+   Zone placement that matches CSS background-size: cover
+   + map switch support via setMap()
+========================================================= */
+
+let currentMapSrc = 'compound_map.png'; // must match default visible map
 
 function setMap(src) {
   currentMapSrc = src;
+
+  // Your CSS uses --map-bg, keep using that
   document.documentElement.style.setProperty('--map-bg', `url('${src}')`);
-  requestAnimationFrame(positionZonesToCoveredImage);
+
+  // Re-position after CSS updates
+  requestAnimationFrame(() => {
+    positionZonesToCoveredImage();
+  });
 }
 
 async function positionZonesToCoveredImage() {
   const container = document.getElementById('map-container');
   if (!container) return;
 
+  // Load current map to get natural dimensions
   const img = new Image();
   img.src = currentMapSrc;
-  await img.decode().catch(() => {});
+
+  // decode() fallback so it works everywhere
+  if (img.decode) {
+    try { await img.decode(); } catch {}
+  } else {
+    await new Promise(res => (img.onload = img.onerror = res));
+  }
 
   const imgW = img.naturalWidth || 1;
   const imgH = img.naturalHeight || 1;
@@ -2095,6 +2109,7 @@ async function positionZonesToCoveredImage() {
   const W = rect.width;
   const H = rect.height;
 
+  // Same math as CSS background-size: cover
   const scale = Math.max(W / imgW, H / imgH);
   const drawnW = imgW * scale;
   const drawnH = imgH * scale;
@@ -2103,13 +2118,23 @@ async function positionZonesToCoveredImage() {
   const offsetY = (H - drawnH) / 2;
 
   document.querySelectorAll('.zone').forEach(zone => {
-    const x = parseFloat(zone.dataset.x || 0);
-    const y = parseFloat(zone.dataset.y || 0);
+    // IMPORTANT: zones must use data-x / data-y (0..1)
+    const x = parseFloat(zone.dataset.x || '0');
+    const y = parseFloat(zone.dataset.y || '0');
 
     zone.style.left = (offsetX + x * drawnW) + 'px';
     zone.style.top  = (offsetY + y * drawnH) + 'px';
   });
 }
+
+// Keep aligned on resize
+window.addEventListener('resize', positionZonesToCoveredImage);
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', positionZonesToCoveredImage);
+}
+
+// Initial run
+positionZonesToCoveredImage();
 
 // run once and on resize
 window.addEventListener('resize', positionZonesToCoveredImage);
@@ -4010,6 +4035,7 @@ document.addEventListener('keydown', (e) => {
 
 </body>
 </html>
+
 
 
 
