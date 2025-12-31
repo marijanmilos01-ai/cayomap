@@ -3063,81 +3063,109 @@ async function applySuggestedSecondaryLoot() {
   }
 
 function renderRollingText(el, nextText, key) {
+  // HARD FAILSAFE: never let the HUD die because of animation
   try {
     if (!el) return;
 
     const next = String(nextText ?? '');
     const prev = hudPrevTextByKey.get(key) ?? '';
 
-    // If you don't have this helper in scope, don't crash.
-    const reduced =
-      (typeof prefersReducedMotion === 'function')
-        ? prefersReducedMotion()
-        : (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-
+    // Reduced motion = plain text
+    const reduced = (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
     if (reduced) {
       el.textContent = next;
       hudPrevTextByKey.set(key, next);
       return;
     }
 
-    // If helpers are missing for any reason, fallback instead of crashing.
+    // If helpers are missing for any reason, fall back
     if (typeof buildRollDigitColumn !== 'function' || typeof setRollDigit !== 'function') {
       el.textContent = next;
       hudPrevTextByKey.set(key, next);
       return;
     }
 
-    const prevDigits = (prev.match(/\d/g) || []).join('');
-    const nextDigits = (next.match(/\d/g) || []).join('');
+    // Split BOTH prev and next into alternating: [non-number, number, non-number, number...]
+    // Number token = digits with optional commas (no $ included)
+    const tokenRegex = /(\d[\d,]*)/g;
 
-    const digitFromRight = (digits, idxFromRight) => {
-      const i = digits.length - 1 - idxFromRight;
-      return (i >= 0) ? digits[i] : '0';
-    };
+    const nextParts = next.split(tokenRegex); // includes number tokens
+    const prevParts = prev.split(tokenRegex);
 
     el.innerHTML = '';
     const wrap = document.createElement('span');
     wrap.className = 'roll-number';
     el.appendChild(wrap);
 
-    let nextDigitSeen = 0;
-    const totalNextDigits = nextDigits.length;
+    // We animate per numeric token index
+    let numTokenIndex = 0;
 
-    for (let i = 0; i < next.length; i++) {
-      const nc = next[i];
-      const isDigit = nc >= '0' && nc <= '9';
+    for (let i = 0; i < nextParts.length; i++) {
+      const part = nextParts[i];
+      const isNumberToken = (i % 2 === 1); // because split keeps captures at odd indices
 
-      if (!isDigit) {
+      if (!isNumberToken) {
         const s = document.createElement('span');
         s.className = 'roll-static';
-        s.textContent = (nc === ' ') ? '\u00A0' : nc;
+        s.textContent = part === ' ' ? '\u00A0' : part;
         wrap.appendChild(s);
         continue;
       }
 
-      const idxFromRight = (totalNextDigits - 1) - nextDigitSeen;
-      nextDigitSeen++;
+      // Next number token (digits+commas), and matching previous token by index
+      const nextNum = part;
+      const prevNum = (prevParts[i] != null && (i % 2 === 1)) ? prevParts[i] : '';
 
-      const startDigit = digitFromRight(prevDigits, idxFromRight);
+      // Remove commas for digit mapping, but we will render commas from NEXT token
+      const nextDigits = (nextNum.match(/\d/g) || []).join('');
+      const prevDigits = (prevNum.match(/\d/g) || []).join('');
 
-      const digitBox = document.createElement('span');
-      digitBox.className = 'roll-digit';
+      // Right-aligned digit mapping WITHIN this number token
+      const digitFromRight = (digits, idxFromRight) => {
+        const pos = digits.length - 1 - idxFromRight;
+        return (pos >= 0) ? digits[pos] : '0';
+      };
 
-      const inner = buildRollDigitColumn();
-      digitBox.appendChild(inner);
-      wrap.appendChild(digitBox);
+      // Walk nextNum char-by-char so commas stay exactly where they are in NEXT
+      let nextDigitSeen = 0;
+      const totalNextDigits = nextDigits.length;
 
-      setRollDigit(inner, startDigit, true);
-      requestAnimationFrame(() => setRollDigit(inner, nc, false));
+      for (let j = 0; j < nextNum.length; j++) {
+        const ch = nextNum[j];
+        const isDigit = ch >= '0' && ch <= '9';
+
+        if (!isDigit) {
+          const c = document.createElement('span');
+          c.className = 'roll-static';
+          c.textContent = ch;
+          wrap.appendChild(c);
+          continue;
+        }
+
+        const idxFromRight = (totalNextDigits - 1) - nextDigitSeen;
+        nextDigitSeen++;
+
+        const startDigit = digitFromRight(prevDigits, idxFromRight);
+
+        const digitBox = document.createElement('span');
+        digitBox.className = 'roll-digit';
+
+        const inner = buildRollDigitColumn();
+        digitBox.appendChild(inner);
+        wrap.appendChild(digitBox);
+
+        setRollDigit(inner, startDigit, true);
+        requestAnimationFrame(() => setRollDigit(inner, ch, false));
+      }
+
+      numTokenIndex++;
     }
 
     hudPrevTextByKey.set(key, next);
   } catch (err) {
-    // NEVER let HUD rendering kill the app.
-    console.warn('renderRollingText failed, falling back to plain text:', err);
+    console.warn('HUD odometer failed; falling back to plain text:', err);
     if (el) el.textContent = String(nextText ?? '');
-    if (typeof hudPrevTextByKey !== 'undefined') hudPrevTextByKey.set(key, String(nextText ?? ''));
+    try { hudPrevTextByKey.set(key, String(nextText ?? '')); } catch {}
   }
 }
 
@@ -3412,6 +3440,7 @@ document.addEventListener('keydown', (e) => {
 
 </body>
 </html>
+
 
 
 
