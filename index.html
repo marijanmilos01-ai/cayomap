@@ -3062,95 +3062,76 @@ async function applySuggestedSecondaryLoot() {
     }
   }
 
-  function renderRollingText(el, nextText, key) {
-    if (!el) return;
+ function renderRollingText(el, nextText, key) {
+  if (!el) return;
 
-    const next = String(nextText ?? '');
-    const prev = hudPrevTextByKey.get(key) ?? el.textContent ?? '';
+  const next = String(nextText ?? '');
+  const prev = hudPrevTextByKey.get(key) ?? '';
 
-    // Reduced motion: just set text
-    if (prefersReducedMotion()) {
-      el.textContent = next;
-      hudPrevTextByKey.set(key, next);
-      return;
-    }
-
-    // Direction hint (up for increase, down for decrease)
-    const prevNum = extractComparableNumber(prev);
-    const nextNum = extractComparableNumber(next);
-    const rollUp = (prevNum != null && nextNum != null) ? (nextNum >= prevNum) : true;
-
-    // Build new structure (simple + robust)
-    el.innerHTML = '';
-    const wrap = document.createElement('span');
-    wrap.className = 'roll-number';
-    el.appendChild(wrap);
-
-    // Pad digits so columns stay aligned between prev/next (only for digit chars)
-    // We'll align by position in the string itself (including commas/$), so no complex padding.
-    const maxLen = Math.max(prev.length, next.length);
-    const prevP = prev.padStart(maxLen, ' ');
-    const nextP = next.padStart(maxLen, ' ');
-
-    for (let i = 0; i < maxLen; i++) {
-      const pc = prevP[i];
-      const nc = nextP[i];
-
-      const isDigit = (c) => c >= '0' && c <= '9';
-
-      if (isDigit(nc)) {
-        const digitBox = document.createElement('span');
-        digitBox.className = 'roll-digit';
-
-        const inner = buildRollDigitColumn();
-        digitBox.appendChild(inner);
-        wrap.appendChild(digitBox);
-
-        // Start at prev digit (or 0 if none), then animate to next digit.
-        const startDigit = isDigit(pc) ? pc : '0';
-        setRollDigit(inner, startDigit, true);
-
-        // Ensure the browser has painted the start position before animating.
-        requestAnimationFrame(() => {
-          setRollDigit(inner, nc, false);
-          void rollUp;
-        });
-      } else {
-        const s = document.createElement('span');
-        s.className = 'roll-static';
-        // keep spacing for padded leading spaces
-        s.textContent = (nc === ' ') ? '\u00A0' : nc;
-        wrap.appendChild(s);
-      }
-    }
-
-    // Remember the actual (un-padded) next string
+  if (prefersReducedMotion()) {
+    el.textContent = next;
     hudPrevTextByKey.set(key, next);
+    return;
   }
 
-  function updateHud(grandTotalMin, grandTotalMax, playerLines) {
-    const totalText = (grandTotalMin === grandTotalMax)
-      ? `$${Math.floor(grandTotalMin).toLocaleString()}`
-      : `$${Math.floor(grandTotalMin).toLocaleString()} - $${Math.floor(grandTotalMax).toLocaleString()}`;
+  // Digits-only strings (for right-aligned digit mapping)
+  const prevDigits = (prev.match(/\d/g) || []).join('');
+  const nextDigits = (next.match(/\d/g) || []).join('');
 
-    renderRollingText(hudTotal, totalText, 'hud-total');
+  // Helper: get digit from right side by digit index
+  const digitFromRight = (digits, idxFromRight) => {
+    // idxFromRight: 0 = last digit
+    const i = digits.length - 1 - idxFromRight;
+    return (i >= 0) ? digits[i] : '0';
+  };
 
-    hudPlayers.innerHTML = '';
-    (playerLines || []).forEach((line, idx) => {
-      const row = document.createElement('div');
-      row.className = 'hud-row';
-      row.innerHTML = `
-        <span class="hud-label">${line.label}</span>
-        <span class="hud-subvalue"></span>
-      `;
-      const valEl = row.querySelector('.hud-subvalue');
-      hudPlayers.appendChild(row);
+  // Rebuild content
+  el.innerHTML = '';
+  const wrap = document.createElement('span');
+  wrap.className = 'roll-number';
+  el.appendChild(wrap);
 
-      // Key by label so it persists even when rows are recreated
-      const key = `player:${line.label}`;
-      renderRollingText(valEl, line.value, key);
+  // Walk the NEXT string, but for each digit, pick a matching prev-digit by right index
+  let nextDigitSeen = 0; // count digits as we scan left->right
+  const totalNextDigits = nextDigits.length;
+
+  for (let i = 0; i < next.length; i++) {
+    const nc = next[i];
+    const isDigit = nc >= '0' && nc <= '9';
+
+    if (!isDigit) {
+      const s = document.createElement('span');
+      s.className = 'roll-static';
+      s.textContent = (nc === ' ') ? '\u00A0' : nc;
+      wrap.appendChild(s);
+      continue;
+    }
+
+    // This digit’s position from the right within the NEXT digits
+    const idxFromRight = (totalNextDigits - 1) - nextDigitSeen;
+    nextDigitSeen++;
+
+    // Choose start digit from prev by same right index
+    const startDigit = digitFromRight(prevDigits, idxFromRight);
+
+    const digitBox = document.createElement('span');
+    digitBox.className = 'roll-digit';
+
+    const inner = buildRollDigitColumn();
+    digitBox.appendChild(inner);
+    wrap.appendChild(digitBox);
+
+    // Set start immediately, then animate to target digit
+    setRollDigit(inner, startDigit, true);
+
+    requestAnimationFrame(() => {
+      setRollDigit(inner, nc, false);
     });
   }
+
+  hudPrevTextByKey.set(key, next);
+}
+
 
  function updateHudBags(totalUsedPct, bagCount) {
   const container = document.getElementById('hud-bag-bars');
@@ -3423,6 +3404,7 @@ document.addEventListener('keydown', (e) => {
 
 </body>
 </html>
+
 
 
 
