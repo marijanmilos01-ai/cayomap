@@ -1765,7 +1765,12 @@ body.splash-done #app {
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-document.addEventListener('DOMContentLoaded', () => {
+  // Supabase client (REQUIRED)
+  const sb = supabase.createClient(
+    'https://qanrnafvvnmimewtxrxv.supabase.co',
+    'sb_publishable_8F3cI7ZKCgpxv6UfaRJn7A_r1s17TmC'
+  );
+</script>
 
   /* =========================
      MAP BUTTONS (ADD THIS)
@@ -3885,5 +3890,6 @@ document.addEventListener('keydown', (e) => {
 
 </body>
 </html>
+
 
 
