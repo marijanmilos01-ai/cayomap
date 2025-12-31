@@ -150,9 +150,9 @@ input, select, textarea {
   transition: all 0.3s ease;
 
   /* counteract browser zoom (best-effort via devicePixelRatio) */
-  transform: scale(var(--inv-zoom));
-  transform-origin: top left;
-}
+  transform: translate(-50%, -50%) scale(var(--inv-zoom));
+  transform-origin: center;
+  
 .zone:hover {
   border-color:#fff;
   background-color: rgba(50,50,50,0.6);
@@ -1651,12 +1651,11 @@ body.splash-done #app {
 <div id="map-container">
 
   <!-- UPDATED: removed width/height %; zones are now fixed pixel squares via CSS -->
-  <div class="zone" style="left:50%;top:50%;" data-name="Office"></div>
-  <div class="zone" style="left:45%;top:48%;" data-name="Vault"></div>
-  <div class="zone" style="left:54%;top:45%;" data-name="West Storage"></div>
-  <div class="zone" style="left:67%;top:55%;" data-name="North Storage"></div>
-  <div class="zone" style="left:48%;top:67%;" data-name="South Storage"></div>
-</div>
+  <div class="zone" data-name="Office" data-x="0.50" data-y="0.50"></div>
+  <div class="zone" data-name="Vault" data-x="0.45" data-y="0.48"></div>
+  <div class="zone" data-name="West Storage" data-x="0.54" data-y="0.45"></div>
+  <div class="zone" data-name="North Storage" data-x="0.67" data-y="0.55"></div>
+  <div class="zone" data-name="South Storage" data-x="0.48" data-y="0.67"></div>
 
 <div id="panel" class="panel">
   <h3 id="panel-title"></h3>
@@ -2071,6 +2070,53 @@ if (splash && splashVideo) {
     window.visualViewport.addEventListener('resize', updateInvZoom);
     window.visualViewport.addEventListener('scroll', updateInvZoom);
   }
+
+  // --- zone placement that matches background-size: cover ---
+let currentMapSrc = 'compound_map.png';
+
+function setMap(src) {
+  currentMapSrc = src;
+  document.documentElement.style.setProperty('--map-bg', `url('${src}')`);
+  requestAnimationFrame(positionZonesToCoveredImage);
+}
+
+async function positionZonesToCoveredImage() {
+  const container = document.getElementById('map-container');
+  if (!container) return;
+
+  const img = new Image();
+  img.src = currentMapSrc;
+  await img.decode().catch(() => {});
+
+  const imgW = img.naturalWidth || 1;
+  const imgH = img.naturalHeight || 1;
+
+  const rect = container.getBoundingClientRect();
+  const W = rect.width;
+  const H = rect.height;
+
+  const scale = Math.max(W / imgW, H / imgH);
+  const drawnW = imgW * scale;
+  const drawnH = imgH * scale;
+
+  const offsetX = (W - drawnW) / 2;
+  const offsetY = (H - drawnH) / 2;
+
+  document.querySelectorAll('.zone').forEach(zone => {
+    const x = parseFloat(zone.dataset.x || 0);
+    const y = parseFloat(zone.dataset.y || 0);
+
+    zone.style.left = (offsetX + x * drawnW) + 'px';
+    zone.style.top  = (offsetY + y * drawnH) + 'px';
+  });
+}
+
+// run once and on resize
+window.addEventListener('resize', positionZonesToCoveredImage);
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', positionZonesToCoveredImage);
+}
+positionZonesToCoveredImage();
 
 /* =========================================================
    TOAST + UNDO SUPPORT (FIXED)
@@ -3964,6 +4010,7 @@ document.addEventListener('keydown', (e) => {
 
 </body>
 </html>
+
 
 
 
