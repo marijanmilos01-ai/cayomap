@@ -1250,6 +1250,23 @@ body.splash-done #app {
 #toast button:hover {
   background: rgba(255,255,255,0.12);
 }
+
+#notes-container > div {
+  padding: 6px 8px;
+  margin: 6px 0;
+  border-radius: 8px;
+  background: rgba(30,30,30,0.35);
+  border: 1px solid rgba(255,255,255,0.10);
+  cursor: var(--hover-cursor);
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+#notes-container > div:active {
+  transform: translateY(0);
+  background: rgba(30,30,30,0.6);
+  cursor: pointer;
+}
+
 </style>
 </head>
 
@@ -1373,55 +1390,66 @@ body.splash-done #app {
       </div>
     </div>
 
-<div class="loot-section collapsed">
-  <div class="loot-section-header">
-    <div class="loot-section-title">Calculator</div>
-    <div class="loot-section-chevron">▼</div>
-  </div>
-
-  <div class="loot-section-body">
-    <div id="calculator">
-      <div>
-        <label>Difficulty:</label>
-        <select id="difficulty-select">
-          <option value="normal">Normal</option>
-          <option value="hard">Hard</option>
-        </select>
+    <!-- Calculator (NO notes inside anymore) -->
+    <div class="loot-section collapsed" data-section="calculator">
+      <div class="loot-section-header">
+        <div class="loot-section-title">Calculator</div>
+        <div class="loot-section-chevron">▼</div>
       </div>
 
-      <div>
-        <label>Primary Loot:</label>
-        <select id="primary-loot-select">
-          <option value="">-- Select --</option>
-          <option value="Tequila">Tequila</option>
-          <option value="Ruby">Ruby</option>
-          <option value="Bonds">Bonds</option>
-          <option value="Diamond">Diamond</option>
-          <option value="Panther">Panther</option>
-        </select>
-      </div>
+      <div class="loot-section-body">
+        <div id="calculator">
+          <div>
+            <label>Difficulty:</label>
+            <select id="difficulty-select">
+              <option value="normal">Normal</option>
+              <option value="hard">Hard</option>
+            </select>
+          </div>
 
-      <div id="player-cuts"></div>
+          <div>
+            <label>Primary Loot:</label>
+            <select id="primary-loot-select">
+              <option value="">-- Select --</option>
+              <option value="Tequila">Tequila</option>
+              <option value="Ruby">Ruby</option>
+              <option value="Bonds">Bonds</option>
+              <option value="Diamond">Diamond</option>
+              <option value="Panther">Panther</option>
+            </select>
+          </div>
 
-      <div id="secondary-loot"></div>
-      <div class="loot-result" id="bag-status"></div>
+          <div id="player-cuts"></div>
 
-      <div class="loot-result" id="loot-result"></div>
+          <div id="secondary-loot"></div>
+          <div class="loot-result" id="bag-status"></div>
 
-      <div class="sync-line">
-        <div class="sync-text">
-          <span class="sync-dot" id="sync-dot"></span><span id="sync-text">Synced</span>
-        </div>
-        <div class="sync-text">
-          <span class="sync-dot" id="sync-dot-map"></span><span id="sync-text-map">Map synced</span>
+          <div class="loot-result" id="loot-result"></div>
+
+          <div class="sync-line">
+            <div class="sync-text">
+              <span class="sync-dot" id="sync-dot"></span><span id="sync-text">Synced</span>
+            </div>
+            <div class="sync-text">
+              <span class="sync-dot" id="sync-dot-map"></span><span id="sync-text-map">Map synced</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
 
-    <div id="notes-container"></div>
-    <input id="note-input" placeholder="Add a note...">
-  </div>
-</div>
+    <!-- Notes (independent section in Loot Panel) -->
+    <div class="loot-section collapsed" data-section="notes">
+      <div class="loot-section-header">
+        <div class="loot-section-title">Notes</div>
+        <div class="loot-section-chevron">▼</div>
+      </div>
+
+      <div class="loot-section-body">
+        <div id="notes-container"></div>
+        <input id="note-input" placeholder="Add a note...">
+      </div>
+    </div>
 
   </div> <!-- end #info-content -->
 </div> <!-- end #info-panel -->
@@ -3338,5 +3366,6 @@ document.addEventListener('keydown', (e) => {
 
 </body>
 </html>
+
 
 
