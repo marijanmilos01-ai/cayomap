@@ -1288,6 +1288,66 @@ body.splash-done #app {
 }
 .zone:hover::before{ opacity:1; }
 
+/* =========================================================
+   ACTIVE USERS BUBBLE (bottom-left)
+========================================================= */
+#active-users-btn{
+  position: fixed;
+  left: max(var(--ui-pad), env(safe-area-inset-left));
+  bottom: max(var(--ui-pad), env(safe-area-inset-bottom));
+  z-index: 70;
+
+  width: 54px;
+  height: 54px;
+  border-radius: 999px;
+
+  background: rgba(40,40,40,0.55);
+  border: 1px solid rgba(255,255,255,0.22);
+  backdrop-filter: blur(4px);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  cursor: var(--hover-cursor);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+#active-users-btn:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.55);
+}
+
+#active-users-btn svg{
+  width: 26px;
+  height: 26px;
+  fill: rgba(255,255,255,0.92);
+}
+
+/* Corner count badge */
+#active-users-badge{
+  position: absolute;
+  top: -6px;
+  right: -6px;
+
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.22);
+  background: rgba(0,0,0,0.65);
+  backdrop-filter: blur(4px);
+
+  color: rgba(255,255,255,0.95);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 20px;
+  text-align: center;
+
+  box-shadow: 0 6px 16px rgba(0,0,0,0.45);
+}
+
 </style>
 </head>
 
@@ -1560,6 +1620,18 @@ body.splash-done #app {
   </div>
 
 </div>
+
+<!-- Active Users bubble (bottom-left) -->
+<button id="active-users-btn" type="button" aria-label="Active users">
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <!-- two-person icon -->
+    <path d="M16 11a3 3 0 1 0-3-3 3 3 0 0 0 3 3Z"/>
+    <path d="M8 11a3 3 0 1 0-3-3 3 3 0 0 0 3 3Z"/>
+    <path d="M16 13c-2.2 0-4 1.2-4 3v2h8v-2c0-1.8-1.8-3-4-3Z"/>
+    <path d="M8 13c-2.2 0-4 1.2-4 3v2h8v-2c0-1.8-1.8-3-4-3Z"/>
+  </svg>
+  <span id="active-users-badge" aria-hidden="true">0</span>
+</button>
 
 <!-- Tooltip stays separate -->
 <div id="ui-tooltip" class="tooltip" role="tooltip"></div>
@@ -1892,6 +1964,70 @@ if (splash && splashVideo) {
     'https://qanrnafvvnmimewtxrxv.supabase.co',
     'sb_publishable_8F3cI7ZKCgpxv6UfaRJn7A_r1s17TmC'
   );
+
+  /* =========================
+   ACTIVE USERS (Presence bubble)
+========================= */
+
+const activeUsersBtn = document.getElementById('active-users-btn');
+const activeUsersBadge = document.getElementById('active-users-badge');
+
+// Make a stable id per browser
+const ACTIVE_USER_ID_KEY = 'cayo_active_user_id';
+let myUserId = localStorage.getItem(ACTIVE_USER_ID_KEY);
+if (!myUserId) {
+  myUserId = (crypto?.randomUUID?.() || (String(Math.random()).slice(2) + Date.now()));
+  localStorage.setItem(ACTIVE_USER_ID_KEY, myUserId);
+}
+
+const presenceChannel = sb.channel('active-users', {
+  config: { presence: { key: myUserId } }
+});
+
+function updateActiveUsersUI() {
+  const state = presenceChannel.presenceState();
+  const count = Object.keys(state).length || 0;
+
+  if (activeUsersBadge) activeUsersBadge.textContent = String(count);
+
+  // Tooltip text: "Active Users" or "X Active Users"
+  if (activeUsersBtn) {
+    activeUsersBtn.dataset.tip = (count === 1) ? '1 Active User' : `${count} Active Users`;
+  }
+
+  // If tooltip is currently showing on this button, refresh it live
+  if (typeof tooltipTarget !== 'undefined' && tooltipTarget === activeUsersBtn && activeUsersBtn?.dataset.tip) {
+    showTooltipFor(activeUsersBtn, activeUsersBtn.dataset.tip);
+  }
+}
+
+// Tooltip hookup (uses your existing tooltip system)
+if (activeUsersBtn) {
+  activeUsersBtn.addEventListener('mouseenter', () => {
+    showTooltipFor(activeUsersBtn, activeUsersBtn.dataset.tip || 'Active Users');
+  });
+  activeUsersBtn.addEventListener('mouseleave', hideTooltip);
+
+  // Optional: click does nothing but prevents bubbling (keeps UX consistent)
+  activeUsersBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+  });
+}
+
+presenceChannel
+  .on('presence', { event: 'sync' }, updateActiveUsersUI)
+  .on('presence', { event: 'join' }, updateActiveUsersUI)
+  .on('presence', { event: 'leave' }, updateActiveUsersUI)
+  .subscribe(async (status) => {
+    if (status === 'SUBSCRIBED') {
+      await presenceChannel.track({ online_at: new Date().toISOString() });
+      updateActiveUsersUI();
+    }
+  });
+
+window.addEventListener('beforeunload', () => {
+  try { presenceChannel.untrack(); } catch {}
+});
 
   const zones = document.querySelectorAll('.zone');
   const panel = document.getElementById('panel');
@@ -3456,5 +3592,6 @@ document.addEventListener('keydown', (e) => {
 
 </body>
 </html>
+
 
 
