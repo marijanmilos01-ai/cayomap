@@ -1348,6 +1348,26 @@ body.splash-done #app {
   box-shadow: 0 6px 16px rgba(0,0,0,0.45);
 }
 
+/* === Active users pulse animation === */
+@keyframes pulse-pop {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 rgba(255,255,255,0.0);
+  }
+  40% {
+    transform: scale(1.25);
+    box-shadow: 0 0 14px rgba(255,255,255,0.6);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 rgba(255,255,255,0.0);
+  }
+}
+
+#active-users-badge.pulse {
+  animation: pulse-pop 420ms ease-out;
+}
+
 </style>
 </head>
 
@@ -1986,18 +2006,23 @@ const presenceChannel = sb.channel('active-users', {
 
 function updateActiveUsersUI() {
   const state = presenceChannel.presenceState();
-  const count = Object.keys(state).length || 0;
+  const count = Object.keys(state).length;
 
-  if (activeUsersBadge) activeUsersBadge.textContent = String(count);
+  if (!activeUsersBadge) return;
 
-  // Tooltip text: "Active Users" or "X Active Users"
-  if (activeUsersBtn) {
-    activeUsersBtn.dataset.tip = (count === 1) ? '1 Active User' : `${count} Active Users`;
+  const prev = parseInt(activeUsersBadge.textContent || '0', 10);
+  activeUsersBadge.textContent = String(count);
+
+  // Trigger pulse only if number actually changed
+  if (count !== prev) {
+    activeUsersBadge.classList.remove('pulse');
+    void activeUsersBadge.offsetWidth; // force reflow
+    activeUsersBadge.classList.add('pulse');
   }
 
-  // If tooltip is currently showing on this button, refresh it live
-  if (typeof tooltipTarget !== 'undefined' && tooltipTarget === activeUsersBtn && activeUsersBtn?.dataset.tip) {
-    showTooltipFor(activeUsersBtn, activeUsersBtn.dataset.tip);
+  if (activeUsersBtn) {
+    activeUsersBtn.dataset.tip =
+      count === 1 ? '1 Active User' : `${count} Active Users`;
   }
 }
 
@@ -3592,6 +3617,7 @@ document.addEventListener('keydown', (e) => {
 
 </body>
 </html>
+
 
 
 
