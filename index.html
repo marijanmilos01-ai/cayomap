@@ -1231,7 +1231,7 @@ body.splash-done #app {
     <span class="hud-value" id="hud-total">$0</span>
   </div>
 
-  <!-- NEW: Primary/Secondary take -->
+  <!-- NEW: Primary/Secondary take + Elite Challenge -->
   <div class="hud-row">
     <span class="hud-label">Primary Take:</span>
     <span class="hud-subvalue" id="hud-primary">$0</span>
@@ -1239,6 +1239,10 @@ body.splash-done #app {
   <div class="hud-row">
     <span class="hud-label">Secondary Take:</span>
     <span class="hud-subvalue" id="hud-secondary">$0</span>
+  </div>
+    <div class="hud-row">
+    <span class="hud-label">Elite Take:</span>
+    <span class="hud-subvalue" id="hud-elite">$0</span>
   </div>
 
   <div class="hud-divider"></div>
@@ -1794,6 +1798,7 @@ if (splash && splashVideo) {
   const hudPlayers = document.getElementById('hud-players');
   const hudPrimary = document.getElementById('hud-primary');
   const hudSecondary = document.getElementById('hud-secondary');
+  const hudPrimary = document.getElementById('hud-primary');
 
   let activeZone = null;
 
@@ -3168,23 +3173,33 @@ lootResultDiv.innerHTML = html;
 updateHud(grandTotalMin, grandTotalMax, hudLines);
 
 
-      // HUD: show Primary / Secondary take
-    if (hudPrimary) {
-      renderRollingText(
-        hudPrimary,
-        `$${Math.floor(primaryValue || 0).toLocaleString()}`,
-        'hud-primary'
-      );
-    }
-    
-    if (hudSecondary) {
-      const secText =
-        totalSecondaryMin === totalSecondaryMax
-        ? `$${Math.floor(totalSecondaryMin || 0).toLocaleString()}`
-        : `$${Math.floor(totalSecondaryMin || 0).toLocaleString()} - $${Math.floor(totalSecondaryMax || 0).toLocaleString()}`;
-      
-      renderRollingText(hudSecondary, secText, 'hud-secondary');
-    }
+// Primary
+if (hudPrimary) {
+  renderRollingText(
+    hudPrimary,
+    `$${Math.floor(primaryValue || 0).toLocaleString()}`,
+    'hud-primary'
+  );
+}
+
+// Secondary
+if (hudSecondary) {
+  const secText =
+    totalSecondaryMin === totalSecondaryMax
+      ? `$${Math.floor(totalSecondaryMin || 0).toLocaleString()}`
+      : `$${Math.floor(totalSecondaryMin || 0).toLocaleString()} - $${Math.floor(totalSecondaryMax || 0).toLocaleString()}`;
+
+  renderRollingText(hudSecondary, secText, 'hud-secondary');
+}
+
+// Elite (NEW)
+if (hudElite) {
+  renderRollingText(
+    hudElite,
+    `$${Math.floor(eliteTotal || 0).toLocaleString()}`,
+    'hud-elite'
+  );
+}
 
     lootResultDiv.innerHTML = html;
     updateHud(grandTotalMin, grandTotalMax, hudLines);
@@ -3221,5 +3236,6 @@ updateHud(grandTotalMin, grandTotalMax, hudLines);
 
 </body>
 </html>
+
 
 
