@@ -3062,76 +3062,84 @@ async function applySuggestedSecondaryLoot() {
     }
   }
 
- function renderRollingText(el, nextText, key) {
-  if (!el) return;
+function renderRollingText(el, nextText, key) {
+  try {
+    if (!el) return;
 
-  const next = String(nextText ?? '');
-  const prev = hudPrevTextByKey.get(key) ?? '';
+    const next = String(nextText ?? '');
+    const prev = hudPrevTextByKey.get(key) ?? '';
 
-  if (prefersReducedMotion()) {
-    el.textContent = next;
-    hudPrevTextByKey.set(key, next);
-    return;
-  }
+    // If you don't have this helper in scope, don't crash.
+    const reduced =
+      (typeof prefersReducedMotion === 'function')
+        ? prefersReducedMotion()
+        : (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 
-  // Digits-only strings (for right-aligned digit mapping)
-  const prevDigits = (prev.match(/\d/g) || []).join('');
-  const nextDigits = (next.match(/\d/g) || []).join('');
-
-  // Helper: get digit from right side by digit index
-  const digitFromRight = (digits, idxFromRight) => {
-    // idxFromRight: 0 = last digit
-    const i = digits.length - 1 - idxFromRight;
-    return (i >= 0) ? digits[i] : '0';
-  };
-
-  // Rebuild content
-  el.innerHTML = '';
-  const wrap = document.createElement('span');
-  wrap.className = 'roll-number';
-  el.appendChild(wrap);
-
-  // Walk the NEXT string, but for each digit, pick a matching prev-digit by right index
-  let nextDigitSeen = 0; // count digits as we scan left->right
-  const totalNextDigits = nextDigits.length;
-
-  for (let i = 0; i < next.length; i++) {
-    const nc = next[i];
-    const isDigit = nc >= '0' && nc <= '9';
-
-    if (!isDigit) {
-      const s = document.createElement('span');
-      s.className = 'roll-static';
-      s.textContent = (nc === ' ') ? '\u00A0' : nc;
-      wrap.appendChild(s);
-      continue;
+    if (reduced) {
+      el.textContent = next;
+      hudPrevTextByKey.set(key, next);
+      return;
     }
 
-    // This digit’s position from the right within the NEXT digits
-    const idxFromRight = (totalNextDigits - 1) - nextDigitSeen;
-    nextDigitSeen++;
+    // If helpers are missing for any reason, fallback instead of crashing.
+    if (typeof buildRollDigitColumn !== 'function' || typeof setRollDigit !== 'function') {
+      el.textContent = next;
+      hudPrevTextByKey.set(key, next);
+      return;
+    }
 
-    // Choose start digit from prev by same right index
-    const startDigit = digitFromRight(prevDigits, idxFromRight);
+    const prevDigits = (prev.match(/\d/g) || []).join('');
+    const nextDigits = (next.match(/\d/g) || []).join('');
 
-    const digitBox = document.createElement('span');
-    digitBox.className = 'roll-digit';
+    const digitFromRight = (digits, idxFromRight) => {
+      const i = digits.length - 1 - idxFromRight;
+      return (i >= 0) ? digits[i] : '0';
+    };
 
-    const inner = buildRollDigitColumn();
-    digitBox.appendChild(inner);
-    wrap.appendChild(digitBox);
+    el.innerHTML = '';
+    const wrap = document.createElement('span');
+    wrap.className = 'roll-number';
+    el.appendChild(wrap);
 
-    // Set start immediately, then animate to target digit
-    setRollDigit(inner, startDigit, true);
+    let nextDigitSeen = 0;
+    const totalNextDigits = nextDigits.length;
 
-    requestAnimationFrame(() => {
-      setRollDigit(inner, nc, false);
-    });
+    for (let i = 0; i < next.length; i++) {
+      const nc = next[i];
+      const isDigit = nc >= '0' && nc <= '9';
+
+      if (!isDigit) {
+        const s = document.createElement('span');
+        s.className = 'roll-static';
+        s.textContent = (nc === ' ') ? '\u00A0' : nc;
+        wrap.appendChild(s);
+        continue;
+      }
+
+      const idxFromRight = (totalNextDigits - 1) - nextDigitSeen;
+      nextDigitSeen++;
+
+      const startDigit = digitFromRight(prevDigits, idxFromRight);
+
+      const digitBox = document.createElement('span');
+      digitBox.className = 'roll-digit';
+
+      const inner = buildRollDigitColumn();
+      digitBox.appendChild(inner);
+      wrap.appendChild(digitBox);
+
+      setRollDigit(inner, startDigit, true);
+      requestAnimationFrame(() => setRollDigit(inner, nc, false));
+    }
+
+    hudPrevTextByKey.set(key, next);
+  } catch (err) {
+    // NEVER let HUD rendering kill the app.
+    console.warn('renderRollingText failed, falling back to plain text:', err);
+    if (el) el.textContent = String(nextText ?? '');
+    if (typeof hudPrevTextByKey !== 'undefined') hudPrevTextByKey.set(key, String(nextText ?? ''));
   }
-
-  hudPrevTextByKey.set(key, next);
 }
-
 
  function updateHudBags(totalUsedPct, bagCount) {
   const container = document.getElementById('hud-bag-bars');
@@ -3404,6 +3412,7 @@ document.addEventListener('keydown', (e) => {
 
 </body>
 </html>
+
 
 
 
