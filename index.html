@@ -1999,6 +1999,27 @@ if (splash && splashVideo) {
     tooltip.classList.remove('show');
   }
 
+  // === Map Button Tooltips ===
+const mapTooltips = {
+  compound: "Compound",
+  satellite: "Satellite",
+  guards: "Guards",
+  kosatka: "Kosatka"
+};
+
+document.querySelectorAll('.map-btn').forEach(btn => {
+  const key = btn.dataset.map;
+  const label = mapTooltips[key];
+
+  if (!label) return;
+
+  btn.addEventListener('mouseenter', () => {
+    showTooltipFor(btn, label);
+  });
+
+  btn.addEventListener('mouseleave', hideTooltip);
+});
+
   function positionTooltip() {
     if (!tooltipTarget || !tooltip.classList.contains('show')) return;
 
@@ -3435,4 +3456,5 @@ document.addEventListener('keydown', (e) => {
 
 </body>
 </html>
+
 
