@@ -774,7 +774,7 @@ body.splash-done #app {
   box-shadow: 0 0 0 var(--hud-panel-shadow);
 
   padding: 0;
-  pointer-events: none; /* clicks pass through */
+  pointer-events: auto; /* clicks pass through */
 
   /* Let HUD size to content but never exceed viewport */
   width: max-content;
@@ -783,6 +783,30 @@ body.splash-done #app {
 
   /* If anything inside scales, keep growth inward */
   transform-origin: top right;
+}
+
+/* ==============================
+   HUD breakdown collapse/expand
+   - collapsed by default
+   - slides out only on #hud hover
+============================== */
+
+#hud-breakdown {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+
+  transform: translateY(-6px);
+  transition: max-height 220ms ease, opacity 220ms ease, transform 220ms ease;
+  pointer-events: none; /* so it doesn't "catch" hover */
+}
+
+/* Expand when hovering the whole HUD */
+#hud:hover #hud-breakdown {
+  max-height: 200px; /* enough to fit 3 rows */
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: none;
 }
 
 /* Row layout */
@@ -1231,18 +1255,20 @@ body.splash-done #app {
     <span class="hud-value" id="hud-total">$0</span>
   </div>
 
-  <!-- NEW: Primary/Secondary take + Elite Challenge -->
-  <div class="hud-row">
-    <span class="hud-label">Primary Take:</span>
-    <span class="hud-subvalue" id="hud-primary">$0</span>
-  </div>
-  <div class="hud-row">
-    <span class="hud-label">Secondary Take:</span>
-    <span class="hud-subvalue" id="hud-secondary">$0</span>
-  </div>
+  <!-- Collapsed by default, expands on HUD hover -->
+  <div id="hud-breakdown">
     <div class="hud-row">
-    <span class="hud-label">Elite Take:</span>
-    <span class="hud-subvalue" id="hud-elite">$0</span>
+      <span class="hud-label">Primary Take:</span>
+      <span class="hud-subvalue" id="hud-primary">$0</span>
+    </div>
+    <div class="hud-row">
+      <span class="hud-label">Secondary Take:</span>
+      <span class="hud-subvalue" id="hud-secondary">$0</span>
+    </div>
+    <div class="hud-row">
+      <span class="hud-label">Elite Take:</span>
+      <span class="hud-subvalue" id="hud-elite">$0</span>
+    </div>
   </div>
 
   <div class="hud-divider"></div>
@@ -3235,6 +3261,7 @@ if (hudElite) {
 
 </body>
 </html>
+
 
 
 
