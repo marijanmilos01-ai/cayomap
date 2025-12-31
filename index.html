@@ -2505,78 +2505,76 @@ document.querySelectorAll('.map-btn').forEach(btn => {
   });
 
   function renderSymbol(zone, type, id) {
-    if (zone.querySelector(`.symbol[data-id="${id}"]`)) return;
+  if (zone.querySelector(`.symbol[data-id="${id}"]`)) return;
 
-    const idx = zone.querySelectorAll('.symbol').length;
+  const idx = zone.querySelectorAll('.symbol').length;
+  if (idx >= 4) return; // max 4 per zone
 
-    /* UPDATED: max 4 symbols per zone */
-    if (idx >= 4) return;
+  const symbol = document.createElement('div');
+  symbol.className = 'symbol';
+  symbol.dataset.id = id;
 
-    const symbol = document.createElement('div');
-    symbol.className = 'symbol';
-    symbol.dataset.id = id;
+  // 2x2 grid placement
+  const row = Math.floor(idx / 2);
+  const col = idx % 2;
+  symbol.style.top = `${row * 50 + 2}%`;
+  symbol.style.left = `${col * 50 + 2}%`;
 
-    /* UPDATED: 2x2 grid */
-    const row = Math.floor(idx / 2);   // 0..1
-    const col = idx % 2;              // 0..1
-    symbol.style.top = `${row * 50 + 2}%`;
-    symbol.style.left = `${col * 50 + 2}%`;
+  const icons = {
+    Gold: 'https://www.svgrepo.com/show/532436/gold.svg',
+    Cash: 'https://www.svgrepo.com/show/175801/dollar-exchange.svg',
+    Painting: 'https://www.svgrepo.com/show/535548/painting.svg'
+  };
 
-    const icons = {
-      Gold: 'https://www.svgrepo.com/show/532436/gold.svg',
-      Cash: 'https://www.svgrepo.com/show/175801/dollar-exchange.svg',
-      Painting: 'https://www.svgrepo.com/show/535548/painting.svg'
-    };
-    symbol.innerHTML = `<img src="${icons[type]}" width="100%" height="100%">`;
+  symbol.innerHTML = `<img src="${icons[type]}" width="100%" height="100%">`;
 
-    // Pop IN on insertion
-    playPopIn(symbol);
+  // Pop IN on insertion
+  playPopIn(symbol);
 
-symbol.onclick = async e => {
-  e.stopPropagation();
+  symbol.onclick = async (e) => {
+    e.stopPropagation();
 
-  const region = zone.dataset.name;
+    const region = zone.dataset.name;
 
-  // ✅ Setup undo FIRST (so even instant pop-out still has an undo)
-  setUndo('Undo', async () => {
-    setMapSyncing(true);
+    // Undo action: re-insert
+    setUndo('Undo', async () => {
+      setMapSyncing(true);
 
-    const { data: inserted, error: undoErr } = await sb
-      .from('symbols')
-      .insert({ region, symbol: type })
-      .select()
-      .single();
+      const { data: inserted, error: undoErr } = await sb
+        .from('symbols')
+        .insert({ region, symbol: type })
+        .select()
+        .single();
 
-    setMapSyncing(false);
+      setMapSyncing(false);
 
-    if (undoErr || !inserted) {
-      showToast('Undo failed', 'Could not restore the symbol.');
-      throw undoErr || new Error('Undo insert failed');
+      if (undoErr || !inserted) {
+        showToast('Undo failed', 'Could not restore the symbol.');
+        throw undoErr || new Error('Undo insert failed');
+      }
+
+      showToast('Restored', `${type} restored to ${region}.`, 2500);
+    });
+
+    // instant UX
+    popOutAndRemove(symbol);
+
+    const { error } = await sb.from('symbols').delete().eq('id', id);
+
+    if (error) {
+      showToast('Sync failed', 'Could not delete symbol. Check connection and try again.');
+
+      // restore visually if delete failed
+      renderSymbol(zone, type, id);
+      return;
     }
 
-    showToast('Restored', `${type} restored to ${region}.`, 2500);
-  });
+    showToast('Deleted', `${type} removed from ${region}.`, 2500);
+  };
 
-  // Instant UX: pop out immediately
-  popOutAndRemove(symbol);
-
-  const { error } = await sb.from('symbols').delete().eq('id', id);
-
-  if (error) {
-    showToast('Sync failed', 'Could not delete symbol. Check connection and try again.');
-
-    // If delete failed, undo should not be offered anymore
-    // (otherwise user would "undo" something that never deleted)
-    // So clear it safely if your toast code supports it:
-    // clearUndo();
-
-    // Restore symbol visually
-    renderSymbol(zone, type, id);
-    return;
-  }
-
-  showToast('Deleted', `${type} removed from ${region}.`, 2500);
-};
+  // ✅ THIS was missing
+  zone.appendChild(symbol);
+}
 
   panel.querySelectorAll('button').forEach(btn => {
     btn.addEventListener('click', async e => {
@@ -3887,4 +3885,5 @@ document.addEventListener('keydown', (e) => {
 
 </body>
 </html>
+
 
