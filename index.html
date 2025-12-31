@@ -1368,6 +1368,72 @@ body.splash-done #app {
   animation: pulse-pop 420ms ease-out;
 }
 
+/* === Confirm Delete Modal === */
+.confirm-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  backdrop-filter: blur(3px);
+  z-index: 9999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+
+.confirm-modal.show {
+  display: flex;
+}
+
+.confirm-box {
+  background: rgba(30,30,30,0.9);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 14px;
+  padding: 20px;
+  width: min(90vw, 340px);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+  text-align: center;
+}
+
+.confirm-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.confirm-text {
+  font-size: 14px;
+  opacity: 0.85;
+  margin-bottom: 18px;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.confirm-actions button {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.confirm-actions .danger {
+  background: #b32121;
+  color: white;
+}
+
+.confirm-actions button:not(.danger) {
+  background: #444;
+  color: #fff;
+}
+
+.confirm-actions button:hover {
+  opacity: 0.9;
+}
+
 </style>
 </head>
 
@@ -1665,6 +1731,20 @@ body.splash-done #app {
     <div class="toast-msg" id="toast-msg">Something went wrong.</div>
   </div>
   <button type="button" id="toast-close">Close</button>
+</div>
+
+<!-- Confirm Delete All Symbols -->
+<div id="confirm-delete-modal" class="confirm-modal">
+  <div class="confirm-box">
+    <div class="confirm-title">Delete all symbols?</div>
+    <div class="confirm-text">
+      This will permanently remove all placed symbols from the map.
+    </div>
+    <div class="confirm-actions">
+      <button id="confirm-delete-cancel">Cancel</button>
+      <button id="confirm-delete-ok" class="danger">Delete</button>
+    </div>
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -2512,9 +2592,14 @@ if (applySuggestedMenuBtn) {
   });
 }  
 
-/* ================= DELETE ALL SYMBOLS BUTTON ================= */
+/* ================= DELETE ALL SYMBOLS BUTTON (WITH CONFIRM) ================= */
 
 const clearSymbolsBtn = document.getElementById('clear-symbols-btn');
+
+// Confirm modal elements (must exist in HTML)
+const confirmDeleteModal = document.getElementById('confirm-delete-modal');
+const confirmDeleteOk = document.getElementById('confirm-delete-ok');
+const confirmDeleteCancel = document.getElementById('confirm-delete-cancel');
 
 if (clearSymbolsBtn) {
   // Tooltip (add ONCE)
@@ -2528,9 +2613,43 @@ if (clearSymbolsBtn) {
     e.preventDefault();
   });
 
-  // Click action (NO confirm dialog -> won't exit fullscreen)
-  clearSymbolsBtn.addEventListener('click', async (e) => {
+  // Open confirm modal instead of deleting immediately
+  clearSymbolsBtn.addEventListener('click', (e) => {
     e.stopPropagation();
+    hideTooltip();
+
+    // If modal isn't present, fallback to toast + do nothing (safe)
+    if (!confirmDeleteModal || !confirmDeleteOk || !confirmDeleteCancel) {
+      showToast('Missing confirm UI', 'Confirm modal not found in HTML.');
+      return;
+    }
+
+    confirmDeleteModal.classList.add('show');
+  });
+}
+
+/* ===== Confirm modal behavior ===== */
+if (confirmDeleteModal && confirmDeleteOk && confirmDeleteCancel) {
+  // Close helper
+  const closeConfirm = () => confirmDeleteModal.classList.remove('show');
+
+  // Clicking overlay closes (but clicking the box does not)
+  confirmDeleteModal.addEventListener('click', closeConfirm);
+
+  // Prevent clicks inside the dialog from closing it
+  const box = confirmDeleteModal.querySelector('.confirm-box');
+  box?.addEventListener('click', (e) => e.stopPropagation());
+
+  // Cancel button
+  confirmDeleteCancel.addEventListener('click', (e) => {
+    e.stopPropagation();
+    closeConfirm();
+  });
+
+  // Confirm delete button
+  confirmDeleteOk.addEventListener('click', async (e) => {
+    e.stopPropagation();
+    closeConfirm();
 
     setMapSyncing(true);
 
@@ -2547,6 +2666,13 @@ if (clearSymbolsBtn) {
 
     setMapSyncing(false);
     showToast('Done', 'All symbols deleted.');
+  });
+
+  // ESC closes confirm (nice safety)
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && confirmDeleteModal.classList.contains('show')) {
+      closeConfirm();
+    }
   });
 }
 
@@ -3617,6 +3743,7 @@ document.addEventListener('keydown', (e) => {
 
 </body>
 </html>
+
 
 
 
