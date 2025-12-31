@@ -1392,46 +1392,58 @@ body.splash-done #app {
   width: min(90vw, 340px);
   box-shadow: 0 20px 40px rgba(0,0,0,0.6);
   text-align: center;
+  color: #ffffff; /* ✅ ensures all text is white */
 }
 
+/* Title */
 .confirm-title {
   font-size: 18px;
   font-weight: 600;
   margin-bottom: 10px;
+  color: #ffffff;
 }
 
+/* Description text */
 .confirm-text {
   font-size: 14px;
-  opacity: 0.85;
+  opacity: 0.9;
   margin-bottom: 18px;
+  color: #ffffff;
 }
 
+/* Button container */
 .confirm-actions {
   display: flex;
   gap: 12px;
   justify-content: center;
 }
 
+/* Base button style */
 .confirm-actions button {
   padding: 8px 16px;
   border-radius: 8px;
   border: none;
   cursor: pointer;
   font-weight: 600;
+  transition: transform 0.15s ease, opacity 0.15s ease;
 }
 
+/* Delete button */
 .confirm-actions .danger {
   background: #b32121;
-  color: white;
+  color: #ffffff;
 }
 
+/* Cancel button */
 .confirm-actions button:not(.danger) {
   background: #444;
-  color: #fff;
+  color: #ffffff;
 }
 
+/* Hover effect */
 .confirm-actions button:hover {
   opacity: 0.9;
+  transform: translateY(-1px);
 }
 
 </style>
@@ -3743,6 +3755,7 @@ document.addEventListener('keydown', (e) => {
 
 </body>
 </html>
+
 
 
 
