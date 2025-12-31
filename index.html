@@ -3179,6 +3179,24 @@ async function applySuggestedSecondaryLoot() {
   }
 }
   
+  function fillRemainingWithCash() {
+  const available = getSymbolCounts();
+  const take = calculatorState.secondary_take || { Cash:0, Painting:0, Gold:0 };
+
+  const cap = getBagCapacityUnits();
+  const used = computeBagUsedUnits(take);
+  const left = Math.max(0, cap - used);
+
+  const maxExtraCash = (available.Cash || 0) - (parseFloat(take.Cash) || 0);
+  if (maxExtraCash <= 0 || left <= 0) return;
+
+  const addCash = left / BAG_PER_STACK_UNITS.Cash; // stacks needed
+  const newCash = (parseFloat(take.Cash) || 0) + Math.min(maxExtraCash, addCash);
+
+  take.Cash = Math.round(newCash * 1000) / 1000;
+  calculatorState.secondary_take = take;
+}
+  
   function updateHudBagLoot(take) {
   const el = document.getElementById('hud-bag-loot');
   if (!el) return;
@@ -3373,6 +3391,7 @@ document.addEventListener('keydown', (e) => {
 
 </body>
 </html>
+
 
 
 
