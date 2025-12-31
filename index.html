@@ -136,25 +136,24 @@ input, select, textarea {
    - counter zoom using transform: scale(var(--inv-zoom))
 =============================== */
 .zone {
-  position:absolute;
+  position: absolute;
   width: var(--zone-size);
   aspect-ratio: 1 / 1;
-  height: auto;
 
-  border:2px solid rgba(30,30,30,0.8);
+  border: 2px solid rgba(30,30,30,0.8);
   background-color: rgba(40,40,40,0.6);
   box-shadow: 0 4px 12px rgba(0,0,0,0.5), 0 0 10px rgba(30,30,30,0.5);
-  cursor:pointer;
-  box-sizing:border-box;
-  border-radius:8px;
+  cursor: pointer;
+  box-sizing: border-box;
+  border-radius: 8px;
   transition: all 0.3s ease;
 
-  /* counteract browser zoom (best-effort via devicePixelRatio) */
   transform: translate(-50%, -50%) scale(var(--inv-zoom));
   transform-origin: center;
-  
+}
+
 .zone:hover {
-  border-color:#fff;
+  border-color: #fff;
   background-color: rgba(50,50,50,0.6);
   box-shadow: 0 4px 12px rgba(0,0,0,0.5), 0 0 10px rgba(30,30,30,0.5);
 }
@@ -1656,7 +1655,8 @@ body.splash-done #app {
   <div class="zone" data-name="West Storage"  data-x="0.54" data-y="0.45"></div>
   <div class="zone" data-name="North Storage" data-x="0.67" data-y="0.55"></div>
   <div class="zone" data-name="South Storage" data-x="0.48" data-y="0.67"></div>
-
+</div> 
+    
 <div id="panel" class="panel">
   <h3 id="panel-title"></h3>
   <button data-symbol="Gold">Gold</button>
@@ -2126,22 +2126,16 @@ async function positionZonesToCoveredImage() {
     zone.style.top  = (offsetY + y * drawnH) + 'px';
   });
 }
-
-// Keep aligned on resize
-window.addEventListener('resize', positionZonesToCoveredImage);
-if (window.visualViewport) {
-  window.visualViewport.addEventListener('resize', positionZonesToCoveredImage);
-}
-
+  
 // Initial run
 positionZonesToCoveredImage();
 
 // run once and on resize
 window.addEventListener('resize', positionZonesToCoveredImage);
+
 if (window.visualViewport) {
   window.visualViewport.addEventListener('resize', positionZonesToCoveredImage);
 }
-positionZonesToCoveredImage();
 
 /* =========================================================
    TOAST + UNDO SUPPORT (FIXED)
@@ -4035,6 +4029,7 @@ document.addEventListener('keydown', (e) => {
 
 </body>
 </html>
+
 
 
 
