@@ -801,12 +801,13 @@ body.splash-done #app {
   pointer-events: none; /* so it doesn't "catch" hover */
 }
 
-/* Expand when hovering the whole HUD */
-#hud:hover #hud-breakdown {
-  max-height: 200px; /* enough to fit 3 rows */
+/* Expand on hover OR when pinned */
+#hud:hover #hud-breakdown,
+#hud.pinned #hud-breakdown {
+  max-height: 200px;
   opacity: 1;
   transform: translateY(0);
-  pointer-events: none;
+  pointer-events: auto;
 }
 
 /* Row layout */
@@ -3306,6 +3307,30 @@ if (hudElite) {
     .subscribe();
 
   loadSymbols();
+
+  /* =========================
+   HUD CLICK-TO-PIN BEHAVIOR
+========================= */
+const hud = document.getElementById('hud');
+
+// Clicking the HUD toggles pinned state
+hud.addEventListener('click', (e) => {
+  e.stopPropagation(); // don't let document click close it
+  hud.classList.toggle('pinned');
+});
+
+// Clicking anywhere else closes the HUD
+document.addEventListener('click', () => {
+  hud.classList.remove('pinned');
+});
+
+// Optional: ESC key closes HUD
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    hud.classList.remove('pinned');
+  }
+});
+
 });
 </script>
 
@@ -3313,4 +3338,5 @@ if (hudElite) {
 
 </body>
 </html>
+
 
