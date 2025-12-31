@@ -3062,91 +3062,43 @@ async function applySuggestedSecondaryLoot() {
     }
   }
 
-function renderRollingText(el, nextText, key) {
-  // HARD FAILSAFE: never let the HUD die because of animation
-  try {
+  function renderRollingText(el, nextText, key) {
     if (!el) return;
 
     const next = String(nextText ?? '');
-    const prev = hudPrevTextByKey.get(key) ?? '';
+    const prev = hudPrevTextByKey.get(key) ?? el.textContent ?? '';
 
-    // Reduced motion = plain text
-    const reduced = (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-    if (reduced) {
+    // Reduced motion: just set text
+    if (prefersReducedMotion()) {
       el.textContent = next;
       hudPrevTextByKey.set(key, next);
       return;
     }
 
-    // If helpers are missing for any reason, fall back
-    if (typeof buildRollDigitColumn !== 'function' || typeof setRollDigit !== 'function') {
-      el.textContent = next;
-      hudPrevTextByKey.set(key, next);
-      return;
-    }
+    // Direction hint (up for increase, down for decrease)
+    const prevNum = extractComparableNumber(prev);
+    const nextNum = extractComparableNumber(next);
+    const rollUp = (prevNum != null && nextNum != null) ? (nextNum >= prevNum) : true;
 
-    // Split BOTH prev and next into alternating: [non-number, number, non-number, number...]
-    // Number token = digits with optional commas (no $ included)
-    const tokenRegex = /(\d[\d,]*)/g;
-
-    const nextParts = next.split(tokenRegex); // includes number tokens
-    const prevParts = prev.split(tokenRegex);
-
+    // Build new structure (simple + robust)
     el.innerHTML = '';
     const wrap = document.createElement('span');
     wrap.className = 'roll-number';
     el.appendChild(wrap);
 
-    // We animate per numeric token index
-    let numTokenIndex = 0;
+    // Pad digits so columns stay aligned between prev/next (only for digit chars)
+    // We'll align by position in the string itself (including commas/$), so no complex padding.
+    const maxLen = Math.max(prev.length, next.length);
+    const prevP = prev.padStart(maxLen, ' ');
+    const nextP = next.padStart(maxLen, ' ');
 
-    for (let i = 0; i < nextParts.length; i++) {
-      const part = nextParts[i];
-      const isNumberToken = (i % 2 === 1); // because split keeps captures at odd indices
+    for (let i = 0; i < maxLen; i++) {
+      const pc = prevP[i];
+      const nc = nextP[i];
 
-      if (!isNumberToken) {
-        const s = document.createElement('span');
-        s.className = 'roll-static';
-        s.textContent = part === ' ' ? '\u00A0' : part;
-        wrap.appendChild(s);
-        continue;
-      }
+      const isDigit = (c) => c >= '0' && c <= '9';
 
-      // Next number token (digits+commas), and matching previous token by index
-      const nextNum = part;
-      const prevNum = (prevParts[i] != null && (i % 2 === 1)) ? prevParts[i] : '';
-
-      // Remove commas for digit mapping, but we will render commas from NEXT token
-      const nextDigits = (nextNum.match(/\d/g) || []).join('');
-      const prevDigits = (prevNum.match(/\d/g) || []).join('');
-
-      // Right-aligned digit mapping WITHIN this number token
-      const digitFromRight = (digits, idxFromRight) => {
-        const pos = digits.length - 1 - idxFromRight;
-        return (pos >= 0) ? digits[pos] : '0';
-      };
-
-      // Walk nextNum char-by-char so commas stay exactly where they are in NEXT
-      let nextDigitSeen = 0;
-      const totalNextDigits = nextDigits.length;
-
-      for (let j = 0; j < nextNum.length; j++) {
-        const ch = nextNum[j];
-        const isDigit = ch >= '0' && ch <= '9';
-
-        if (!isDigit) {
-          const c = document.createElement('span');
-          c.className = 'roll-static';
-          c.textContent = ch;
-          wrap.appendChild(c);
-          continue;
-        }
-
-        const idxFromRight = (totalNextDigits - 1) - nextDigitSeen;
-        nextDigitSeen++;
-
-        const startDigit = digitFromRight(prevDigits, idxFromRight);
-
+      if (isDigit(nc)) {
         const digitBox = document.createElement('span');
         digitBox.className = 'roll-digit';
 
@@ -3154,20 +3106,51 @@ function renderRollingText(el, nextText, key) {
         digitBox.appendChild(inner);
         wrap.appendChild(digitBox);
 
+        // Start at prev digit (or 0 if none), then animate to next digit.
+        const startDigit = isDigit(pc) ? pc : '0';
         setRollDigit(inner, startDigit, true);
-        requestAnimationFrame(() => setRollDigit(inner, ch, false));
-      }
 
-      numTokenIndex++;
+        // Ensure the browser has painted the start position before animating.
+        requestAnimationFrame(() => {
+          setRollDigit(inner, nc, false);
+          void rollUp;
+        });
+      } else {
+        const s = document.createElement('span');
+        s.className = 'roll-static';
+        // keep spacing for padded leading spaces
+        s.textContent = (nc === ' ') ? '\u00A0' : nc;
+        wrap.appendChild(s);
+      }
     }
 
+    // Remember the actual (un-padded) next string
     hudPrevTextByKey.set(key, next);
-  } catch (err) {
-    console.warn('HUD odometer failed; falling back to plain text:', err);
-    if (el) el.textContent = String(nextText ?? '');
-    try { hudPrevTextByKey.set(key, String(nextText ?? '')); } catch {}
   }
-}
+
+  function updateHud(grandTotalMin, grandTotalMax, playerLines) {
+    const totalText = (grandTotalMin === grandTotalMax)
+      ? `$${Math.floor(grandTotalMin).toLocaleString()}`
+      : `$${Math.floor(grandTotalMin).toLocaleString()} - $${Math.floor(grandTotalMax).toLocaleString()}`;
+
+    renderRollingText(hudTotal, totalText, 'hud-total');
+
+    hudPlayers.innerHTML = '';
+    (playerLines || []).forEach((line, idx) => {
+      const row = document.createElement('div');
+      row.className = 'hud-row';
+      row.innerHTML = `
+        <span class="hud-label">${line.label}</span>
+        <span class="hud-subvalue"></span>
+      `;
+      const valEl = row.querySelector('.hud-subvalue');
+      hudPlayers.appendChild(row);
+
+      // Key by label so it persists even when rows are recreated
+      const key = `player:${line.label}`;
+      renderRollingText(valEl, line.value, key);
+    });
+  }
 
  function updateHudBags(totalUsedPct, bagCount) {
   const container = document.getElementById('hud-bag-bars');
@@ -3440,9 +3423,6 @@ document.addEventListener('keydown', (e) => {
 
 </body>
 </html>
-
-
-
 
 
 
