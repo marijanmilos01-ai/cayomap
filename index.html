@@ -2818,11 +2818,11 @@ if (clearSymbolsBtn) {
     return best;
   }
 
-  // NEW: shared "apply suggested loot" so both buttons do the same thing
+// NEW: shared "apply suggested loot" so both buttons do the same thing
 async function applySuggestedSecondaryLoot() {
   if (!calculatorState) return;
 
-  // Compute fresh suggestion based on current symbols + player count
+  // 1) Base suggestion (coarse search is OK)
   const suggested = computeSuggestedSecondaryTake();
 
   calculatorState.secondary_take = {
@@ -2831,14 +2831,29 @@ async function applySuggestedSecondaryLoot() {
     Painting: suggested.Painting
   };
 
-  // 🔧 ensures precision + full bag usage
-  calculatorState.secondary_take.Cash =
-    Math.round(calculatorState.secondary_take.Cash * 1000) / 1000;
-
+  // 2) Make sure we are within availability first
   clampSecondaryToAvailable();
-  await updateCalculatorState({ secondary_take: calculatorState.secondary_take });
 
-  // Re-render UI
+  // 3) ✅ TOP OFF remaining bag space with Cash in 0.001 precision
+  // (this is what makes 1.333 happen)
+  fillRemainingWithCash();
+
+  // 4) Safety: enforce capacity + availability again
+  enforceBagCapacity('Cash');
+  clampSecondaryToAvailable();
+
+  // 5) ✅ snap to 0.001 precision (so UI + DB store the exact number)
+  calculatorState.secondary_take.Cash =
+    Math.round((parseFloat(calculatorState.secondary_take.Cash) || 0) * 1000) / 1000;
+
+  calculatorState.secondary_take.Gold =
+    Math.round((parseFloat(calculatorState.secondary_take.Gold) || 0) * 1000) / 1000;
+
+  calculatorState.secondary_take.Painting =
+    Math.floor(parseFloat(calculatorState.secondary_take.Painting) || 0);
+
+  // 6) Persist + re-render
+  await updateCalculatorState({ secondary_take: calculatorState.secondary_take });
   renderSecondaryControls();
   renderLootResult();
 }
@@ -3395,6 +3410,7 @@ document.addEventListener('keydown', (e) => {
 
 </body>
 </html>
+
 
 
 
