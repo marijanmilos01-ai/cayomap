@@ -1300,7 +1300,7 @@ body.splash-done #app {
   <div id="hud-players"></div>
 
   <!-- Loot bag bars (auto adds 1 per player) -->
-  <<div id="hud-bags">
+  <div id="hud-bags">
   <div class="hud-row hud-bags-title">
     <span class="hud-label">Loot Bags:</span>
   </div>
@@ -3114,26 +3114,6 @@ async function applySuggestedSecondaryLoot() {
     container.removeChild(container.lastChild);
   }
 
-  function updateHudBagLoot(take) {
-  const el = document.getElementById('hud-bag-loot');
-  if (!el) return;
-
-  const cash = parseFloat(take?.Cash) || 0;
-  const gold = parseFloat(take?.Gold) || 0;
-  const painting = Math.floor(parseFloat(take?.Painting) || 0);
-
-  const fmt = (n) => (Number.isInteger(n) ? String(n) : n.toFixed(1));
-
-  const parts = [];
-  if (gold > 0) parts.push(`${fmt(gold)}x Gold`);
-  if (cash > 0) parts.push(`${fmt(cash)}x Cash`);
-  if (painting > 0) parts.push(`${painting}x Painting`);
-
-  el.innerHTML = parts.length
-    ? `<div class="hud-row"><span class="hud-bag-label">${parts.join(', ')}</span></div>`
-    : `<div class="hud-row"><span class="hud-bag-label" style="opacity:0.75;">No secondary selected</span></div>`;
-}
-
   // Animate fill amounts
   for (let i = 0; i < n; i++) {
     const row = container.children[i];
@@ -3159,7 +3139,27 @@ async function applySuggestedSecondaryLoot() {
     }
   }
 }
+  
+  function updateHudBagLoot(take) {
+  const el = document.getElementById('hud-bag-loot');
+  if (!el) return;
 
+  const cash = parseFloat(take?.Cash) || 0;
+  const gold = parseFloat(take?.Gold) || 0;
+  const painting = Math.floor(parseFloat(take?.Painting) || 0);
+
+  const fmt = (n) => (Number.isInteger(n) ? String(n) : n.toFixed(1));
+
+  const parts = [];
+  if (gold > 0) parts.push(`${fmt(gold)}x Gold`);
+  if (cash > 0) parts.push(`${fmt(cash)}x Cash`);
+  if (painting > 0) parts.push(`${painting}x Painting`);
+
+  el.innerHTML = parts.length
+    ? `<div class="hud-row"><span class="hud-bag-label">${parts.join(', ')}</span></div>`
+    : `<div class="hud-row"><span class="hud-bag-label" style="opacity:0.75;">No secondary selected</span></div>`;
+}
+  
   function renderLootResult() {
     if (!calculatorState) return;
 
@@ -3310,9 +3310,3 @@ if (hudElite) {
 
 </body>
 </html>
-
-
-
-
-
-
