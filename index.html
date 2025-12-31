@@ -2053,8 +2053,8 @@ if (splash && splashVideo) {
     window.visualViewport.addEventListener('scroll', updateInvZoom);
   }
 
- /* =========================================================
-   TOAST + UNDO SUPPORT
+/* =========================================================
+   TOAST + UNDO SUPPORT (FIXED)
 ========================================================= */
 const toastEl = document.getElementById('toast');
 const toastTitleEl = document.getElementById('toast-title');
@@ -2083,6 +2083,7 @@ function showToast(title, message, ms = 3500) {
   toastTitleEl.textContent = title || 'Notice';
   toastMsgEl.textContent = message || '';
 
+  // Setup undo button (if present)
   if (toastActionBtn && lastUndo?.fn) {
     toastActionBtn.style.display = '';
     toastActionBtn.textContent = lastUndo.label || 'Undo';
@@ -2104,7 +2105,16 @@ function showToast(title, message, ms = 3500) {
   toastEl.classList.add('show');
 
   if (toastTimer) clearTimeout(toastTimer);
-  toastTimer = setTimeout
+  toastTimer = setTimeout(() => {
+    toastEl.classList.remove('show');
+    // optional: clear undo after toast disappears
+    // clearUndo();
+  }, ms);
+}
+
+toastCloseBtn?.addEventListener('click', () => {
+  toastEl?.classList.remove('show');
+});
 
   /* =========================
    ACTIVE USERS (Presence bubble)
@@ -3877,3 +3887,4 @@ document.addEventListener('keydown', (e) => {
 
 </body>
 </html>
+
