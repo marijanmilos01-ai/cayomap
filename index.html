@@ -2209,6 +2209,16 @@ if (activeUsersBtn) {
   });
 }
 
+// Shift + Click = change username
+if (activeUsersBtn) {
+  activeUsersBtn.addEventListener('click', (e) => {
+    if (e.shiftKey) {
+      e.preventDefault();
+      changeUsername();
+    }
+  });
+}
+
 presenceChannel
   .on('presence', { event: 'sync' }, updateActiveUsersUI)
   .on('presence', { event: 'join' }, updateActiveUsersUI)
@@ -3902,6 +3912,15 @@ if (hudElite) {
 ========================= */
 const hud = document.getElementById('hud');
 
+/*HUD CLICK-TO-PIN BEHAVIOR*/
+function changeUsername() {
+  const name = prompt('Enter your display name:');
+  if (!name || !name.trim()) return;
+
+  localStorage.setItem('cayo_username', name.trim());
+  location.reload(); // rejoin presence with new name
+}
+
 // Clicking the HUD toggles pinned state
 hud.addEventListener('click', (e) => {
   e.stopPropagation(); // don't let document click close it
@@ -3925,3 +3944,4 @@ document.addEventListener('keydown', (e) => {
 
 </body>
 </html>
+
