@@ -3029,9 +3029,9 @@ if (confirmDeleteModal && confirmDeleteOk && confirmDeleteCancel) {
   };
 
   const secondaryRanges = {
-    Cash:[78000,89000],
-    Painting:[176000,199000],
-    Gold:[328000,333000]
+    Cash:[78480,89420],
+    Painting:[176200,199700],
+    Gold:[328584,333192]
   };
 
   function getPlayerCountForBag() {
@@ -3894,16 +3894,44 @@ const elitePerPlayer = (difficulty === 'hard') ? 100000 : 50000;
 const eliteTotal = elitePerPlayer * playerCount;
 
 // Heist take BEFORE fees (do NOT include Elite here)
-const heistMin = primaryValue + totalSecondaryMin + WALL_SAFE_MIN;
-const heistMax = primaryValue + totalSecondaryMax + WALL_SAFE_MAX;
+// ✅ round here so fees always work with integers (prevents float pennies)
+const heistMin = Math.round(primaryValue + totalSecondaryMin + WALL_SAFE_MIN);
+const heistMax = Math.round(primaryValue + totalSecondaryMax + WALL_SAFE_MAX);
 
 // Apply fees ONLY to heist take
-const heistAfterFeesMin = heistMin * 0.88;
-const heistAfterFeesMax = heistMax * 0.88;
+// ✅ also forces gross to be integer
+function netAfterFees(gross) {
+  gross = Math.round(gross);
+  const fence = Math.round(gross * 0.10);
+  const pavel = Math.round(gross * 0.02);
+  return gross - fence - pavel;
+}
+
+const heistAfterFeesMin = netAfterFees(heistMin);
+const heistAfterFeesMax = netAfterFees(heistMax);
 
 // Grand total (HUD Total Take) = heist after fees + elite total (elite is not taxed)
 const grandTotalMin = heistAfterFeesMin + eliteTotal;
 const grandTotalMax = heistAfterFeesMax + eliteTotal;
+
+// ✅ Share calculator: floors each share, then gives remainder to host (player 0)
+function computeShares(net, players) {
+  const cuts = players.map(p => (parseFloat(p.cut) || 0) / 100);
+
+  // floor each share
+  const shares = cuts.map(c => Math.floor(net * c));
+
+  // remainder caused by flooring
+  let remainder = net - shares.reduce((a, b) => a + b, 0);
+
+  // give remainder to host
+  if (shares.length > 0) shares[0] += remainder;
+
+  return shares;
+}
+
+const minShares = computeShares(heistAfterFeesMin, players);
+const maxShares = computeShares(heistAfterFeesMax, players);
 
 let html = `<strong>Actual Take:</strong><br>`;
 html += `<span style="opacity:0.8;">(includes Wall Safe: $${WALL_SAFE_MIN.toLocaleString()}–$${WALL_SAFE_MAX.toLocaleString()})</span><br>`;
@@ -3911,20 +3939,16 @@ html += `<span style="opacity:0.8;">(includes Elite Challenge: $${eliteTotal.toL
 
 const hudLines = [];
 
-players.forEach(p => {
+players.forEach((p, idx) => {
   const cutRaw = parseFloat(p.cut) || 0;
-  const cut = cutRaw / 100;
 
-  const minTake = Math.floor(heistAfterFeesMin * cut) + elitePerPlayer;
-  const maxTake = Math.floor(heistAfterFeesMax * cut) + elitePerPlayer;
+  // ✅ use the precomputed shares (already fixed for remainder)
+  const minTake = (minShares[idx] ?? 0) + elitePerPlayer;
+  const maxTake = (maxShares[idx] ?? 0) + elitePerPlayer;
 
-  // MAIN PLAYER LINE
   html += `<div><strong>${p.name} (${cutRaw}%):</strong> $${minTake.toLocaleString()} - $${maxTake.toLocaleString()}</div>`;
-
-  // ELITE BONUS LINE (always shown, not part of cut)
   html += `<div style="margin-left:14px; opacity:0.85;">Elite Challenge: $${elitePerPlayer.toLocaleString()}</div>`;
 
-  // HUD
   hudLines.push({
     label: `${p.name} (${cutRaw}%):`,
     value: (minTake === maxTake)
@@ -3935,7 +3959,6 @@ players.forEach(p => {
 
 lootResultDiv.innerHTML = html;
 updateHud(grandTotalMin, grandTotalMax, hudLines);
-
 
 // Primary
 if (hudPrimary) {
@@ -4116,14 +4139,3 @@ document.addEventListener('keydown', (e) => {
 
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
