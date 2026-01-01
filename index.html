@@ -730,66 +730,104 @@ body.splash-done #app {
 }
 
 /* ==========================================
-   CALCULATOR (Loot Panel) — MATCH MENU THEME
+   CALCULATOR (Loot Panel) — CLEAN + MATCH MENU
 ========================================== */
 
-/* Calculator container should NOT be its own “app card” */
+/* Calculator container: give left/right padding so nothing touches edges */
 #info-panel #calculator{
   background: transparent !important;
   border: none !important;
   border-radius: 0 !important;
-  padding: 10px 0 0 0 !important;
+
+  padding: 10px 12px 12px 12px !important;  /* ✅ fixes edge spacing */
   margin-top: 8px !important;
+
   color: rgba(255,255,255,0.92);
 }
 
-/* Rows: same vibe as menu rows */
+/* Make each row look like a clean "line item" and add spacing */
 #info-panel #calculator .calc-row{
-  background: rgba(0,0,0,0.20);
-  border: 1px solid rgba(255,255,255,0.10);
+  background: transparent;                  /* ✅ remove ugly row blocks */
+  border: none;
   border-radius: 0;
-  padding: 10px 12px;
-  margin: 8px 0;
+
+  padding: 10px 0;                          /* ✅ vertical spacing */
+  margin: 0;
+
   gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
 }
 
-/* Titles/meta text */
+/* Divider between rows (subtle) */
+#info-panel #calculator .calc-row{
+  border-bottom: 1px solid rgba(255,255,255,0.10);
+}
+#info-panel #calculator .calc-row:last-child{
+  border-bottom: none;
+}
+
+/* Hover highlight like menu rows */
+#info-panel #calculator .calc-row:hover{
+  background: rgba(255,255,255,0.92);
+}
+#info-panel #calculator .calc-row:hover,
+#info-panel #calculator .calc-row:hover *{
+  color: rgba(0,0,0,0.92) !important;
+}
+
+/* Titles/meta text: add breathing room */
 #info-panel #calculator .calc-title{
-  margin: 10px 0 6px;
+  margin: 14px 0 8px;
   font-weight: 700;
   opacity: 0.95;
 }
 #info-panel #calculator .calc-meta{
-  opacity: 0.85;
+  opacity: 0.88;
   font-size: 0.92em;
 }
 
-/* Inputs/selects: flat + translucent */
+/* Inputs/selects: flatter + slightly smaller */
 #info-panel #calculator select,
 #info-panel #calculator input.calc-input{
   background: rgba(0,0,0,0.22) !important;
   color: rgba(255,255,255,0.95) !important;
   border: 1px solid rgba(255,255,255,0.18) !important;
+
   border-radius: 0 !important;
-  padding: 6px 10px !important;
+  padding: 5px 8px !important;              /* ✅ smaller */
   outline: none !important;
   box-shadow: none !important;
+
+  height: 30px;                              /* ✅ consistent */
 }
 
-/* Focus: subtle bright edge (not glow-y) */
+/* When row is hovered (white), inputs should also become light */
+#info-panel #calculator .calc-row:hover select,
+#info-panel #calculator .calc-row:hover input.calc-input{
+  background: rgba(255,255,255,0.75) !important;
+  border-color: rgba(0,0,0,0.18) !important;
+  color: rgba(0,0,0,0.92) !important;
+}
+
+/* Focus: subtle */
 #info-panel #calculator select:focus,
 #info-panel #calculator input.calc-input:focus{
   border-color: rgba(255,255,255,0.55) !important;
-  background: rgba(0,0,0,0.28) !important;
 }
 
-/* Buttons: menu style (white on hover) */
+/* Buttons: smaller + match theme */
 #info-panel #calculator .calc-btn{
   background: rgba(0,0,0,0.22);
   color: rgba(255,255,255,0.95);
   border: 1px solid rgba(255,255,255,0.18);
+
   border-radius: 0;
-  padding: 6px 12px;
+  padding: 5px 10px;                         /* ✅ smaller */
+  height: 30px;                              /* ✅ consistent */
+  font-size: 13px;                           /* ✅ smaller */
+  font-weight: 600;
+
   cursor: var(--hover-cursor);
   transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
 }
@@ -800,22 +838,19 @@ body.splash-done #app {
   border-color: rgba(0,0,0,0.12);
 }
 
-/* “Danger” remove button: keep theme but slightly more obvious */
+/* ✅ Remove "danger" look entirely (no red outline) */
 #info-panel #calculator .calc-btn.danger{
-  border-color: rgba(255,120,120,0.35);
-}
-#info-panel #calculator .calc-btn.danger:hover{
-  background: rgba(255,255,255,0.92);
-  color: rgba(120,0,0,0.90);
-  border-color: rgba(120,0,0,0.25);
+  border-color: rgba(255,255,255,0.18) !important;
 }
 
-/* Bag status + result panels should not look like separate cards */
+/* Bag status + result panels: give padding so text isn't glued */
 #info-panel #calculator .loot-result{
   background: rgba(0,0,0,0.20) !important;
   border: 1px solid rgba(255,255,255,0.10) !important;
   border-radius: 0 !important;
+
   padding: 10px 12px !important;
+  margin-top: 10px !important;
 }
 
 /* ===== Sync indicator (minimal) ===== */
@@ -827,12 +862,16 @@ body.splash-done #app {
   margin-top: 8px;
   padding-top: 6px;
   border-top: 1px solid rgba(255,255,255,0.12);
+  padding-left: 12px;
+  padding-right: 12px;
 }
+  
 #calculator .sync-text {
   opacity: 0.75;
   font-size: 0.88em;
   white-space: nowrap;
 }
+  
 #calculator .sync-dot {
   display:inline-block;
   width: 8px;
@@ -842,9 +881,11 @@ body.splash-done #app {
   margin-right: 6px;
   vertical-align: middle;
 }
+  
 #calculator .sync-dot.syncing {
   animation: pulse 0.8s infinite ease-in-out;
 }
+  
 @keyframes pulse {
   0% { transform: scale(0.9); opacity: 0.35; }
   50% { transform: scale(1.15); opacity: 0.95; }
@@ -1555,12 +1596,13 @@ body.splash-done #app {
    LOOT PANEL: remove outer box, keep button theme
 ========================================== */
 
-/* Only remove the OUTER panel "box" look */
-#info-panel {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-  backdrop-filter: none !important;
+/* keep translucent, just remove rounded edges */
+#info-panel{
+  background: rgba(0,0,0,0.35) !important;
+  border: 1px solid rgba(255,255,255,0.14) !important;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.45) !important;
+  backdrop-filter: blur(6px) !important;
+  border-radius: 0 !important; /* <- removes visible rounding */
 }
 
 /* Content area should not add its own box either */
@@ -1706,15 +1748,16 @@ body.splash-done #app {
 
       <div class="loot-section-body">
         <div id="calculator">
-          <div>
-            <label>Difficulty:</label>
-            <select id="difficulty-select">
-              <option value="normal">Normal</option>
-              <option value="hard">Hard</option>
-            </select>
-          </div>
+           <div style="display:flex; gap:14px; flex-wrap:wrap; align-items:center; margin-bottom:8px;">
+             <div style="display:flex; align-items:center; gap:8px;">
+               <label>Difficulty:</label>
+                <select id="difficulty-select">
+                 <option value="normal">Normal</option>
+                 <option value="hard">Hard</option>
+               </select>
+             </div>
 
-          <div>
+          <div style="display:flex; align-items:center; gap:8px;">
             <label>Primary Loot:</label>
             <select id="primary-loot-select">
               <option value="">-- Select --</option>
@@ -1725,7 +1768,7 @@ body.splash-done #app {
               <option value="Panther">Panther</option>
             </select>
           </div>
-
+        </div>
           <div id="player-cuts"></div>
 
           <div id="secondary-loot"></div>
@@ -3333,7 +3376,7 @@ if (confirmDeleteModal && confirmDeleteOk && confirmDeleteCancel) {
         <span class="calc-meta">Cut %</span>
         <input class="calc-input player-cut" type="text" inputmode="numeric" autocomplete="off" spellcheck="false"
                value="${(p.cut ?? 0)}" data-idx="${idx}" style="width:80px;">
-        <button class="calc-btn danger remove-player" data-idx="${idx}">Remove</button>
+        <button class="calc-btn danger remove-player" data-idx="${idx}">Remove Player</button>
         <span class="calc-meta">(Enter to sync)</span>
       `;
       playerCutsDiv.appendChild(row);
@@ -4265,8 +4308,4 @@ document.addEventListener('keydown', (e) => {
 
 </body>
 </html>
-
-
-
-
 
