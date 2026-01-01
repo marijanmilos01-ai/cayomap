@@ -569,50 +569,96 @@ body.splash-done #app {
   text-align: center;
 }
 
-/* ===== Collapsible Loot Tables ===== */
-.loot-section {
-  border-radius: 8px;
-  margin-bottom: 10px;
-  background: rgba(30,30,30,0.25);
+/* ===== Loot Panel Sections (UPDATED to match screenshots) ===== */
+
+/* overall section container = translucent */
+.loot-section{
+  border-radius: 0; /* screenshot look: flat rows */
+  margin-bottom: 6px;
+  background: rgba(0,0,0,0.28);
   overflow: hidden;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+  box-shadow: none;
+  border: 1px solid rgba(255,255,255,0.10);
 }
 
-.loot-section-header {
+/* header row default = translucent */
+.loot-section-header{
+  position: relative;
   display:flex;
   align-items:center;
   justify-content:space-between;
   gap:10px;
-  padding: 10px;
-  cursor: pointer;
-  transition: background 0.2s ease;
-  background: rgba(40,40,40,0.35);
+
+  padding: 10px 12px;
+
+  background: rgba(0,0,0,0.28);
   border-bottom: 1px solid rgba(255,255,255,0.08);
+
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
 }
-.loot-section-header:hover {
-  background: rgba(30,30,30,0.45);
-}
-.loot-section-title {
+
+/* default text */
+.loot-section-title{
   opacity: 0.95;
-  font-weight: 600;
+  font-weight: 700;
+  color: rgba(255,255,255,0.92);
 }
-.loot-section-chevron {
-  opacity: 0.9;
-  transition: transform 0.25s ease;
+.loot-section-chevron{
+  opacity: 0.95;
+  color: rgba(255,255,255,0.92);
+  transition: transform 0.25s ease, color 120ms ease;
   transform: rotate(0deg);
 }
-.loot-section.collapsed .loot-section-chevron {
+
+/* hover = white row */
+.loot-section-header:hover{
+  background: rgba(255,255,255,0.92);
+}
+.loot-section-header:hover .loot-section-title,
+.loot-section-header:hover .loot-section-chevron{
+  color: rgba(0,0,0,0.90);
+}
+
+/* selected/clicked header = "MENU 1" style (white + green top stripe) */
+.loot-section.is-selected .loot-section-header{
+  background: rgba(255,255,255,0.96);
+  border-bottom-color: rgba(0,0,0,0.10);
+}
+
+/*top stripe */
+.loot-section.is-selected .loot-section-header::before{
+  content:"";
+  position:absolute;
+  left:0;
+  top:0;
+  width:100%;
+  height: 4px;
+  background: rgba(80, 200, 120, 0.95); /* green line */
+}
+
+/* selected text turns dark */
+.loot-section.is-selected .loot-section-title,
+.loot-section.is-selected .loot-section-chevron{
+  color: rgba(0,0,0,0.92);
+}
+
+/* chevron rotation */
+.loot-section.collapsed .loot-section-chevron{
   transform: rotate(-90deg);
 }
 
-.loot-section-body {
+/* body open/close (keep your existing behavior) */
+.loot-section-body{
   overflow: hidden;
   max-height: 1200px;
   opacity: 1;
   padding: 8px 0 0 0;
   transition: max-height 0.3s ease, opacity 0.25s ease, padding 0.3s ease;
+  background: rgba(0,0,0,0.20); /* subtle translucent body */
 }
-.loot-section.collapsed .loot-section-body {
+
+.loot-section.collapsed .loot-section-body{
   max-height: 0;
   opacity: 0;
   padding: 0;
@@ -2550,22 +2596,37 @@ document.querySelectorAll('.map-btn').forEach(btn => {
   }
 
   /* ================= Collapsible table sections ================= */
-  function initLootSections() {
-    document.querySelectorAll('.loot-section').forEach(section => {
-      const header = section.querySelector('.loot-section-header');
-      const chevron = section.querySelector('.loot-section-chevron');
-      if (!header || !chevron) return;
+function initLootSections() {
+  document.querySelectorAll('.loot-section').forEach(section => {
+    const header = section.querySelector('.loot-section-header');
+    const chevron = section.querySelector('.loot-section-chevron');
+    if (!header || !chevron) return;
 
-      // Default CLOSED (also enforced in HTML via .collapsed)
-      section.classList.add('collapsed');
+    // Default CLOSED (also enforced in HTML via .collapsed)
+    section.classList.add('collapsed');
+    section.classList.remove('is-selected');
 
-      header.addEventListener('click', (e) => {
-        e.stopPropagation();
-        section.classList.toggle('collapsed');
-        chevron.textContent = '▼';
-      });
+    header.addEventListener('click', (e) => {
+      e.stopPropagation();
+
+      const wasCollapsed = section.classList.contains('collapsed');
+
+      // Clear selection from all sections first
+      document.querySelectorAll('.loot-section.is-selected')
+        .forEach(s => s.classList.remove('is-selected'));
+
+      // Toggle collapsed
+      section.classList.toggle('collapsed');
+      chevron.textContent = '▼';
+
+      // If opening -> mark selected
+      // If closing -> leave none selected (matches typical “selected = active/open” behavior)
+      if (wasCollapsed) {
+        section.classList.add('is-selected');
+      }
     });
-  }
+  });
+}
   initLootSections();
 
   /* ================= NOTES LOGIC ================= */
@@ -4139,3 +4200,4 @@ document.addEventListener('keydown', (e) => {
 
 </body>
 </html>
+
