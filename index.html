@@ -729,89 +729,93 @@ body.splash-done #app {
   font-size: clamp(20px, 2.2vw, 34px);
 }
 
-/* ===== CALCULATOR STYLES ===== */
-#calculator {
-  background: rgba(50,50,50,0.7);
-  padding: 8px;
-  margin-top: 10px;
-  border-radius: 8px;
-  color: #fff;
-  font-size: 0.9em;
-}
-#calculator label {
-  margin-right: 4px;
-}
-#calculator .loot-result {
-  margin-top: 6px;
-  background: rgba(30,30,30,0.5);
-  padding: 4px;
-  border-radius: 6px;
-}
-#calculator select {
-  background: rgba(60,60,60,0.8);
-  color: #fff;
-  border: 1px solid #555;
-  border-radius: 4px;
-  padding: 2px 4px;
-  margin-right: 6px;
-  margin-bottom: 6px; /* prevents overlap between stacked selector rows */
+/* ==========================================
+   CALCULATOR (Loot Panel) — MATCH MENU THEME
+========================================== */
+
+/* Calculator container should NOT be its own “app card” */
+#info-panel #calculator{
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  padding: 10px 0 0 0 !important;
+  margin-top: 8px !important;
+  color: rgba(255,255,255,0.92);
 }
 
-/* ===== CALCULATOR UI (minimal + modern) ===== */
-#calculator .calc-title {
-  margin-top: 10px;
-  font-weight: 600;
+/* Rows: same vibe as menu rows */
+#info-panel #calculator .calc-row{
+  background: rgba(0,0,0,0.20);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 0;
+  padding: 10px 12px;
+  margin: 8px 0;
+  gap: 10px;
+}
+
+/* Titles/meta text */
+#info-panel #calculator .calc-title{
+  margin: 10px 0 6px;
+  font-weight: 700;
   opacity: 0.95;
 }
-
-#calculator .calc-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 6px 0;
-  flex-wrap: wrap;
+#info-panel #calculator .calc-meta{
+  opacity: 0.85;
+  font-size: 0.92em;
 }
 
-#calculator .calc-meta {
-  opacity: 0.75;
-  font-size: 0.9em;
+/* Inputs/selects: flat + translucent */
+#info-panel #calculator select,
+#info-panel #calculator input.calc-input{
+  background: rgba(0,0,0,0.22) !important;
+  color: rgba(255,255,255,0.95) !important;
+  border: 1px solid rgba(255,255,255,0.18) !important;
+  border-radius: 0 !important;
+  padding: 6px 10px !important;
+  outline: none !important;
+  box-shadow: none !important;
 }
 
-#calculator .calc-input {
-  background: rgba(60,60,60,0.8);
-  color: #fff;
-  border: 1px solid #555;
-  border-radius: 6px;
-  padding: 4px 8px;
-  outline: none;
-  transition: all 0.2s ease;
-  box-sizing: border-box;
+/* Focus: subtle bright edge (not glow-y) */
+#info-panel #calculator select:focus,
+#info-panel #calculator input.calc-input:focus{
+  border-color: rgba(255,255,255,0.55) !important;
+  background: rgba(0,0,0,0.28) !important;
 }
 
-#calculator .calc-input:focus {
-  border-color: #fff;
-  background: rgba(60,60,60,1);
-  box-shadow: 0 0 6px #fff;
+/* Buttons: menu style (white on hover) */
+#info-panel #calculator .calc-btn{
+  background: rgba(0,0,0,0.22);
+  color: rgba(255,255,255,0.95);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 0;
+  padding: 6px 12px;
+  cursor: var(--hover-cursor);
+  transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
 }
 
-#calculator .calc-btn {
-  background: transparent;
-  border: 1px solid #888;
-  border-radius: 6px;
-  color: #fff;
-  padding: 4px 10px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-weight: 500;
+#info-panel #calculator .calc-btn:hover{
+  background: rgba(255,255,255,0.92);
+  color: rgba(0,0,0,0.92);
+  border-color: rgba(0,0,0,0.12);
 }
-#calculator .calc-btn:hover {
-  background: #555;
-  box-shadow: 0 0 8px rgba(255,255,255,0.7);
-  transform: translateY(-1px);
+
+/* “Danger” remove button: keep theme but slightly more obvious */
+#info-panel #calculator .calc-btn.danger{
+  border-color: rgba(255,120,120,0.35);
 }
-#calculator .calc-btn.danger {
-  border-color: rgba(255,255,255,0.35);
-  opacity: 0.9;
+#info-panel #calculator .calc-btn.danger:hover{
+  background: rgba(255,255,255,0.92);
+  color: rgba(120,0,0,0.90);
+  border-color: rgba(120,0,0,0.25);
+}
+
+/* Bag status + result panels should not look like separate cards */
+#info-panel #calculator .loot-result{
+  background: rgba(0,0,0,0.20) !important;
+  border: 1px solid rgba(255,255,255,0.10) !important;
+  border-radius: 0 !important;
+  padding: 10px 12px !important;
 }
 
 /* ===== Sync indicator (minimal) ===== */
@@ -4261,6 +4265,7 @@ document.addEventListener('keydown', (e) => {
 
 </body>
 </html>
+
 
 
 
