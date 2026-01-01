@@ -1547,6 +1547,35 @@ body.splash-done #app {
   transform: translateY(-1px);
 }
 
+/* ==========================================
+   MAKE LOOT PANEL FULLY TRANSLUCENT
+   (no visible edges, no box feeling)
+========================================== */
+
+#info-panel {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+}
+
+/* Make sure header inherits transparency */
+#info-header {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Remove background from inner wrappers */
+#info-content {
+  background: transparent !important;
+}
+
+/* Keep text readable */
+#info-panel,
+#info-panel * {
+  color: rgba(255, 255, 255, 0.95);
+}
+
 </style>
 </head>
 
@@ -4238,5 +4267,6 @@ document.addEventListener('keydown', (e) => {
 
 </body>
 </html>
+
 
 
