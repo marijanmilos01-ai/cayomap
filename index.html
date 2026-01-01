@@ -4355,7 +4355,91 @@ document.addEventListener('keydown', (e) => {
     dragging = null;
   });
 })();
-    
+
+// ==================================================
+// Keyboard navigation for Loot Panel
+// ==================================================
+(function enableKeyboardControls() {
+
+  function getSections() {
+    return Array.from(document.querySelectorAll('.loot-section'));
+  }
+
+  function isTyping() {
+    const el = document.activeElement;
+    return el && (
+      el.tagName === 'INPUT' ||
+      el.tagName === 'TEXTAREA' ||
+      el.isContentEditable
+    );
+  }
+
+  function openPanel() {
+    const panel = document.getElementById('info-panel');
+    if (panel) panel.classList.remove('collapsed');
+  }
+
+  function closePanel() {
+    const panel = document.getElementById('info-panel');
+    if (panel) panel.classList.add('collapsed');
+  }
+
+  function selectSection(index) {
+    const sections = getSections();
+    if (!sections.length) return;
+
+    if (index < 0) index = sections.length - 1;
+    if (index >= sections.length) index = 0;
+
+    sections.forEach((s, i) => {
+      s.classList.toggle('is-selected', i === index);
+    });
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (isTyping()) return;
+
+    const sections = getSections();
+    const panel = document.getElementById('info-panel');
+    const openIndex = sections.findIndex(s => s.classList.contains('is-selected'));
+
+    // --- M toggles panel ---
+    if (e.key === 'm' || e.key === 'M') {
+      e.preventDefault();
+      panel.classList.toggle('collapsed');
+      return;
+    }
+
+    // --- ESC / BACKSPACE closes open section ---
+    if (e.key === 'Escape' || e.key === 'Backspace') {
+      if (openIndex !== -1) {
+        e.preventDefault();
+        sections[openIndex].classList.remove('is-selected');
+      }
+      return;
+    }
+
+    // Ignore navigation if panel closed
+    if (panel.classList.contains('collapsed')) return;
+
+    // --- Arrow navigation ---
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      selectSection(openIndex + 1);
+    }
+
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      selectSection(openIndex - 1);
+    }
+
+    // --- Enter opens selected ---
+    if (e.key === 'Enter' && openIndex !== -1) {
+      e.preventDefault();
+      sections[openIndex].classList.toggle('collapsed');
+    }
+  });
+})();
 });
 </script>
 
@@ -4363,6 +4447,3 @@ document.addEventListener('keydown', (e) => {
 
 </body>
 </html>
-
-
-
