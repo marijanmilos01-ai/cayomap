@@ -1548,10 +1548,10 @@ body.splash-done #app {
 }
 
 /* ==========================================
-   MAKE LOOT PANEL FULLY TRANSLUCENT
-   (no visible edges, no box feeling)
+   LOOT PANEL: remove outer box, keep button theme
 ========================================== */
 
+/* Only remove the OUTER panel "box" look */
 #info-panel {
   background: transparent !important;
   border: none !important;
@@ -1559,22 +1559,16 @@ body.splash-done #app {
   backdrop-filter: none !important;
 }
 
-/* Make sure header inherits transparency */
-#info-header {
-  background: transparent !important;
-  box-shadow: none !important;
-}
-
-/* Remove background from inner wrappers */
+/* Content area should not add its own box either */
 #info-content {
   background: transparent !important;
 }
 
-/* Keep text readable */
-#info-panel,
-#info-panel * {
-  color: rgba(255, 255, 255, 0.95);
-}
+/* IMPORTANT:
+   Do NOT force #info-header background to transparent
+   Do NOT force all text colors inside the panel
+   (that breaks the white selected theme)
+*/
 
 </style>
 </head>
@@ -4267,6 +4261,7 @@ document.addEventListener('keydown', (e) => {
 
 </body>
 </html>
+
 
 
 
