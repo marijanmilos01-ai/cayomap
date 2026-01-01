@@ -768,13 +768,13 @@ body.splash-done #app {
 }
 
 /* Hover highlight like menu rows */
+/* subtle hover: just a tiny lift, keep the dark theme */
 #info-panel #calculator .calc-row:hover{
-  background: rgba(255,255,255,0.92);
+  background: rgba(255,255,255,0.06);
 }
-#info-panel #calculator .calc-row:hover,
-#info-panel #calculator .calc-row:hover *{
-  color: rgba(0,0,0,0.92) !important;
-}
+
+/* DO NOT recolor all children on hover (this caused the ugly look) */
+
 
 /* Titles/meta text: add breathing room */
 #info-panel #calculator .calc-title{
@@ -787,7 +787,6 @@ body.splash-done #app {
   font-size: 0.92em;
 }
 
-/* Inputs/selects: flatter + slightly smaller */
 #info-panel #calculator select,
 #info-panel #calculator input.calc-input{
   background: rgba(0,0,0,0.22) !important;
@@ -795,19 +794,36 @@ body.splash-done #app {
   border: 1px solid rgba(255,255,255,0.18) !important;
 
   border-radius: 0 !important;
-  padding: 5px 8px !important;              /* ✅ smaller */
+  padding: 3px 8px !important;     /* smaller */
   outline: none !important;
   box-shadow: none !important;
 
-  height: 30px;                              /* ✅ consistent */
+  height: 26px !important;         /* ✅ shorter so it won't overlap buttons */
+  line-height: 1.1 !important;
+  font-size: 13px !important;
+  box-sizing: border-box !important;
 }
 
-/* When row is hovered (white), inputs should also become light */
+/* give wrapped items breathing room so button never touches inputs */
+#info-panel #calculator .calc-row{
+  row-gap: 8px;
+}
+
+/* make sure player name + cut + secondary inputs all match height */
+#info-panel #calculator .player-name,
+#info-panel #calculator .player-cut,
+#info-panel #calculator #take-cash,
+#info-panel #calculator #take-gold,
+#info-panel #calculator #take-painting{
+  height: 26px !important;
+}  
+
+/* on row hover, keep inputs dark — just brighten border a bit */
 #info-panel #calculator .calc-row:hover select,
 #info-panel #calculator .calc-row:hover input.calc-input{
-  background: rgba(255,255,255,0.75) !important;
-  border-color: rgba(0,0,0,0.18) !important;
-  color: rgba(0,0,0,0.92) !important;
+  background: rgba(0,0,0,0.26) !important;
+  border-color: rgba(255,255,255,0.28) !important;
+  color: rgba(255,255,255,0.95) !important;
 }
 
 /* Focus: subtle */
@@ -1615,6 +1631,28 @@ body.splash-done #app {
    Do NOT force all text colors inside the panel
    (that breaks the white selected theme)
 */
+
+/* ===== Dark dropdown menus (Difficulty / Primary Loot) ===== */
+#info-panel #calculator select{
+  background: rgba(0,0,0,0.35) !important;
+  color: rgba(255,255,255,0.95) !important;
+  border-color: rgba(255,255,255,0.22) !important;
+}
+
+/* the opened list items */
+#info-panel #calculator select option{
+  background: #0f0f0f;
+  color: #ffffff;
+}
+
+/* remove "light up" feeling on hover/focus */
+#info-panel #calculator select:hover{
+  background: rgba(0,0,0,0.35) !important;
+}
+#info-panel #calculator select:focus{
+  background: rgba(0,0,0,0.42) !important;
+  border-color: rgba(255,255,255,0.35) !important;
+}
 
 </style>
 </head>
@@ -4308,4 +4346,5 @@ document.addEventListener('keydown', (e) => {
 
 </body>
 </html>
+
 
