@@ -481,29 +481,32 @@ body.splash-done #app {
   stroke-width: 2;
 }
 
-/* ===== INFO PANEL ===== */
-/* CHANGED: absolute -> fixed, and responsive widths/offsets */
+/* ===== INFO PANEL (FINAL STYLE) ===== */
 #info-panel {
-  position: fixed; /* was absolute */
+  position: fixed;
   top: 0;
   left: 0;
   width: var(--panel-width-open);
-  background: rgba(40,40,40,0.6);
+
+  /* ✅ whole panel translucent */
+  background: rgba(0,0,0,0.35);
+  border: 1px solid rgba(255,255,255,0.14);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.45);
+  backdrop-filter: blur(6px);
+
   border-radius: 8px;
   overflow: hidden;
   z-index: 20;
   color: #fff;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.5), 0 0 10px rgba(30,30,30,0.5);
+
   transition:
     max-height 0.3s ease,
     opacity 0.3s ease,
     width 0.3s ease,
     top 0.3s ease,
     left 0.3s ease;
-  max-height: 100vh;
-  backdrop-filter: blur(4px);
 
-  /* safety on tiny screens */
+  max-height: 100vh;
   max-width: 92vw;
 }
 
@@ -513,15 +516,46 @@ body.splash-done #app {
   left: clamp(10px, 2.5vw, 30px);
 }
 
-#info-header {
-  padding: 10px;
-  background: rgba(40,40,40,0.6);
+/* ===== Loot Panel Header (same scheme as sections) ===== */
+#info-header{
+  position: relative;
+  padding: 10px 12px;
+
+  /* default = translucent like section headers */
+  background: rgba(0,0,0,0.28);
+  color: rgba(255,255,255,0.95);
+  border-bottom: 1px solid rgba(255,255,255,0.10);
+
   cursor: pointer;
-  font-weight: normal;
-  transition: background 0.2s ease;
+  transition: background 120ms ease, color 120ms ease;
 }
-#info-header:hover {
-  background: rgba(30,30,30,0.7);
+
+/* hover = white */
+#info-header:hover{
+  background: rgba(255,255,255,0.98);
+  color: rgba(0,0,0,0.92);
+}
+
+/* If panel is OPEN, keep header white even on hover */
+#info-panel:not(.collapsed) #info-header:hover{
+  background: rgba(255,255,255,0.98);
+  color: rgba(0,0,0,0.92);
+}
+
+/* selected/open = white + stripe */
+#info-panel:not(.collapsed) #info-header{
+  background: rgba(255,255,255,0.98);
+  color: rgba(0,0,0,0.92);
+}
+
+#info-panel:not(.collapsed) #info-header::before{
+  content:"";
+  position:absolute;
+  left:0;
+  top:0;
+  width:100%;
+  height:4px;
+  background: rgba(80, 200, 120, 0.95);
 }
 
 #info-panel.collapsed #info-content {
@@ -604,6 +638,14 @@ body.splash-done #app {
   font-weight: 700;
   color: rgba(255,255,255,0.92);
 }
+
+/* Make Loot Panel title match the section title styling */
+#info-header{
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+}
+  
 .loot-section-chevron{
   opacity: 0.95;
   color: rgba(255,255,255,0.92);
@@ -682,8 +724,7 @@ body.splash-done #app {
 
 /* Apply to headers */
 /* CHANGED: font-size made responsive so it won't blow up on small displays */
-#panel-title,
-#info-header {
+#panel-title{
   font-family: 'Mission Script', cursive;
   font-size: clamp(20px, 2.2vw, 34px);
 }
@@ -2597,36 +2638,33 @@ document.querySelectorAll('.map-btn').forEach(btn => {
 
   /* ================= Collapsible table sections ================= */
 function initLootSections() {
-  document.querySelectorAll('.loot-section').forEach(section => {
-    const header = section.querySelector('.loot-section-header');
-    const chevron = section.querySelector('.loot-section-chevron');
-    if (!header || !chevron) return;
+  const sections = document.querySelectorAll('.loot-section');
 
-    // Default CLOSED (also enforced in HTML via .collapsed)
-    section.classList.add('collapsed');
-    section.classList.remove('is-selected');
+  sections.forEach(section => {
+    const header = section.querySelector('.loot-section-header');
+    if (!header) return;
 
     header.addEventListener('click', (e) => {
       e.stopPropagation();
 
-      const wasCollapsed = section.classList.contains('collapsed');
+      const isCollapsed = section.classList.contains('collapsed');
 
-      // Clear selection from all sections first
-      document.querySelectorAll('.loot-section.is-selected')
-        .forEach(s => s.classList.remove('is-selected'));
+      // 1) remove selection from all sections
+      sections.forEach(s => s.classList.remove('is-selected'));
 
-      // Toggle collapsed
-      section.classList.toggle('collapsed');
-      chevron.textContent = '▼';
+      // 2) close all sections (accordion behavior)
+      sections.forEach(s => s.classList.add('collapsed'));
 
-      // If opening -> mark selected
-      // If closing -> leave none selected (matches typical “selected = active/open” behavior)
-      if (wasCollapsed) {
+      // 3) if the clicked one WAS collapsed, open it + mark selected
+      //    if it WAS open, it will stay closed (no selection)
+      if (isCollapsed) {
+        section.classList.remove('collapsed');
         section.classList.add('is-selected');
       }
     });
   });
 }
+
   initLootSections();
 
   /* ================= NOTES LOGIC ================= */
@@ -4200,4 +4238,5 @@ document.addEventListener('keydown', (e) => {
 
 </body>
 </html>
+
 
