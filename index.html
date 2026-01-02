@@ -1671,6 +1671,143 @@ body.splash-done #app {
   border-color: rgba(255,255,255,0.35) !important;
 }
 
+/* =========================================================
+   GTA INTERACTION MENU SKIN (ONLY WHEN PANEL IS OPEN)
+========================================================= */
+
+#info-panel{
+  background: rgba(0,0,0,0.55) !important;
+  border: 1px solid rgba(255,255,255,0.14) !important;
+  backdrop-filter: blur(6px);
+}
+
+/* Stop your old “white header when open” behavior */
+#info-panel:not(.collapsed) #info-header{
+  background: transparent !important;
+  color: rgba(255,255,255,0.95) !important;
+  border-bottom: none !important;
+}
+#info-panel:not(.collapsed) #info-header::before{
+  display:none !important;
+}
+
+/* No white hover on header */
+#info-header:hover{
+  background: transparent !important;
+  color: rgba(255,255,255,0.95) !important;
+}
+
+/* --- Blue top bar --- */
+#info-panel:not(.collapsed) .im-bluebar{
+  height: 54px;
+  background: rgba(0, 70, 140, 0.85);
+  border-bottom: 1px solid rgba(0,0,0,0.55);
+  position: relative;
+}
+#info-panel:not(.collapsed) .im-bluebar-fill{
+  position:absolute;
+  left: 16%;
+  top: 14px;
+  width: 52%;
+  height: 26px;
+  background: rgba(0,0,0,0.18);
+}
+
+/* --- Black title row --- */
+#info-panel:not(.collapsed) .im-titlebar{
+  height: 28px;
+  background: rgba(0,0,0,0.85);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding: 0 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.10);
+}
+#info-panel:not(.collapsed) .im-title{
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.6px;
+  opacity: 0.95;
+}
+#info-panel:not(.collapsed) .im-page{
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+/* Content spacing under header */
+#info-panel:not(.collapsed) #info-content{
+  padding: 6px 0 0 0 !important;
+}
+
+/* Remove section “boxes” */
+#info-panel:not(.collapsed) .loot-section{
+  background: transparent !important;
+  border: none !important;
+  margin: 0 !important;
+}
+
+/* Menu rows */
+#info-panel:not(.collapsed) .loot-section-header{
+  height: 32px;
+  padding: 0 10px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+
+  background: rgba(0,0,0,0.0) !important;
+  border: none !important;
+
+  color: rgba(255,255,255,0.92);
+  font-weight: 600;
+
+  box-shadow: inset 0 -1px rgba(255,255,255,0.06);
+}
+
+/* Title size */
+#info-panel:not(.collapsed) .loot-section-title{
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: 0.2px;
+}
+
+/* Hover */
+#info-panel:not(.collapsed) .loot-section-header:hover{
+  background: rgba(255,255,255,0.06) !important;
+}
+
+/* Selected row = white bar */
+#info-panel:not(.collapsed) .loot-section.is-selected .loot-section-header{
+  background: rgba(235,235,235,0.92) !important;
+  color: rgba(0,0,0,0.92) !important;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.18);
+}
+#info-panel:not(.collapsed) .loot-section.is-selected .loot-section-title,
+#info-panel:not(.collapsed) .loot-section.is-selected .loot-section-chevron{
+  color: rgba(0,0,0,0.92) !important;
+}
+
+/* REMOVE your green stripe */
+#info-panel:not(.collapsed) .loot-section.is-selected .loot-section-header::before{
+  display:none !important;
+}
+
+/* Body area (submenu look) */
+#info-panel:not(.collapsed) .loot-section-body{
+  background: rgba(0,0,0,0.35) !important;
+  padding: 10px 10px 12px 10px !important;
+  box-shadow: inset 0 1px rgba(255,255,255,0.08);
+}
+
+/* Bottom hint bar */
+#info-panel:not(.collapsed) .im-hint{
+  margin-top: 8px;
+  padding: 10px;
+  background: rgba(0,0,0,0.72);
+  border-top: 1px solid rgba(255,255,255,0.10);
+  font-size: 13px;
+  opacity: 0.85;
+}
+
 </style>
 </head>
 
@@ -1737,14 +1874,23 @@ body.splash-done #app {
 <!-- Info Panel -->   
 
 <div id="info-panel" class="collapsed">
-  <div id="info-header">Loot Panel</div>
+  <div id="info-header">
+  <div class="im-bluebar">
+    <div class="im-bluebar-fill"></div>
+  </div>
+
+  <div class="im-titlebar">
+    <div class="im-title">INTERACTION MENU</div>
+    <div class="im-page" id="im-page">1 / 17</div>
+  </div>
+</div>
   <div id="info-content">
 
     <!-- default collapsed -->
     <div class="loot-section collapsed" data-section="primary">
       <div class="loot-section-header">
         <div class="loot-section-title">Primary Loot Table</div>
-        <div class="loot-section-chevron">▼</div>
+        <div class="loot-section-chevron">›</div>
       </div>
      <div class="loot-section-body">
       <div class="hscroll">
@@ -1764,7 +1910,7 @@ body.splash-done #app {
     <div class="loot-section collapsed" data-section="secondary">
       <div class="loot-section-header">
         <div class="loot-section-title">Secondary Loot Table</div>
-        <div class="loot-section-chevron">▼</div>
+        <div class="loot-section-chevron">›</div>
       </div>
    <div class="loot-section-body">
      <div class="hscroll">
@@ -1783,7 +1929,7 @@ body.splash-done #app {
     <div class="loot-section collapsed" data-section="fee">
       <div class="loot-section-header">
         <div class="loot-section-title">Fee Table</div>
-        <div class="loot-section-chevron">▼</div>
+        <div class="loot-section-chevron">›</div>
       </div>
       <div class="loot-section-body">
         <table class="loot-table">
@@ -1798,7 +1944,7 @@ body.splash-done #app {
     <div class="loot-section collapsed" data-section="calculator">
       <div class="loot-section-header">
         <div class="loot-section-title">Calculator</div>
-        <div class="loot-section-chevron">▼</div>
+        <div class="loot-section-chevron">›</div>
       </div>
 
       <div class="loot-section-body">
@@ -1847,7 +1993,7 @@ body.splash-done #app {
     <div class="loot-section collapsed" data-section="notes">
       <div class="loot-section-header">
         <div class="loot-section-title">Notes</div>
-        <div class="loot-section-chevron">▼</div>
+        <div class="loot-section-chevron">›</div>
       </div>
 
       <div class="loot-section-body">
@@ -1855,6 +2001,8 @@ body.splash-done #app {
         <input id="note-input" placeholder="Add a note...">
       </div>
     </div>
+
+    <div class="im-hint" id="im-hint">Select an option.</div>
 
   </div> <!-- end #info-content -->
 </div> <!-- end #info-panel -->
@@ -2761,6 +2909,27 @@ document.querySelectorAll('.map-btn').forEach(btn => {
     setFsIcon();
   }
 
+  // ===== GTA "Interaction Menu" page counter + hint text =====
+const sectionHelp = {
+  primary:   "View primary loot values and rarity.",
+  secondary: "View secondary loot bag % and stack values.",
+  fee:       "See Pavel cut and fencing fee.",
+  calculator:"Calculate final take and splits.",
+  notes:     "Add notes and click to delete."
+};
+
+function updateInteractionMenuUI() {
+  const sections = Array.from(document.querySelectorAll('.loot-section[data-section]'));
+  const selected = sections.findIndex(s => s.classList.contains('is-selected'));
+  const pageEl = document.getElementById('im-page');
+  const hintEl = document.getElementById('im-hint');
+
+  if (pageEl) pageEl.textContent = `${Math.max(1, selected + 1)} / ${sections.length || 1}`;
+
+  const key = sections[selected]?.dataset.section;
+  if (hintEl) hintEl.textContent = sectionHelp[key] || "Select an option.";
+}
+
   /* ================= Collapsible table sections ================= */
 function initLootSections() {
   const sections = document.querySelectorAll('.loot-section');
@@ -2786,11 +2955,15 @@ function initLootSections() {
         section.classList.remove('collapsed');
         section.classList.add('is-selected');
       }
+
+        updateInteractionMenuUI();
+
     });
   });
 }
 
   initLootSections();
+  updateInteractionMenuUI();
 
   /* ================= NOTES LOGIC ================= */
   noteInput.addEventListener('keydown', async e => {
@@ -2859,11 +3032,13 @@ function initLootSections() {
   });
 
   infoHeader.addEventListener('click', e => {
-    e.stopPropagation();
-    collapsed = !collapsed;
-    infoPanel.classList.toggle('collapsed', collapsed);
-    infoHeader.innerHTML = collapsed ? 'Loot Panel' : 'Loot Panel';
-  });
+  e.stopPropagation();
+  collapsed = !collapsed;
+  infoPanel.classList.toggle('collapsed', collapsed);
+
+  // keep the fancy header, just update page/hint
+  updateInteractionMenuUI();
+});
 
   function renderSymbol(zone, type, id) {
   if (zone.querySelector(`.symbol[data-id="${id}"]`)) return;
@@ -3173,9 +3348,10 @@ if (confirmDeleteModal && confirmDeleteOk && confirmDeleteCancel) {
 
   // ESC closes confirm (nice safety)
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && confirmDeleteModal.classList.contains('show')) {
-      closeConfirm();
-    }
+  if (e.key === 'Escape') {
+    hud.classList.remove('pinned');
+  }
+});
   });
 }
 
@@ -4545,3 +4721,4 @@ document.addEventListener('keydown', (e) => {
 
 </body>
 </html>
+
