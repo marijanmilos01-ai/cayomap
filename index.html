@@ -353,7 +353,7 @@ body.splash-done #app {
 #ui-float {
   position: static;         /* wrapper handles positioning */
   display: flex;
-  flex-direction: row;
+  flex-direction: column-reverse;
   align-items: center;
 }
 
@@ -365,10 +365,10 @@ body.splash-done #app {
   flex-direction: row;
   gap: 10px;
 
-  margin-left: 10px;
+  margin-bottom: 10px;
 
   opacity: 0;
-  transform: translateX(-10px);
+  transform: translateY(10px);
   pointer-events: none;
 
   transition: opacity 180ms ease, transform 180ms ease;
@@ -377,7 +377,7 @@ body.splash-done #app {
 /* Click-to-open on all devices (hover no longer opens it) */
 #ui-float.open .ui-float-menu {
   opacity: 1;
-  transform: translateX(0);
+  transform: translateY(0);
   pointer-events: auto;
 }
 
@@ -1179,8 +1179,9 @@ body.splash-done #app {
   margin-top: 6px;
 }
 
-/* Expand when hovering the whole HUD */
-#hud:hover #hud-bag-loot {
+/* Expand when hovering the whole HUD, or when pinned open */
+#hud:hover #hud-bag-loot,
+#hud.pinned #hud-bag-loot {
   max-height: 120px;
   opacity: 1;
   transform: translateY(0);
