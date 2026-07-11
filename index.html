@@ -1637,6 +1637,11 @@ body.splash-done #app {
   padding: 0 10px;
   border-bottom: 1px solid rgba(255,255,255,0.08);
 }
+
+/* ADDED: taller pill when collapsed, so the bigger LOOT MENU text has room */
+#info-panel.collapsed .im-titlebar{
+  height: clamp(38px, 3vw, 50px);
+}
 #info-panel .im-title{
   font-family: 'Mission Script', cursive;
   font-weight: 700;
