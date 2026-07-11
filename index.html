@@ -57,7 +57,7 @@ html, body {
   --hud-subvalue-size: clamp(18px, 2.0vw, 34px);
 
   /* Loot panel width scaling */
-  --panel-width-open: clamp(260px, 22vw, 460px);
+  --panel-width-open: clamp(300px, 26vw, 520px);
   --panel-width-collapsed: clamp(120px, 8vw, 180px);
 
   /* ===============================
@@ -282,15 +282,9 @@ body.splash-done #app {
   box-shadow: 0 0 10px rgba(255,255,255,0.9);
   background-color: rgba(255, 255, 255, 1);
 }
-  /* Horizontal scroll on small screens (4:3 etc) */
+  /* No more forced horizontal scroll — tables wrap their cell text instead */
 .hscroll {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-/* Keep tables from squishing too hard */
-.hscroll .loot-table {
-  min-width: 520px; /* tweak if you want */
+  overflow-x: hidden;
 }
 
 /* =========================================================
@@ -510,20 +504,19 @@ body.splash-done #app {
   stroke-width: 2;
 }
 
-/* ===== INFO PANEL (FINAL STYLE) ===== */
+/* ===== INFO PANEL — GTA Online Interaction Menu style (consolidated) ===== */
 #info-panel {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: var(--panel-width-open);
+  top: clamp(10px, 2.5vw, 30px);
+  left: clamp(10px, 2.5vw, 30px);
+  width: var(--panel-width-collapsed);
 
-  /* ✅ whole panel translucent */
-  background: rgba(0,0,0,0.35);
+  background: rgba(8,8,8,0.72);
   border: 1px solid rgba(255,255,255,0.14);
-  box-shadow: 0 10px 30px rgba(0,0,0,0.45);
-  backdrop-filter: blur(6px);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.55);
+  backdrop-filter: blur(8px);
 
-  border-radius: 8px;
+  border-radius: 0; /* flat, sharp edges — matches the real interaction menu */
   overflow: hidden;
   z-index: 20;
   color: #fff;
@@ -532,64 +525,26 @@ body.splash-done #app {
     max-height 0.3s ease,
     opacity 0.3s ease,
     width 0.3s ease,
-    top 0.3s ease,
-    left 0.3s ease;
+    background 0.3s ease;
 
   max-height: 100vh;
   max-width: 92vw;
 }
 
-#info-panel.collapsed {
-  width: var(--panel-width-collapsed);
-  top: clamp(10px, 2.5vw, 30px);
-  left: clamp(10px, 2.5vw, 30px);
+#info-panel:not(.collapsed){
+  width: var(--panel-width-open);
+  background: rgba(8,8,8,0.86);
 }
 
-/* ===== Loot Panel Header (same scheme as sections) ===== */
+/* Header pill (blue bar + black titlebar live inside this) — always visible */
 #info-header{
   position: relative;
-  padding: 10px 12px;
-
-  /* default = translucent like section headers */
-  background: rgba(0,0,0,0.28);
-  color: rgba(255,255,255,0.95);
-  border-bottom: 1px solid rgba(255,255,255,0.10);
-
+  padding: 0;             /* let the blue/black bars run edge-to-edge */
   cursor: pointer;
-  transition: background 120ms ease, color 120ms ease;
-
-  /* Match Loot Panel title to section title styling */
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  font-size: 16px;
-  font-weight: 700;
+  transition: filter 120ms ease;
 }
-
-/* hover = white */
 #info-header:hover{
-  background: rgba(255,255,255,0.98);
-  color: rgba(0,0,0,0.92);
-}
-
-/* If panel is OPEN, keep header white even on hover */
-#info-panel:not(.collapsed) #info-header:hover{
-  background: rgba(255,255,255,0.98);
-  color: rgba(0,0,0,0.92);
-}
-
-/* selected/open = white + stripe */
-#info-panel:not(.collapsed) #info-header{
-  background: rgba(255,255,255,0.98);
-  color: rgba(0,0,0,0.92);
-}
-
-#info-panel:not(.collapsed) #info-header::before{
-  content:"";
-  position:absolute;
-  left:0;
-  top:0;
-  width:100%;
-  height:4px;
-  background: rgba(80, 200, 120, 0.95);
+  filter: brightness(1.18);
 }
 
 #info-panel.collapsed #info-content {
@@ -603,53 +558,75 @@ body.splash-done #app {
 #info-content {
   padding: 10px;
   overflow-y: auto;
-  max-height: calc(100vh - 50px);
+  overflow-x: hidden;      /* no sideways scroll, ever */
+  max-height: calc(100vh - 90px);
   transition: max-height 0.3s ease, opacity 0.3s ease;
 }
+#info-content::-webkit-scrollbar{ width: 6px; }
+#info-content::-webkit-scrollbar-track{ background: transparent; }
+#info-content::-webkit-scrollbar-thumb{ background: rgba(60,140,220,0.6); }
 
 #note-input {
   width: calc(100% - 16px);
   padding: 6px 8px;
   margin-top: 6px;
-  border-radius: 6px;
-  border: 1px solid #555;
-  background: rgba(60,60,60,0.8);
+  border-radius: 0;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(0,0,0,0.35);
   color: #fff;
   outline: none;
   transition: all 0.2s ease;
   box-sizing: border-box;
 }
 #note-input:focus {
-  border-color: #fff;
-  background: rgba(60,60,60,1);
-  box-shadow: 0 0 6px #fff;
+  border-color: rgba(90,160,230,0.9);
+  background: rgba(0,0,0,0.5);
+  box-shadow: 0 0 6px rgba(60,140,220,0.6);
 }
 
+/* ===== Loot tables — cells wrap instead of forcing horizontal scroll ===== */
 .loot-table {
   width: 100%;
+  table-layout: fixed;
   border-collapse: collapse;
   margin-bottom: 10px;
+  font-size: 12.5px;
 }
 .loot-table th,
 .loot-table td {
-  border: 1px solid rgba(255,255,255,0.2);
-  padding: 4px;
+  border: 1px solid rgba(255,255,255,0.14);
+  padding: 5px 4px;
   text-align: center;
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  vertical-align: middle;
+}
+.loot-table th{
+  background: rgba(30,100,180,0.28);
+  color: rgba(200,225,255,0.95);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  font-weight: 700;
+  font-size: 11px;
+}
+.loot-table tr:nth-child(even) td{
+  background: rgba(255,255,255,0.03);
+}
+.loot-table tr:hover td{
+  background: rgba(60,140,220,0.12);
 }
 
-/* ===== Loot Panel Sections (UPDATED to match screenshots) ===== */
-
-/* overall section container = translucent */
+/* ===== Loot Panel Sections ===== */
 .loot-section{
-  border-radius: 0; /* screenshot look: flat rows */
-  margin-bottom: 6px;
-  background: rgba(0,0,0,0.28);
+  border-radius: 0;
+  margin-bottom: 4px;
+  background: transparent;
   overflow: hidden;
   box-shadow: none;
-  border: 1px solid rgba(255,255,255,0.10);
+  border: none;
 }
 
-/* header row default = translucent */
 .loot-section-header{
   position: relative;
   display:flex;
@@ -657,56 +634,47 @@ body.splash-done #app {
   justify-content:space-between;
   gap:10px;
 
-  padding: 10px 12px;
+  height: 34px;
+  padding: 0 12px;
 
-  background: rgba(0,0,0,0.28);
+  background: rgba(255,255,255,0.03);
   border-bottom: 1px solid rgba(255,255,255,0.08);
+  border-left: 3px solid transparent;
 
   cursor: pointer;
   transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
 }
 
-/* default text */
 .loot-section-title{
-  opacity: 0.95;
-  font-weight: 700;
-  color: rgba(255,255,255,0.92);
+  font-weight: 600;
+  font-size: 13.5px;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.88);
 }
 
 .loot-section-chevron{
-  opacity: 0.95;
-  color: rgba(255,255,255,0.92);
+  color: rgba(255,255,255,0.7);
   transition: transform 0.25s ease, color 120ms ease;
   transform: rotate(0deg);
 }
 
-/* hover = white row */
+/* hover = white row, blue accent on the left */
 .loot-section-header:hover{
-  background: rgba(255,255,255,0.92);
+  background: rgba(235,235,235,0.94);
+  border-left-color: rgba(40,120,205,0.9);
 }
 .loot-section-header:hover .loot-section-title,
 .loot-section-header:hover .loot-section-chevron{
   color: rgba(0,0,0,0.90);
 }
 
-/* selected/clicked header = "MENU 1" style (white + green top stripe) */
+/* selected/open row = white + blue left accent (GTA interaction-menu style) */
 .loot-section.is-selected .loot-section-header{
-  background: rgba(255,255,255,0.96);
+  background: rgba(235,235,235,0.96);
+  border-left-color: rgba(40,120,205,0.95);
   border-bottom-color: rgba(0,0,0,0.10);
 }
-
-/*top stripe */
-.loot-section.is-selected .loot-section-header::before{
-  content:"";
-  position:absolute;
-  left:0;
-  top:0;
-  width:100%;
-  height: 4px;
-  background: rgba(80, 200, 120, 0.95); /* green line */
-}
-
-/* selected text turns dark */
 .loot-section.is-selected .loot-section-title,
 .loot-section.is-selected .loot-section-chevron{
   color: rgba(0,0,0,0.92);
@@ -717,22 +685,23 @@ body.splash-done #app {
   transform: rotate(-90deg);
 }
 
-/* body open/close (keep your existing behavior) */
+/* body open/close */
 .loot-section-body{
   overflow: hidden;
-  max-height: 1200px;
+  max-height: 2000px;
   opacity: 1;
-  padding: 8px 0 0 0;
-  transition: max-height 0.3s ease, opacity 0.25s ease, padding 0.3s ease;
-  background: rgba(0,0,0,0.20); /* subtle translucent body */
+  padding: 10px 12px 12px;
+  transition: max-height 0.35s ease, opacity 0.25s ease, padding 0.3s ease;
+  background: rgba(0,0,0,0.30);
+  border-left: 3px solid rgba(40,120,205,0.45);
 }
 
 .loot-section.collapsed .loot-section-body{
   max-height: 0;
   opacity: 0;
-  padding: 0;
+  padding: 0 12px;
+  border-left-color: transparent;
 }
-
 /* ===== MISSION SCRIPT FONT ===== */
 @font-face {
   font-family: 'Mission Script';
@@ -1623,27 +1592,8 @@ body.splash-done #app {
 }
 
 /* ==========================================
-   LOOT PANEL: remove outer box, keep button theme
+   LOOT PANEL: calculator dropdown theme
 ========================================== */
-
-/* keep translucent, just remove rounded edges
-   (background/border/box-shadow/backdrop-filter here used to be
-   overridden further down by the "GTA INTERACTION MENU SKIN" block
-   anyway, so only the still-live property is kept) */
-#info-panel{
-  border-radius: 0 !important; /* <- removes visible rounding */
-}
-
-/* Content area should not add its own box either */
-#info-content {
-  background: transparent !important;
-}
-
-/* IMPORTANT:
-   Do NOT force #info-header background to transparent
-   Do NOT force all text colors inside the panel
-   (that breaks the white selected theme)
-*/
 
 /* ===== Dark dropdown menus (Difficulty / Primary Loot) ===== */
 #info-panel #calculator select{
@@ -1668,199 +1618,65 @@ body.splash-done #app {
 }
 
 /* =========================================================
-   GTA INTERACTION MENU SKIN (ONLY WHEN PANEL IS OPEN)
+   GTA INTERACTION MENU HEADER — blue bar + black titlebar
 ========================================================= */
 
-#info-panel{
-  background: rgba(0,0,0,0.55) !important;
-  border: 1px solid rgba(255,255,255,0.14) !important;
-  backdrop-filter: blur(6px);
-}
-
-/* Stop your old “white header when open” behavior */
-#info-panel:not(.collapsed) #info-header{
-  background: transparent !important;
-  color: rgba(255,255,255,0.95) !important;
-  border-bottom: none !important;
-}
-#info-panel:not(.collapsed) #info-header::before{
-  display:none !important;
-}
-
-/* No white hover on header */
-#info-header:hover{
-  background: transparent !important;
-  color: rgba(255,255,255,0.95) !important;
-}
-
-/* --- Blue top bar --- */
-#info-panel:not(.collapsed) .im-bluebar{
-  height: 54px;
-  background: rgba(0, 70, 140, 0.85);
-  border-bottom: 1px solid rgba(0,0,0,0.55);
-  position: relative;
-}
-#info-panel:not(.collapsed) .im-bluebar-fill{
-  position:absolute;
-  left: 16%;
-  top: 14px;
-  width: 52%;
-  height: 26px;
-  background: rgba(0,0,0,0.18);
-}
-
-/* --- Black title row --- */
-#info-panel:not(.collapsed) .im-titlebar{
-  height: 28px;
-  background: rgba(0,0,0,0.85);
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding: 0 10px;
-  border-bottom: 1px solid rgba(255,255,255,0.10);
-}
-#info-panel:not(.collapsed) .im-title{
-  font-weight: 700;
-  font-size: 13px;
-  letter-spacing: 0.6px;
-  opacity: 0.95;
-}
-#info-panel:not(.collapsed) .im-page{
-  font-size: 12px;
-  opacity: 0.85;
-}
-
-/* Content spacing under header */
-#info-panel:not(.collapsed) #info-content{
-  padding: 6px 0 0 0 !important;
-}
-
-/* Remove section “boxes” */
-#info-panel:not(.collapsed) .loot-section{
-  background: transparent !important;
-  border: none !important;
-  margin: 0 !important;
-}
-
-/* Menu rows */
-#info-panel:not(.collapsed) .loot-section-header{
-  height: 32px;
-  padding: 0 10px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-
-  background: rgba(0,0,0,0.0) !important;
-  border: none !important;
-
-  color: rgba(255,255,255,0.92);
-  font-weight: 600;
-
-  box-shadow: inset 0 -1px rgba(255,255,255,0.06);
-}
-
-/* Title size */
-#info-panel:not(.collapsed) .loot-section-title{
-  font-weight: 600;
-  font-size: 14px;
-  letter-spacing: 0.2px;
-}
-
-/* Hover should be readable (white row + black text like selected) */
-#info-panel:not(.collapsed) .loot-section-header:hover{
-  background: rgba(235,235,235,0.92) !important;
-  color: rgba(0,0,0,0.92) !important;
-  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.18);
-}
-
-#info-panel:not(.collapsed) .loot-section-header:hover .loot-section-title,
-#info-panel:not(.collapsed) .loot-section-header:hover .loot-section-chevron{
-  color: rgba(0,0,0,0.92) !important;
-}
-
-/* Selected row = white bar */
-#info-panel:not(.collapsed) .loot-section.is-selected .loot-section-header{
-  background: rgba(235,235,235,0.92) !important;
-  color: rgba(0,0,0,0.92) !important;
-  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.18);
-}
-#info-panel:not(.collapsed) .loot-section.is-selected .loot-section-title,
-#info-panel:not(.collapsed) .loot-section.is-selected .loot-section-chevron{
-  color: rgba(0,0,0,0.92) !important;
-}
-
-/* REMOVE your green stripe */
-#info-panel:not(.collapsed) .loot-section.is-selected .loot-section-header::before{
-  display:none !important;
-}
-
-/* Body area (submenu look) */
-#info-panel:not(.collapsed) .loot-section-body{
-  background: rgba(0,0,0,0.35) !important;
-  padding: 10px 10px 12px 10px !important;
-  box-shadow: inset 0 1px rgba(255,255,255,0.08);
-}
-
-/* Bottom hint bar */
-#info-panel:not(.collapsed) .im-hint{
-  margin-top: 8px;
-  padding: 10px;
-  background: rgba(0,0,0,0.72);
-  border-top: 1px solid rgba(255,255,255,0.10);
-  font-size: 13px;
-  opacity: 0.85;
-}
-
-/* =========================
-   INTERACTION MENU HEADER (NEW)
-========================= */
-.im-menubar{
-  height: 40px;
-  display: flex;
-  align-items: center;
-  padding: 0 10px;
-  background: rgba(0,0,0,0.55);
-  border-bottom: 1px solid rgba(255,255,255,0.10);
-}
-
-.im-menu-title{
-  font-family: 'Mission Script', cursive;
-  font-size: 26px;
-  line-height: 1;
-  color: rgba(255,255,255,0.95);
-  letter-spacing: 0.3px;
-}
-
-/* Title row stays clean and consistent */
+/* Compact titlebar shown in the collapsed pill */
 #info-panel .im-titlebar{
   height: 30px;
-  background: rgba(0,0,0,0.72);
+  background: rgba(0,0,0,0.78);
   display:flex;
   align-items:center;
   justify-content:flex-start;
   padding: 0 10px;
   border-bottom: 1px solid rgba(255,255,255,0.08);
 }
-
-/* Collapsed state should look like part of the page, not a different theme */
-#info-panel.collapsed{
-  width: 160px !important;
-  background: rgba(0,0,0,0.35) !important;
-  border: 1px solid rgba(255,255,255,0.14) !important;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.45) !important;
-  backdrop-filter: blur(6px) !important;
+#info-panel .im-title{
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.95);
 }
 
-/* In collapsed state, keep header visible but compact */
-#info-panel.collapsed #info-header{
-  background: transparent !important;
+/* Full header (blue bar + titlebar) only when the panel is open */
+#info-panel:not(.collapsed) .im-bluebar{
+  height: 46px;
+  background: linear-gradient(180deg, rgba(35,120,205,0.95), rgba(10,55,110,0.92));
+  border-bottom: 1px solid rgba(0,0,0,0.55);
+  border-top: 1px solid rgba(255,255,255,0.18);
+  position: relative;
+}
+#info-panel:not(.collapsed) .im-titlebar{
+  height: 30px;
+  background: rgba(0,0,0,0.88);
+}
+#info-panel:not(.collapsed) .im-page{
+  font-size: 11px;
+  letter-spacing: 0.4px;
+  color: rgba(255,255,255,0.6);
+}
+
+/* Tighten content spacing right under the header */
+#info-panel:not(.collapsed) #info-content{
+  padding: 8px 10px 10px !important;
+}
+
+/* Bottom hint bar */
+.im-hint{
+  margin-top: 8px;
+  padding: 8px 10px;
+  background: rgba(0,0,0,0.5);
+  border-top: 2px solid rgba(40,120,205,0.6);
+  font-size: 12px;
+  letter-spacing: 0.2px;
+  color: rgba(255,255,255,0.75);
 }
 
 /* In collapsed state, hide only the content list */
 #info-panel.collapsed #info-content{
   display: none !important;
 }
-
 </style>
 </head>
 
