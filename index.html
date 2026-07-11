@@ -353,7 +353,7 @@ body.splash-done #app {
 #ui-float {
   position: static;         /* wrapper handles positioning */
   display: flex;
-  flex-direction: column-reverse;
+  flex-direction: row;
   align-items: center;
 }
 
@@ -362,41 +362,23 @@ body.splash-done #app {
 ========================================================= */
 .ui-float-menu {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   gap: 10px;
 
-  margin-bottom: 10px;
+  margin-left: 10px;
 
   opacity: 0;
-  transform: translateY(10px);
+  transform: translateX(-10px);
   pointer-events: none;
 
   transition: opacity 180ms ease, transform 180ms ease;
 }
 
-/* Show menu on hover (desktop) */
-#ui-float:hover .ui-float-menu,
-#ui-float:focus-within .ui-float-menu {
+/* Click-to-open on all devices (hover no longer opens it) */
+#ui-float.open .ui-float-menu {
   opacity: 1;
-  transform: translateY(-10px);
+  transform: translateX(0);
   pointer-events: auto;
-}
-
-/* =========================================================
-   MOBILE: tap-to-open behavior
-========================================================= */
-@media (hover: none) and (pointer: coarse) {
-  #ui-float:hover .ui-float-menu {
-    opacity: 0;
-    transform: translateY(8px);
-    pointer-events: none;
-  }
-
-  #ui-float.open .ui-float-menu {
-    opacity: 1;
-    transform: translateY(0);
-    pointer-events: auto;
-  }
 }
 
 /* ===== SYMBOL PANEL ANIMATIONS ===== */
@@ -3576,7 +3558,17 @@ if (confirmDeleteOk && confirmDeleteCancel) {
     }
 
     // 4️⃣ Animate removal
+// Animate local symbols out immediately (realtime will also arrive)
     document.querySelectorAll('.symbol').forEach(el => popOutAndRemove(el));
+
+    // Reset secondary-loot selection so player takes / total take update now,
+    // instead of waiting for something else to touch the panel
+    if (calculatorState) {
+      calculatorState.secondary_take = { Cash: 0, Painting: 0, Gold: 0 };
+      await updateCalculatorState({ secondary_take: calculatorState.secondary_take });
+      renderSecondaryControls();
+      renderLootResult();
+    }
 
     setMapSyncing(false);
     showToast('Deleted', 'All symbols removed.');
@@ -3601,24 +3593,27 @@ if (confirmDeleteModal && confirmDeleteOk && confirmDeleteCancel) {
     closeConfirm();
   });
 
-  // Confirm delete button
+// Confirm delete button
   confirmDeleteOk.addEventListener('click', async (e) => {
     e.stopPropagation();
     closeConfirm();
-
     setMapSyncing(true);
-
     const { error } = await sb.from('symbols').delete().neq('id', 0);
-
     if (error) {
       showToast('Sync failed', 'Could not delete symbols.');
       setMapSyncing(false);
       return;
     }
-
     // Animate local symbols out immediately (realtime will also arrive)
     document.querySelectorAll('.symbol').forEach(el => popOutAndRemove(el));
-
+    // Reset secondary-loot selection so player takes / total take update now,
+    // instead of waiting for something else to touch the panel
+    if (calculatorState) {
+      calculatorState.secondary_take = { Cash: 0, Painting: 0, Gold: 0 };
+      await updateCalculatorState({ secondary_take: calculatorState.secondary_take });
+      renderSecondaryControls();
+      renderLootResult();
+    }
     setMapSyncing(false);
     showToast('Done', 'All symbols deleted.');
   });
@@ -4711,15 +4706,10 @@ function changeUsername() {
   location.reload(); // rejoin presence with new name
 }
 
-// Clicking the HUD toggles pinned state
+// Clicking the HUD toggles pinned state — stays open until clicked again or ESC
 hud.addEventListener('click', (e) => {
-  e.stopPropagation(); // don't let document click close it
+  e.stopPropagation();
   hud.classList.toggle('pinned');
-});
-
-// Clicking anywhere else closes the HUD
-document.addEventListener('click', () => {
-  hud.classList.remove('pinned');
 });
 
 // Optional: ESC key closes HUD
