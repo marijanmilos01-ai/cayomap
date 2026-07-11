@@ -332,21 +332,29 @@ body.splash-done #app {
 ========================================================= */
 
 /* Wrapper that holds BOTH floating bubbles */
-#ui-minimap-wrap {
-  position: fixed;
-  left: calc(max(var(--ui-pad), env(safe-area-inset-left)) + clamp(12px, 3vw, 44px));
-  bottom: calc(max(var(--ui-pad), env(safe-area-inset-bottom)) + clamp(12px, 3vw, 44px));
-  z-index: 60;
+#guards-video-toggle {
+  display: none;              /* JS shows this only when the guards map is active */
+  width: var(--minimap-w);
+  margin-bottom: var(--minimap-gap);
+  padding: 6px 0;
+  text-align: center;
 
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: clamp(4px, 0.5vw, 6px);
+  background: rgba(20,20,20,0.85);
+  border: 1px solid rgba(255,210,90,0.35);
+  color: #fff;
+  font-family: 'Pricedown', sans-serif;
+  font-size: 12px;
+  letter-spacing: 1px;
 
-  /* single source of truth for sizing — scales with viewport, capped at the old 1.5x size */
-  --minimap-w: clamp(150px, 18vw, 285px);
-  --minimap-bar-h: calc(var(--minimap-w) * 0.0632);  /* keeps the same ratio as 18px/285px */
-  --minimap-gap: clamp(4px, 0.5vw, 6px);
+  cursor: var(--hover-cursor);
+  transition: border-color 140ms ease, background 140ms ease;
+}
+#guards-video-toggle:hover {
+  border-color: rgba(255,225,130,0.95);
+  background: rgba(30,30,30,0.9);
+}
+#guards-video-toggle.on {
+  border-color: rgba(120,190,255,0.85);
 }
 
 #ui-float-center {
@@ -2274,6 +2282,11 @@ body.splash-done #app {
 
 <!-- GTA V style minimap (bottom-left) -->
 <div id="ui-minimap-wrap">
+
+  <button id="guards-video-toggle" type="button" aria-label="Toggle guards map video">
+    <span id="guards-video-toggle-label">Live View: ON</span>
+  </button>
+
   <div id="minimap" tabindex="0" role="button" aria-label="Change map background">
     <div id="minimap-frame">
       <div id="minimap-image"></div>
@@ -2740,25 +2753,49 @@ async function loadMapImage(src) {
   return img;
 }
 
+let guardsVideoOn = localStorage.getItem('cayo_guards_video_on') !== '0';
+
+const guardsVideoToggleBtn = document.getElementById('guards-video-toggle');
+const guardsVideoToggleLabel = document.getElementById('guards-video-toggle-label');
+
+function applyGuardsVideoState() {
+  const guardsVideo = document.getElementById('guards-map-video');
+  const isGuardsMap = currentMapSrc === 'guards_map.webp';
+
+  if (guardsVideoToggleBtn) {
+    guardsVideoToggleBtn.style.display = isGuardsMap ? 'block' : 'none';
+    guardsVideoToggleBtn.classList.toggle('on', guardsVideoOn);
+  }
+  if (guardsVideoToggleLabel) {
+    guardsVideoToggleLabel.textContent = guardsVideoOn ? 'Live View: ON' : 'Live View: OFF';
+  }
+
+  if (!guardsVideo) return;
+
+  if (isGuardsMap && guardsVideoOn) {
+    guardsVideo.style.display = 'block';
+    guardsVideo.currentTime = 0;
+    guardsVideo.play().catch(() => {});
+  } else {
+    guardsVideo.pause();
+    guardsVideo.style.display = 'none';
+  }
+}
+
+guardsVideoToggleBtn?.addEventListener('click', (e) => {
+  e.stopPropagation();
+  guardsVideoOn = !guardsVideoOn;
+  localStorage.setItem('cayo_guards_video_on', guardsVideoOn ? '1' : '0');
+  applyGuardsVideoState();
+});
+
 function setMap(src) {
   currentMapSrc = src;
 
   // Your CSS uses --map-bg, keep using that
   document.documentElement.style.setProperty('--map-bg', `url('${src}')`);
 
-  // Guards map video layer: only shown/playing when guards map is active,
-  // paused + hidden otherwise so it's not wasting CPU/battery in the background.
-  const guardsVideo = document.getElementById('guards-map-video');
-  if (guardsVideo) {
-    if (src === 'guards_map.webp') {
-      guardsVideo.style.display = 'block';
-      guardsVideo.currentTime = 0;
-      guardsVideo.play().catch(() => {});
-    } else {
-      guardsVideo.pause();
-      guardsVideo.style.display = 'none';
-    }
-  }
+  applyGuardsVideoState();
 
   // Warm the cache for this map, then re-position after CSS updates
   loadMapImage(src).finally(() => {
@@ -2805,6 +2842,7 @@ const positionZonesThrottled = rafThrottle(positionZonesToCoveredImage);
 
 // Initial run
 positionZonesToCoveredImage();
+applyGuardsVideoState();
 
 // run once and on resize (rAF-throttled to avoid redundant work mid-drag)
 window.addEventListener('resize', positionZonesThrottled);
