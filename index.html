@@ -353,14 +353,14 @@ body.splash-done #app {
   display: none;              /* JS shows this only when the guards map is active */
   width: var(--minimap-w);
   margin-bottom: var(--minimap-gap);
-  padding: 6px 0;
+  padding: 14px 0;            /* taller */
   text-align: center;
 
   background: rgba(20,20,20,0.85);
   border: 1px solid rgba(255,210,90,0.35);
   color: #fff;
   font-family: 'Pricedown', sans-serif;
-  font-size: 12px;
+  font-size: 17px;            /* bigger, easier to read */
   letter-spacing: 1px;
 
   cursor: var(--hover-cursor);
@@ -2300,8 +2300,8 @@ body.splash-done #app {
 <!-- GTA V style minimap (bottom-left) -->
 <div id="ui-minimap-wrap">
 
-  <button id="guards-video-toggle" type="button" aria-label="Toggle guards map video">
-    <span id="guards-video-toggle-label">Live View: ON</span>
+<button id="guards-video-toggle" type="button" aria-label="Toggle guards map video">
+    <span id="guards-video-toggle-label">Guard Movement: ON</span>
   </button>
 
   <div id="minimap" tabindex="0" role="button" aria-label="Change map background">
@@ -2784,7 +2784,7 @@ function applyGuardsVideoState() {
     guardsVideoToggleBtn.classList.toggle('on', guardsVideoOn);
   }
   if (guardsVideoToggleLabel) {
-    guardsVideoToggleLabel.textContent = guardsVideoOn ? 'Live View: ON' : 'Live View: OFF';
+    guardsVideoToggleLabel.textContent = guardsVideoOn ? 'Guard Movement: ON' : 'Guard Movement: OFF';
   }
 
   if (!guardsVideo) return;
