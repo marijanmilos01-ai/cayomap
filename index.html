@@ -3213,6 +3213,12 @@ if (discordAuthBtn) {
 
 sb.auth.onAuthStateChange((_event, _session) => {
   refreshAuthUI();
+
+  // Clean the #access_token=... fragment out of the URL so it can't
+  // get carried into the next login attempt (fixes the "##" double-hash bug)
+  if (window.location.hash && window.location.hash.includes('access_token')) {
+    history.replaceState(null, '', window.location.pathname + window.location.search);
+  }
 });
 
 refreshAuthUI();
