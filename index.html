@@ -3191,6 +3191,9 @@ if (discordAuthBtn) {
     e.stopPropagation();
 
     if (discordUser) {
+      const confirmLogout = confirm(`Log out of Discord (${discordUser.name})?`);
+      if (!confirmLogout) return;
+
       await sb.auth.signOut();
       await refreshAuthUI();
       showToast('Signed out', 'You have been logged out of Discord.');
