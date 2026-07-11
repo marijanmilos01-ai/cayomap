@@ -3149,6 +3149,74 @@ document.addEventListener('click', (e) => {
   }
 });
 
+/* =========================
+   DISCORD AUTH (Supabase OAuth)
+========================= */
+const discordAuthBtn = document.getElementById('discord-auth-btn');
+
+const DISCORD_ICON_SVG = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.317 4.369A19.79 19.79 0 0 0 15.885 3c-.21.375-.444.87-.608 1.262a18.27 18.27 0 0 0-5.554 0A12.76 12.76 0 0 0 9.115 3a19.736 19.736 0 0 0-4.435 1.369C1.578 9.045.837 13.579 1.207 18.05a19.9 19.9 0 0 0 6.031 3.03c.486-.66.919-1.36 1.293-2.098a12.3 12.3 0 0 1-2.037-.977c.171-.125.338-.256.499-.392a14.11 14.11 0 0 0 12.014 0c.163.136.33.267.499.392-.649.383-1.334.71-2.04.978.374.737.807 1.437 1.293 2.097a19.83 19.83 0 0 0 6.032-3.03c.457-5.19-.638-9.68-3.474-13.68ZM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.418 2.157-2.418 1.211 0 2.176 1.094 2.157 2.418 0 1.334-.946 2.419-2.157 2.419Zm7.974 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.418 2.157-2.418 1.211 0 2.176 1.094 2.157 2.418 0 1.334-.937 2.419-2.157 2.419Z"/></svg>`;
+
+let discordUser = null;
+
+async function refreshAuthUI() {
+  const { data: { session } } = await sb.auth.getSession();
+
+  if (session?.user) {
+    const identity = session.user.user_metadata || {};
+    discordUser = {
+      id: session.user.id,
+      name: identity.full_name || identity.name || identity.user_name || 'Discord User',
+      avatarUrl: identity.avatar_url || null
+    };
+
+    if (discordAuthBtn) {
+      discordAuthBtn.innerHTML = discordUser.avatarUrl
+        ? `<img class="discord-avatar" src="${discordUser.avatarUrl}" alt="${discordUser.name}">`
+        : DISCORD_ICON_SVG;
+      discordAuthBtn.setAttribute('aria-label', `Signed in as ${discordUser.name} (click to sign out)`);
+    }
+
+    localStorage.setItem(USERNAME_KEY, discordUser.name);
+  } else {
+    discordUser = null;
+    if (discordAuthBtn) {
+      discordAuthBtn.innerHTML = DISCORD_ICON_SVG;
+      discordAuthBtn.setAttribute('aria-label', 'Login with Discord');
+    }
+  }
+}
+
+if (discordAuthBtn) {
+  discordAuthBtn.addEventListener('click', async (e) => {
+    e.stopPropagation();
+
+    if (discordUser) {
+      await sb.auth.signOut();
+      await refreshAuthUI();
+      showToast('Signed out', 'You have been logged out of Discord.');
+    } else {
+      const { error } = await sb.auth.signInWithOAuth({
+        provider: 'discord',
+        options: { redirectTo: window.location.href }
+      });
+      if (error) {
+        showToast('Login failed', 'Could not start Discord login. Try again.');
+      }
+    }
+  });
+
+  discordAuthBtn.addEventListener('mouseenter', () => {
+    showTooltipFor(discordAuthBtn, discordUser ? `Signed in as ${discordUser.name}` : 'Login with Discord');
+  });
+  discordAuthBtn.addEventListener('mouseleave', hideTooltip);
+}
+
+sb.auth.onAuthStateChange((_event, _session) => {
+  refreshAuthUI();
+});
+
+refreshAuthUI();
+  
 presenceChannel
   .on('presence', { event: 'sync' }, updateActiveUsersUI)
   .on('presence', { event: 'join' }, updateActiveUsersUI)
