@@ -1404,41 +1404,40 @@ body.splash-done #app {
   transform: scale(1.04);
 }
 
-/* Health / Armor bars beneath the minimap (visual only) — side by side, equal width */
+/* Health / Armor bars beneath the minimap (visual only) — one bar, split down the middle */
 #minimap-bars {
   display: flex;
   flex-direction: row;
-  gap: var(--minimap-gap);
   width: var(--minimap-w);
   height: var(--minimap-bar-h);
+
+  border: 2px solid #000;
+  box-sizing: border-box;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.45);
+  overflow: hidden;
 }
 
 .minimap-bar {
   flex: 1 1 0;
   height: 100%;
-  border-radius: 0;
-  background: rgba(0,0,0,0.55);
-  border: 2px solid #000;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.45);
-  overflow: hidden;
-  box-sizing: border-box;
+}
+
+.minimap-bar-health {
+  border-right: 2px solid #000;
 }
 
 .minimap-bar-fill {
+  display: block;
+  width: 100%;
   height: 100%;
-  border-radius: 0;
 }
 
 .minimap-bar-health .minimap-bar-fill {
-  width: 80%;
   background: linear-gradient(180deg, #8fe36a, #4fae2c);
-  box-shadow: 0 0 8px rgba(120,220,90,0.55);
 }
 
 .minimap-bar-armor .minimap-bar-fill {
-  width: 60%;
   background: linear-gradient(180deg, #7fd4f0, #2f9dc9);
-  box-shadow: 0 0 8px rgba(90,200,230,0.55);
 }
 
 /* =========================================================
