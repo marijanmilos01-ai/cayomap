@@ -1944,6 +1944,98 @@ body.splash-done #app {
 #info-panel.collapsed #info-content{
   display: none !important;
 }
+/* =========================================================
+   PORTRAIT / MOBILE (9:16-ish) ADJUSTMENTS
+   Kicks in on narrow or tall-aspect screens (phones, portrait monitors)
+========================================================= */
+@media (max-width: 700px), (max-aspect-ratio: 3/4) {
+
+  /* ---- Minimap: smaller, hugs the corner tighter ---- */
+  #ui-minimap-wrap {
+    left: calc(max(var(--ui-pad), env(safe-area-inset-left)) + 8px);
+    bottom: calc(max(var(--ui-pad), env(safe-area-inset-bottom)) + 8px);
+    --minimap-w: clamp(96px, 26vw, 150px);
+  }
+
+  /* ---- Info panel (Loot Menu): full width when open, no huge side gap ---- */
+  #info-panel {
+    top: 8px;
+    left: 8px;
+    max-width: calc(100vw - 16px);
+  }
+  #info-panel:not(.collapsed) {
+    width: calc(100vw - 16px);
+  }
+
+  /* ---- HUD: shrink so it doesn't dominate a narrow screen ---- */
+  #hud {
+    top: calc(max(var(--ui-pad), env(safe-area-inset-top)) + 2px);
+    right: calc(max(var(--ui-pad), env(safe-area-inset-right)) + 2px);
+  }
+  :root {
+    --hud-label-size: clamp(14px, 3.6vw, 22px);
+    --hud-value-size: clamp(17px, 4.6vw, 30px);
+    --hud-subvalue-size: clamp(14px, 3.6vw, 22px);
+  }
+  .hud-bag-bar {
+    width: clamp(80px, 24vw, 140px);
+  }
+
+  /* ---- 3-dot cluster: keep it above the thumb-reachable bottom edge ---- */
+  #ui-float-center {
+    bottom: calc(max(var(--ui-pad), env(safe-area-inset-bottom)) + 4px);
+  }
+  #ui-main-btn,
+  #apply-suggested-menu-btn,
+  #clear-symbols-btn,
+  #fs-btn {
+    width: 46px;
+    height: 46px;
+  }
+
+  /* ---- Active users / crew wheel: shrink so all 4 wedges stay on-screen ---- */
+  #crew-wheel {
+    width: 150px;
+    height: 150px;
+  }
+
+  /* ---- Crew wheel tooltip: narrower, doesn't overflow a narrow viewport ---- */
+  #crew-wheel-tip {
+    width: min(260px, calc(100vw - 24px));
+    bottom: calc(100% + 178px);
+  }
+  #crew-wheel-tip .cwt-name {
+    font-size: clamp(24px, 6vw, 34px);
+  }
+  #crew-wheel-tip .cwt-row,
+  #crew-wheel-tip .cwt-value {
+    font-size: 16px;
+  }
+
+  /* ---- Toast: don't stretch edge to edge ---- */
+  #toast {
+    min-width: unset;
+    width: calc(100vw - 24px);
+  }
+}
+
+/* Extra-narrow phones in portrait (e.g. <420px wide) */
+@media (max-width: 420px) {
+  #ui-minimap-wrap {
+    --minimap-w: clamp(84px, 30vw, 120px);
+  }
+  #minimap-grid .map-btn span {
+    font-size: 11px;
+    padding: 1px 4px;
+  }
+  #crew-wheel {
+    width: 130px;
+    height: 130px;
+  }
+  #crew-wheel-tip {
+    bottom: calc(100% + 158px);
+  }
+}
 </style>
 </head>
 
