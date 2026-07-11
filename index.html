@@ -1637,6 +1637,50 @@ body.splash-done #app {
 }
 
 /* =========================================================
+   ADDED: Discord login button (left of active-users)
+========================================================= */
+#discord-auth-wrap{
+  position: fixed;
+  right: calc(max(var(--ui-pad), env(safe-area-inset-right)) + 54px + 10px);
+  bottom: max(var(--ui-pad), env(safe-area-inset-bottom));
+  z-index: 70;
+}
+
+#discord-auth-btn{
+  width: 54px;
+  height: 54px;
+  border-radius: 999px;
+  padding: 0;
+  overflow: hidden;
+
+  background: rgba(40,40,40,0.55);
+  border: 1px solid rgba(255,255,255,0.22);
+  backdrop-filter: blur(4px);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  cursor: var(--hover-cursor);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+#discord-auth-btn:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.55);
+}
+#discord-auth-btn svg{
+  width: 26px;
+  height: 26px;
+  fill: rgba(114,137,218,0.95);
+}
+#discord-auth-btn img.discord-avatar{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 999px;
+}
+  
+/* =========================================================
    ADDED: Crew Wheel (GTA V style character select)
 ========================================================= */
 #crew-wheel{
@@ -2393,6 +2437,11 @@ body.splash-done #app {
     <div class="cwt-row"><span class="cwt-label">Cut:</span><span class="cwt-value">—</span></div>
     <div class="cwt-row"><span class="cwt-label">Take:</span><span class="cwt-value">—</span></div>
   </div>
+</div>
+
+  <!-- Discord login (stacked above the active-users bubble) -->
+<div id="discord-auth-wrap">
+  <button id="discord-auth-btn" type="button" aria-label="Login with Discord"></button>
 </div>
 
 <!-- Tooltip stays separate -->
