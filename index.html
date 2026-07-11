@@ -322,23 +322,30 @@ body.splash-done #app {
 ========================================================= */
 
 /* Wrapper that holds BOTH floating bubbles */
-#ui-float-row {
+#ui-minimap-wrap {
   position: fixed;
   left: max(var(--ui-pad), env(safe-area-inset-left));
   bottom: max(var(--ui-pad), env(safe-area-inset-bottom));
   z-index: 60;
 
   display: flex;
-  flex-direction: row;
-  gap: 10px;
-  align-items: flex-end;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+#ui-float-center {
+  position: fixed;
+  left: 50%;
+  bottom: max(var(--ui-pad), env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  z-index: 60;
 }
 
 /* =========================================================
    INDIVIDUAL FLOATING BUTTON GROUP
 ========================================================= */
-#ui-float,
-#ui-map {
+#ui-float {
   position: static;         /* wrapper handles positioning */
   display: flex;
   flex-direction: column-reverse;
@@ -364,9 +371,7 @@ body.splash-done #app {
 
 /* Show menu on hover (desktop) */
 #ui-float:hover .ui-float-menu,
-#ui-float:focus-within .ui-float-menu,
-#ui-map:hover .ui-float-menu,
-#ui-map:focus-within .ui-float-menu {
+#ui-float:focus-within .ui-float-menu {
   opacity: 1;
   transform: translateY(-10px);
   pointer-events: auto;
@@ -376,15 +381,13 @@ body.splash-done #app {
    MOBILE: tap-to-open behavior
 ========================================================= */
 @media (hover: none) and (pointer: coarse) {
-  #ui-float:hover .ui-float-menu,
-  #ui-map:hover .ui-float-menu {
+  #ui-float:hover .ui-float-menu {
     opacity: 0;
     transform: translateY(8px);
     pointer-events: none;
   }
 
-  #ui-float.open .ui-float-menu,
-  #ui-map.open .ui-float-menu {
+  #ui-float.open .ui-float-menu {
     opacity: 1;
     transform: translateY(0);
     pointer-events: auto;
@@ -1299,56 +1302,137 @@ body.splash-done #app {
 }
 
 /* =========================================================
-   MAP BUTTON – MATCH MAIN FLOATING BUTTON STYLE
+   GTA V STYLE MINIMAP (bottom-left)
 ========================================================= */
-#map-main-btn {
-  width: 54px;
-  height: 54px;
-  border-radius: 999px;
-  background: rgba(40,40,40,0.55);
-  border: 1px solid rgba(255,255,255,0.22);
-  backdrop-filter: blur(4px);
+#minimap {
+  position: relative;
+  width: 190px;
+  height: 190px;
+  cursor: var(--hover-cursor);
+}
+
+#minimap-frame {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 10px;
+  overflow: hidden;
+
+  border: 3px solid rgba(255, 210, 90, 0.9);
+  box-shadow:
+    0 10px 26px rgba(0,0,0,0.6),
+    0 0 0 1px rgba(0,0,0,0.6),
+    inset 0 0 14px rgba(0,0,0,0.65);
+
+  background: #0a0a0a;
+  transition: box-shadow 160ms ease, border-color 160ms ease;
+}
+
+#minimap:hover #minimap-frame {
+  border-color: rgba(255, 225, 130, 1);
+  box-shadow:
+    0 10px 26px rgba(0,0,0,0.6),
+    0 0 0 1px rgba(0,0,0,0.6),
+    0 0 18px 2px rgba(255,210,90,0.35),
+    inset 0 0 14px rgba(0,0,0,0.65);
+}
+
+#minimap-image {
+  position: absolute;
+  inset: 0;
+  background: var(--map-bg, url('compound_map.webp')) no-repeat center center;
+  background-size: cover;
+  filter: saturate(1.05) contrast(1.05);
+}
+
+#minimap-image::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(0,0,0,0) 55%, rgba(0,0,0,0.55) 100%);
+}
+
+/* 2x2 grid of map-select buttons, hidden until #minimap.open */
+#minimap-grid {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 2px;
+
+  padding: 2px;
+  background: rgba(0,0,0,0.35);
+
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0.96);
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+
+#minimap.open #minimap-grid {
+  opacity: 1;
+  pointer-events: auto;
+  transform: scale(1);
+}
+
+#minimap-grid .map-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
 
-#map-main-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0,0,0,0.55);
-}
-
-#map-main-btn svg {
-  width: 26px;
-  height: 26px;
-  stroke: rgba(255,255,255,0.95);
-  fill: none;
-}
-
-/* Map option buttons (C / S / G / K) */
-#ui-map .ui-float-menu button {
-  width: 44px;
-  height: 44px;
-  border-radius: 999px;
-  background: rgba(40,40,40,0.55);
-  border: 1px solid rgba(255,255,255,0.22);
-  backdrop-filter: blur(4px);
+  background: rgba(20,20,20,0.72);
+  border: 1px solid rgba(255,210,90,0.35);
   color: #fff;
-  font-weight: 600;
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  font-family: 'Pricedown', sans-serif;
+  font-size: 20px;
+  letter-spacing: 1px;
+
+  cursor: var(--hover-cursor);
+  transition: background 140ms ease, border-color 140ms ease, transform 140ms ease;
 }
 
-#ui-map .ui-float-menu button:hover {
-  transform: translateY(-2px);
-  background: rgba(60,60,60,0.75);
-  box-shadow: 0 6px 16px rgba(0,0,0,0.5);
+#minimap-grid .map-btn:hover {
+  background: rgba(255,210,90,0.22);
+  border-color: rgba(255,225,130,0.95);
+  transform: scale(1.04);
+}
+
+/* Health / Armor bars beneath the minimap (visual only) */
+#minimap-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 190px;
+}
+
+.minimap-bar {
+  width: 100%;
+  height: 12px;
+  border-radius: 3px;
+  background: rgba(0,0,0,0.55);
+  border: 1px solid rgba(0,0,0,0.7);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.45);
+  overflow: hidden;
+}
+
+.minimap-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+}
+
+.minimap-bar-health .minimap-bar-fill {
+  width: 80%;
+  background: linear-gradient(180deg, #8fe36a, #4fae2c);
+  box-shadow: 0 0 8px rgba(120,220,90,0.55);
+}
+
+.minimap-bar-armor .minimap-bar-fill {
+  width: 60%;
+  background: linear-gradient(180deg, #7fd4f0, #2f9dc9);
+  box-shadow: 0 0 8px rgba(90,200,230,0.55);
 }
 
 /* =========================================================
@@ -2063,32 +2147,31 @@ body.splash-done #app {
   <button data-symbol="Painting">Painting</button>
 </div>
 
-<!-- Floating UI cluster (bottom-right) -->
-<div id="ui-float-row">
+<!-- GTA V style minimap (bottom-left) -->
+<div id="ui-minimap-wrap">
+  <div id="minimap" tabindex="0" role="button" aria-label="Change map background">
+    <div id="minimap-frame">
+      <div id="minimap-image"></div>
 
-  <!-- NEW: Map menu (LEFT bubble) -->
-  <div id="ui-map">
-
-    <!-- Map MAIN button -->
-    <button id="map-main-btn" type="button" aria-label="Change map background">
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M12 2 3 7l9 5 9-5-9-5Z" fill="none" stroke="rgba(255,255,255,0.92)" stroke-width="2" stroke-linejoin="round"/>
-        <path d="M3 12l9 5 9-5" fill="none" stroke="rgba(255,255,255,0.92)" stroke-width="2" stroke-linejoin="round"/>
-        <path d="M3 17l9 5 9-5" fill="none" stroke="rgba(255,255,255,0.92)" stroke-width="2" stroke-linejoin="round"/>
-      </svg>
-    </button>
-
-    <!-- Map options (shows on hover/tap) -->
-    <div class="ui-float-menu">
-      <button class="map-btn" type="button" data-map="compound" aria-label="Compound Map">C</button>
-      <button class="map-btn" type="button" data-map="satellite" aria-label="Satellite Map">S</button>
-      <button class="map-btn" type="button" data-map="guards" aria-label="Guards Map">G</button>
-      <button class="map-btn" type="button" data-map="kosatka" aria-label="Kosatka Map">K</button>
+      <!-- 2x2 map-select grid, hidden until minimap is clicked open -->
+      <div id="minimap-grid">
+        <button class="map-btn" type="button" data-map="compound" aria-label="Compound Map"><span>C</span></button>
+        <button class="map-btn" type="button" data-map="satellite" aria-label="Satellite Map"><span>S</span></button>
+        <button class="map-btn" type="button" data-map="guards" aria-label="Guards Map"><span>G</span></button>
+        <button class="map-btn" type="button" data-map="kosatka" aria-label="Kosatka Map"><span>K</span></button>
+      </div>
     </div>
-
   </div>
 
-  <!-- EXISTING: Your current menu (RIGHT bubble) -->
+  <!-- Visual-only Health / Armor bars -->
+  <div id="minimap-bars">
+    <div class="minimap-bar minimap-bar-health"><div class="minimap-bar-fill"></div></div>
+    <div class="minimap-bar minimap-bar-armor"><div class="minimap-bar-fill"></div></div>
+  </div>
+</div>
+
+<!-- Floating action cluster (bottom-middle) -->
+<div id="ui-float-center">
   <div id="ui-float">
 
     <!-- MAIN button (always visible) -->
@@ -2129,7 +2212,6 @@ body.splash-done #app {
     </div>
 
   </div>
-
 </div>
 
 <!-- Active Users bubble + Crew Wheel (bottom-right) -->
@@ -2209,7 +2291,7 @@ body.splash-done #app {
    MAP BUTTONS (FIXED)
 ========================= */
 const mapButtons = document.querySelectorAll('.map-btn');
-const uiMap = document.getElementById('ui-map');
+const minimapEl = document.getElementById('minimap');
 
 mapButtons.forEach(btn => {
   btn.addEventListener('click', (e) => {
@@ -2218,20 +2300,26 @@ mapButtons.forEach(btn => {
     const map = btn.dataset.map; // compound / satellite / guards / kosatka
     setMap(`${map}_map.webp`);   // ✅ updates CSS + currentMapSrc + repositions zones
 
-    uiMap?.classList.remove('open'); // close menu on mobile
+    minimapEl?.classList.remove('open'); // close the 2x2 grid after picking
   });
 });
 
-  // Mobile tap-to-open for the MAP bubble
-  const mapMainBtn = document.getElementById('map-main-btn');
-  if (uiMap && mapMainBtn) {
-    mapMainBtn.addEventListener('click', (e) => {
+  // Click (or keyboard) toggles the minimap's 2x2 map picker
+  if (minimapEl) {
+    minimapEl.addEventListener('click', (e) => {
       e.stopPropagation();
-      uiMap.classList.toggle('open');
+      minimapEl.classList.toggle('open');
+    });
+
+    minimapEl.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        minimapEl.classList.toggle('open');
+      }
     });
 
     // clicking elsewhere closes it
-    document.addEventListener('click', () => uiMap.classList.remove('open'));
+    document.addEventListener('click', () => minimapEl.classList.remove('open'));
   }
 
  /* =========================================================
@@ -2958,8 +3046,9 @@ document.querySelectorAll('.map-btn').forEach(btn => {
 
   if (!label) return;
 
+  // anchor to the whole minimap, so the tooltip sits above it, not the tiny button
   btn.addEventListener('mouseenter', () => {
-    showTooltipFor(btn, label);
+    showTooltipFor(minimapEl, label);
   });
 
   btn.addEventListener('mouseleave', hideTooltip);
