@@ -101,8 +101,7 @@ input, select, textarea {
   width:100vw;
   height:100vh;
 
-  /* was: background:url('compound_map.png') ... */
-  background: var(--map-bg, url('compound_map.png')) no-repeat center center;
+  background: var(--map-bg, url('compound_map.webp')) no-repeat center center;
 
   background-size:cover;
   transition: background-image 180ms ease;
@@ -558,6 +557,11 @@ body.splash-done #app {
 
   cursor: pointer;
   transition: background 120ms ease, color 120ms ease;
+
+  /* Match Loot Panel title to section title styling */
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 16px;
+  font-weight: 700;
 }
 
 /* hover = white */
@@ -669,13 +673,6 @@ body.splash-done #app {
   color: rgba(255,255,255,0.92);
 }
 
-/* Make Loot Panel title match the section title styling */
-#info-header{
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  font-size: 16px;
-  font-weight: 700;
-}
-  
 .loot-section-chevron{
   opacity: 0.95;
   color: rgba(255,255,255,0.92);
@@ -1629,12 +1626,11 @@ body.splash-done #app {
    LOOT PANEL: remove outer box, keep button theme
 ========================================== */
 
-/* keep translucent, just remove rounded edges */
+/* keep translucent, just remove rounded edges
+   (background/border/box-shadow/backdrop-filter here used to be
+   overridden further down by the "GTA INTERACTION MENU SKIN" block
+   anyway, so only the still-live property is kept) */
 #info-panel{
-  background: rgba(0,0,0,0.35) !important;
-  border: 1px solid rgba(255,255,255,0.14) !important;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.45) !important;
-  backdrop-filter: blur(6px) !important;
   border-radius: 0 !important; /* <- removes visible rounding */
 }
 
@@ -2200,6 +2196,11 @@ body.splash-done #app {
     'sb_publishable_8F3cI7ZKCgpxv6UfaRJn7A_r1s17TmC'
   );
 
+  // Shared helper (used by click SFX + HUD roll animation)
+  function prefersReducedMotion() {
+    return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  }
+
  /* =========================
    MAP BUTTONS (FIXED)
 ========================= */
@@ -2211,7 +2212,7 @@ mapButtons.forEach(btn => {
     e.stopPropagation();
 
     const map = btn.dataset.map; // compound / satellite / guards / kosatka
-    setMap(`${map}_map.png`);    // ✅ updates CSS + currentMapSrc + repositions zones
+    setMap(`${map}_map.webp`);   // ✅ updates CSS + currentMapSrc + repositions zones
 
     uiMap?.classList.remove('open'); // close menu on mobile
   });
@@ -2258,10 +2259,6 @@ const CLICK_SFX = (() => {
     'select',
     'textarea'
   ].join(',');
-
-  function prefersReducedMotion() {
-    return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  }
 
   function ensureCtx() {
     if (prefersReducedMotion()) return null;
@@ -2471,15 +2468,31 @@ if (splash && splashVideo) {
      - sets CSS var --inv-zoom = 1 / devicePixelRatio
      - makes .zone stay visually the same size when zoom changes
   ========================================================= */
+  // rAF-coalesced throttle: collapses bursts of events (resize/scroll)
+  // down to at most one call per animation frame instead of firing
+  // a full handler for every single native event.
+  function rafThrottle(fn) {
+    let scheduled = false;
+    return function throttled(...args) {
+      if (scheduled) return;
+      scheduled = true;
+      requestAnimationFrame(() => {
+        scheduled = false;
+        fn.apply(this, args);
+      });
+    };
+  }
+
   function updateInvZoom() {
     const dpr = window.devicePixelRatio || 1;
     document.documentElement.style.setProperty('--inv-zoom', String(1 / dpr));
   }
+  const updateInvZoomThrottled = rafThrottle(updateInvZoom);
   updateInvZoom();
-  window.addEventListener('resize', updateInvZoom);
+  window.addEventListener('resize', updateInvZoomThrottled);
   if (window.visualViewport) {
-    window.visualViewport.addEventListener('resize', updateInvZoom);
-    window.visualViewport.addEventListener('scroll', updateInvZoom);
+    window.visualViewport.addEventListener('resize', updateInvZoomThrottled);
+    window.visualViewport.addEventListener('scroll', updateInvZoomThrottled);
   }
 
 /* =========================================================
@@ -2488,7 +2501,27 @@ if (splash && splashVideo) {
    + map switch support via setMap()
 ========================================================= */
 
-let currentMapSrc = 'compound_map.png'; // must match default visible map
+let currentMapSrc = 'compound_map.webp'; // must match default visible map
+
+// Cache decoded <img> elements per src so we don't re-fetch/re-decode
+// the same map image on every single resize event or map switch.
+const _mapImageCache = new Map();
+
+async function loadMapImage(src) {
+  if (_mapImageCache.has(src)) return _mapImageCache.get(src);
+
+  const img = new Image();
+  img.src = src;
+
+  if (img.decode) {
+    try { await img.decode(); } catch {}
+  } else {
+    await new Promise(res => (img.onload = img.onerror = res));
+  }
+
+  _mapImageCache.set(src, img);
+  return img;
+}
 
 function setMap(src) {
   currentMapSrc = src;
@@ -2496,9 +2529,11 @@ function setMap(src) {
   // Your CSS uses --map-bg, keep using that
   document.documentElement.style.setProperty('--map-bg', `url('${src}')`);
 
-  // Re-position after CSS updates
-  requestAnimationFrame(() => {
-    positionZonesToCoveredImage();
+  // Warm the cache for this map, then re-position after CSS updates
+  loadMapImage(src).finally(() => {
+    requestAnimationFrame(() => {
+      positionZonesToCoveredImage();
+    });
   });
 }
 
@@ -2506,16 +2541,9 @@ async function positionZonesToCoveredImage() {
   const container = document.getElementById('map-container');
   if (!container) return;
 
-  // Load current map to get natural dimensions
-  const img = new Image();
-  img.src = currentMapSrc;
-
-  // decode() fallback so it works everywhere
-  if (img.decode) {
-    try { await img.decode(); } catch {}
-  } else {
-    await new Promise(res => (img.onload = img.onerror = res));
-  }
+  // Uses the cached decoded image when available (no network/decode
+  // cost on repeated calls, e.g. during window resize).
+  const img = await loadMapImage(currentMapSrc);
 
   const imgW = img.naturalWidth || 1;
   const imgH = img.naturalHeight || 1;
@@ -2541,15 +2569,17 @@ async function positionZonesToCoveredImage() {
     zone.style.top  = (offsetY + y * drawnH) + 'px';
   });
 }
-  
+
+const positionZonesThrottled = rafThrottle(positionZonesToCoveredImage);
+
 // Initial run
 positionZonesToCoveredImage();
 
-// run once and on resize
-window.addEventListener('resize', positionZonesToCoveredImage);
+// run once and on resize (rAF-throttled to avoid redundant work mid-drag)
+window.addEventListener('resize', positionZonesThrottled);
 
 if (window.visualViewport) {
-  window.visualViewport.addEventListener('resize', positionZonesToCoveredImage);
+  window.visualViewport.addEventListener('resize', positionZonesThrottled);
 }
 
 /* =========================================================
@@ -4076,10 +4106,6 @@ async function applySuggestedSecondaryLoot() {
   ========================================================= */
   const hudPrevTextByKey = new Map(); // key -> previous full text
 
-  function prefersReducedMotion() {
-    return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  }
-
   function extractComparableNumber(str) {
     // Use the FIRST numeric chunk in the string as a direction hint (good enough for "$min - $max")
     // returns null if none
@@ -4527,10 +4553,8 @@ document.addEventListener('keydown', (e) => {
   }
 
   async function getMetrics() {
-    const img = new Image();
-    img.src = currentMapSrc;
-    if (img.decode) { try { await img.decode(); } catch {} }
-    else { await new Promise(res => (img.onload = img.onerror = res)); }
+    // Reuses the same cached/decoded image as positionZonesToCoveredImage()
+    const img = await loadMapImage(currentMapSrc);
 
     const imgW = img.naturalWidth || 1;
     const imgH = img.naturalHeight || 1;
