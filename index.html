@@ -170,21 +170,24 @@ input, select, textarea {
   inset: 10%;
   border-radius: 8px;
 
-  /* ghost look */
+  /* ghost look — now always shown */
   background:
     radial-gradient(circle, rgba(255,255,255,0.10) 0 35%, transparent 36%) 0 0 / 50% 50%;
   outline: 2px solid rgba(255,255,255,0.18);
   box-shadow: 0 10px 24px rgba(0,0,0,0.45);
 
-  opacity: 0;
-  transform: scale(0.98);
-  transition: opacity 140ms ease, transform 140ms ease;
+  opacity: 1;
+  transform: scale(1);
+  transition: opacity 140ms ease, transform 140ms ease, box-shadow 140ms ease, outline-color 140ms ease;
   pointer-events:none;
 }
 
+/* GLOW on hover */
 .zone:hover::before{
   opacity: 1;
-  transform: scale(1);
+  transform: scale(1.03);
+  outline-color: rgba(255,255,255,0.55);
+  box-shadow: 0 10px 24px rgba(0,0,0,0.45), 0 0 18px 6px rgba(255,255,255,0.55);
 }
 
 /* =========================
@@ -520,6 +523,7 @@ body.splash-done #app {
   overflow: hidden;
   z-index: 20;
   color: #fff;
+  font-family: 'Pricedown', sans-serif;
 
   transition:
     max-height 0.3s ease,
@@ -1632,6 +1636,7 @@ body.splash-done #app {
   border-bottom: 1px solid rgba(255,255,255,0.08);
 }
 #info-panel .im-title{
+  font-family: 'Mission Script', cursive;  /* ADDED: LOOT MENU uses Mission Script */
   font-weight: 700;
   font-size: 13px;
   letter-spacing: 1px;
@@ -1646,11 +1651,19 @@ body.splash-done #app {
   border-bottom: 1px solid rgba(0,0,0,0.55);
   border-top: 1px solid rgba(255,255,255,0.18);
   position: relative;
+  display: flex;              /* ADDED: to align title text */
+  align-items: center;
+  padding: 0 12px;
 }
+  
+.im-title-open{ display: none; }
+#info-panel:not(.collapsed) .im-title-open{ display: block; }
+#info-panel:not(.collapsed) .im-titlebar .im-title-collapsed{ display: none; }
 #info-panel:not(.collapsed) .im-titlebar{
   height: 30px;
   background: rgba(0,0,0,0.88);
 }
+  
 #info-panel:not(.collapsed) .im-page{
   font-size: 11px;
   letter-spacing: 0.4px;
@@ -1745,12 +1758,13 @@ body.splash-done #app {
 <div id="info-panel" class="collapsed">
   <div id="info-header">
     <div class="im-bluebar">
-  </div>
+      <div class="im-title im-title-open">LOOT MENU</div>
+    </div>
 
-  <div class="im-titlebar">
-    <div class="im-title">LOOT MENU</div>
+    <div class="im-titlebar">
+      <div class="im-title im-title-collapsed">LOOT MENU</div>
+    </div>
   </div>
-</div>
   <div id="info-content">
 
     <!-- default collapsed -->
