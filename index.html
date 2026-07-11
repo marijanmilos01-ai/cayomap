@@ -1369,7 +1369,7 @@ body.splash-done #app {
   gap: 2px;
 
   padding: 2px;
-  background: rgba(0,0,0,0.35);
+  background: rgba(0,0,0,0.55);
 
   opacity: 0;
   pointer-events: none;
@@ -1384,25 +1384,48 @@ body.splash-done #app {
 }
 
 #minimap-grid .map-btn {
+  position: relative;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: flex-end;
+  justify-content: flex-start;
+  overflow: hidden;
 
-  background: rgba(20,20,20,0.72);
+  background-color: rgba(20,20,20,0.85);
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
+
   border: 1px solid rgba(255,210,90,0.35);
-  color: #fff;
-  font-family: 'Pricedown', sans-serif;
-  font-size: 20px;
-  letter-spacing: 1px;
 
   cursor: var(--hover-cursor);
-  transition: background 140ms ease, border-color 140ms ease, transform 140ms ease;
+  transition: border-color 140ms ease, transform 140ms ease, filter 140ms ease;
 }
 
+#minimap-grid .map-btn[data-map="compound"]  { background-image: url('compound_map.webp'); }
+#minimap-grid .map-btn[data-map="satellite"] { background-image: url('satellite_map.webp'); }
+#minimap-grid .map-btn[data-map="guards"]    { background-image: url('guards_map.webp'); }
+#minimap-grid .map-btn[data-map="kosatka"]   { background-image: url('kosatka_map.webp'); }
+
 #minimap-grid .map-btn:hover {
-  background: rgba(255,210,90,0.22);
   border-color: rgba(255,225,130,0.95);
   transform: scale(1.04);
+  filter: brightness(1.15);
+  z-index: 1;
+}
+
+#minimap-grid .map-btn span {
+  display: inline-block;
+  padding: 2px 6px;
+  margin: 3px;
+
+  background: rgba(0,0,0,0.65);
+  border: 1px solid rgba(255,210,90,0.45);
+
+  color: #fff;
+  font-family: 'Pricedown', sans-serif;
+  font-size: 13px;
+  letter-spacing: 1px;
+  line-height: 1;
 }
 
 /* Health / Armor bars beneath the minimap (visual only) — one bar, split down the middle */
