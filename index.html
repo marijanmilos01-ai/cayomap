@@ -343,29 +343,24 @@ body.splash-done #app {
   align-items: stretch;
   gap: clamp(4px, 0.5vw, 6px);
 
-  /* Width — back to the ORIGINAL full size (not reduced) */
-  --minimap-w: clamp(150px, 18vw, 285px);
+  /* Reference width — NEVER changes, used only to keep bar height constant */
+  --minimap-w-base: clamp(150px, 18vw, 285px);
 
-  /* Bars keep the height you currently see (not taller), width follows --minimap-w (wider) */
-  --minimap-full-bar-h: calc(var(--minimap-w) * 0.0632);
-  --minimap-bar-h: calc(var(--minimap-full-bar-h) * 0.75);
+  /* Live width — this is what actually resizes the map square + bar WIDTH */
+  --minimap-w: var(--minimap-w-base);
+
   --minimap-gap: clamp(4px, 0.5vw, 6px);
 
-  /* Only the map square itself shrinks to 75% height — width stays full */
-  --minimap-map-h: calc((var(--minimap-w) - var(--minimap-full-bar-h) - var(--minimap-gap)) * 0.75);
+  /* Bar HEIGHT — locked to the constant base width, ignores expand entirely */
+  --minimap-bar-h: calc(var(--minimap-w-base) * 0.0632);
 
-  transition: transform 260ms ease;
+  /* Map square height = 75% of normal, scales with the LIVE width */
+  --minimap-map-h: calc((var(--minimap-w) - var(--minimap-bar-h) - var(--minimap-gap)) * 0.75);
 }
 
-/* Expanded state — scales up from whatever size is currently shown (2.5x) */
+/* Expanded — 2.5x, width-only growth. Bar height above never references this. */
 #ui-minimap-wrap.expanded {
-  transform: scale(2.5);
-  transform-origin: bottom left;
-}
-
-/* ADDED — expanded state: roughly 4x the ORIGINAL (pre-75%) size */
-#ui-minimap-wrap.expanded {
-  --minimap-w: clamp(600px, 72vw, 1140px);
+  --minimap-w: calc(var(--minimap-w-base) * 2.5);
 }
 
 #guards-video-toggle {
@@ -1351,6 +1346,7 @@ body.splash-done #app {
   width: var(--minimap-w);
   height: var(--minimap-map-h);
   cursor: var(--hover-cursor);
+  transition: width 260ms ease, height 260ms ease;
 }
 
 #minimap-frame {
@@ -1475,6 +1471,7 @@ body.splash-done #app {
   box-sizing: border-box;
   box-shadow: 0 4px 10px rgba(0,0,0,0.45);
   overflow: hidden;
+  transition: width 260ms ease;   /* ADDED — height is fixed, never animates */
 }
 
 .minimap-bar {
@@ -2046,11 +2043,37 @@ body.splash-done #app {
 @media (max-width: 700px), (max-aspect-ratio: 3/4) {
 
   /* ---- Minimap: smaller, hugs the corner tighter ---- */
-  #ui-minimap-wrap {
-    left: calc(max(var(--ui-pad), env(safe-area-inset-left)) + 8px);
-    bottom: calc(max(var(--ui-pad), env(safe-area-inset-bottom)) + 8px);
-    --minimap-w: clamp(96px, 26vw, 150px);
-  }
+#ui-minimap-wrap {
+  position: fixed;
+  left: calc(max(var(--ui-pad), env(safe-area-inset-left)) + clamp(12px, 3vw, 44px));
+  bottom: calc(max(var(--ui-pad), env(safe-area-inset-bottom)) + clamp(12px, 3vw, 44px));
+  z-index: 60;
+
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: clamp(4px, 0.5vw, 6px);
+
+  /* Reference width — NEVER changes, used only to keep bar height constant */
+  --minimap-w-base: clamp(150px, 18vw, 285px);
+
+  /* Width of the map square — this is the collapsed size you like */
+  --minimap-w: var(--minimap-w-base);
+  --minimap-gap: clamp(4px, 0.5vw, 6px);
+
+  /* Internal helper only — used to work out the map square's height (scales live) */
+  --minimap-full-bar-h: calc(var(--minimap-w) * 0.0632);
+
+  /* Map square height = 75% of normal */
+  --minimap-map-h: calc((var(--minimap-w) - var(--minimap-full-bar-h) - var(--minimap-gap)) * 0.75);
+
+  /* Health/Armor bar HEIGHT — locked to the constant base width, matches desktop's ratio exactly */
+  --minimap-bar-h: calc(var(--minimap-w-base) * 0.0632);
+}
+/* Expanded state — only the map square (and bar WIDTH) grow; bar height untouched */
+#ui-minimap-wrap.expanded {
+  --minimap-w: clamp(300px, 36vw, 570px);
+}
 
   /* ---- Info panel (Loot Menu): full width when open, no huge side gap ---- */
   #info-panel {
@@ -2526,20 +2549,20 @@ mapButtons.forEach(btn => {
 });
 
   // Click expands the minimap AND reveals the map-picker grid
-  if (minimapEl && uiMinimapWrap) {
+if (minimapEl && uiMinimapWrap) {
     minimapEl.addEventListener('click', (e) => {
       e.stopPropagation();
-      uiMinimapWrap.classList.toggle('expanded');
+      uiMinimapWrap.classList.add('expanded');   // CHANGED — only opens, never closes on click
     });
 
     minimapEl.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
-        uiMinimapWrap.classList.toggle('expanded');
+        uiMinimapWrap.classList.add('expanded');   // CHANGED — same here
       }
     });
 
-    // clicking elsewhere closes it
+    // clicking elsewhere (the main map / anywhere outside the minimap) closes it
     document.addEventListener('click', () => {
       uiMinimapWrap.classList.remove('expanded');
     });
@@ -3246,7 +3269,7 @@ if (discordAuthBtn) {
   discordAuthBtn.addEventListener('mouseleave', hideTooltip);
 }
 
-sb.auth.onAuthStateChange((_event, _session) => {
+sb.auth.onAuthStateChange((_event, session) => {
   sb.realtime.setAuth(session?.access_token);
   refreshAuthUI();
 
