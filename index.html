@@ -361,6 +361,10 @@ body.splash-done #app {
 /* Expanded — 2.5x, width-only growth. Bar height above never references this. */
 #ui-minimap-wrap.expanded {
   --minimap-w: calc(var(--minimap-w-base) * 2.5);
+
+  /* Override the collapsed state's 0.75 ratio — expanded should be a true
+     1:1 square (height = width), not the shorter rectangle used collapsed */
+  --minimap-map-h: var(--minimap-w);
 }
 
 #guards-video-toggle {
