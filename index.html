@@ -1736,7 +1736,7 @@ body.splash-done #app {
   background: rgba(20,20,20,0.72);
   border: none;
   cursor: pointer;
-  transition: background 140ms ease, filter 140ms ease;
+  transition: background 140ms ease, box-shadow 140ms ease, filter 140ms ease;
 }
 
 .wheel-dot{
@@ -1777,10 +1777,9 @@ body.splash-done #app {
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  border: 5px solid transparent;
-  background: transparent;
+  box-shadow: 0 0 0 5px transparent;   /* same technique as the outer gray ring — sits in the same band */
   pointer-events: none;
-  transition: border-color 140ms ease;
+  transition: box-shadow 140ms ease;
 }
 
 .wheel-slot-up::before{
@@ -1804,23 +1803,26 @@ body.splash-done #app {
 /* GTA V style highlight colors — slice brightens instead of scaling (scaling breaks pie alignment) */
 .wheel-slot-left:hover{
   background: rgba(255,255,255,0.06);
+  box-shadow: inset 0 0 34px 6px rgba(120,190,255,0.28);
 }
 .wheel-slot-left:hover::before{
-  border-color: rgba(120,190,255,0.95);
+  box-shadow: 0 0 0 5px rgba(120,190,255,0.95);
 }
 
 .wheel-slot-up:hover{
   background: rgba(255,255,255,0.06);
+  box-shadow: inset 0 0 34px 6px rgba(150,255,150,0.28);
 }
 .wheel-slot-up:hover::before{
-  border-color: rgba(150,255,150,0.95);
+  box-shadow: 0 0 0 5px rgba(150,255,150,0.95);
 }
 
 .wheel-slot-right:hover{
   background: rgba(255,255,255,0.06);
+  box-shadow: inset 0 0 34px 6px rgba(255,190,110,0.28);
 }
 .wheel-slot-right:hover::before{
-  border-color: rgba(255,190,110,0.95);
+  box-shadow: 0 0 0 5px rgba(255,190,110,0.95);
 }
 /* Stat tooltip above the wheel */
 #crew-wheel-tip{
