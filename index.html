@@ -1730,7 +1730,7 @@ body.splash-done #app {
 
   display: block;
   background: rgba(20,20,20,0.72);
-  border: 1px solid rgba(255,255,255,0.16);
+  border: 1px solid transparent;   /* invisible at rest — outer ring above provides the outline instead */
   cursor: pointer;
   transition: background 140ms ease, box-shadow 140ms ease, border-color 140ms ease, filter 140ms ease;
 }
