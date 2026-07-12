@@ -2452,12 +2452,11 @@ body.splash-done #app {
     <span id="guards-video-toggle-label">Guard Movement: ON</span>
   </button>
 
-<div id="minimap" tabindex="0" role="button" aria-label="Change map background">
+<div id="minimap-outer">
+
+  <div id="minimap" tabindex="0" role="button" aria-label="Change map background">
     <div id="minimap-frame">
       <div id="minimap-image"></div>
-
-      <!-- Compass "N" indicator, top-right corner -->
-      <div id="minimap-compass">N</div>
 
       <!-- 2x2 map-select grid, hidden until minimap is clicked open -->
       <div id="minimap-grid">
@@ -2474,6 +2473,11 @@ body.splash-done #app {
     <div class="minimap-bar minimap-bar-health"><div class="minimap-bar-fill"></div></div>
     <div class="minimap-bar minimap-bar-armor"><div class="minimap-bar-fill"></div></div>
   </div>
+
+  <!-- Compass "N" badge — lives on the outer wrapper now, so it's never clipped -->
+  <div id="minimap-compass">N</div>
+
+</div>
 </div>
 
 <!-- Floating action cluster (bottom-middle) -->
