@@ -343,10 +343,24 @@ body.splash-done #app {
   align-items: stretch;
   gap: clamp(4px, 0.5vw, 6px);
 
-  /* CHANGED — 75% of the old size */
-  --minimap-w: clamp(112.5px, 13.5vw, 213.75px);
-  --minimap-bar-h: calc(var(--minimap-w) * 0.0632);
+  /* Width — back to the ORIGINAL full size (not reduced) */
+  --minimap-w: clamp(150px, 18vw, 285px);
+
+  /* Bars keep the height you currently see (not taller), width follows --minimap-w (wider) */
+  --minimap-full-bar-h: calc(var(--minimap-w) * 0.0632);
+  --minimap-bar-h: calc(var(--minimap-full-bar-h) * 0.75);
   --minimap-gap: clamp(4px, 0.5vw, 6px);
+
+  /* Only the map square itself shrinks to 75% height — width stays full */
+  --minimap-map-h: calc((var(--minimap-w) - var(--minimap-full-bar-h) - var(--minimap-gap)) * 0.75);
+
+  transition: transform 260ms ease;
+}
+
+/* Expanded state — scales up from whatever size is currently shown (2.5x) */
+#ui-minimap-wrap.expanded {
+  transform: scale(2.5);
+  transform-origin: bottom left;
 }
 
 /* ADDED — expanded state: roughly 4x the ORIGINAL (pre-75%) size */
@@ -1335,10 +1349,8 @@ body.splash-done #app {
 #minimap {
   position: relative;
   width: var(--minimap-w);
-  /* height = square (w) minus the bars row + gap, so map+bars together form a square */
-  height: calc(var(--minimap-w) - var(--minimap-bar-h) - var(--minimap-gap));
+  height: var(--minimap-map-h);
   cursor: var(--hover-cursor);
-  transition: width 260ms ease, height 260ms ease;
 }
 
 #minimap-frame {
@@ -1401,7 +1413,7 @@ body.splash-done #app {
   transition: opacity 160ms ease, transform 160ms ease;
 }
 
-#minimap.open #minimap-grid {
+#ui-minimap-wrap.expanded #minimap-grid {
   opacity: 1;
   pointer-events: auto;
   transform: scale(1);
@@ -2495,7 +2507,7 @@ body.splash-done #app {
     return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   }
 
- /* =========================
+/* =========================
    MAP BUTTONS (FIXED)
 ========================= */
 const mapButtons = document.querySelectorAll('.map-btn');
@@ -2509,34 +2521,31 @@ mapButtons.forEach(btn => {
     const map = btn.dataset.map; // compound / satellite / guards / kosatka
     setMap(`${map}_map.webp`);   // ✅ updates CSS + currentMapSrc + repositions zones
 
-    minimapEl?.classList.remove('open'); // close the 2x2 grid after picking
+    uiMinimapWrap?.classList.remove('expanded'); // close after picking
   });
 });
 
-  // Click toggles the 2x2 map picker AND expands the minimap for a better view
+  // Click expands the minimap AND reveals the map-picker grid
   if (minimapEl && uiMinimapWrap) {
     minimapEl.addEventListener('click', (e) => {
       e.stopPropagation();
-      minimapEl.classList.toggle('open');
       uiMinimapWrap.classList.toggle('expanded');
     });
 
     minimapEl.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
-        minimapEl.classList.toggle('open');
         uiMinimapWrap.classList.toggle('expanded');
       }
     });
 
-    // clicking elsewhere closes both
+    // clicking elsewhere closes it
     document.addEventListener('click', () => {
-      minimapEl.classList.remove('open');
       uiMinimapWrap.classList.remove('expanded');
     });
   }
 
-  // "Y" toggles the expanded minimap on its own, without opening the picker grid
+  // "Y" toggles the expanded minimap
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'y' && e.key !== 'Y') return;
     const ae = document.activeElement;
