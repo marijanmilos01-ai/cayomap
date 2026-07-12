@@ -343,10 +343,15 @@ body.splash-done #app {
   align-items: stretch;
   gap: clamp(4px, 0.5vw, 6px);
 
-  /* single source of truth for sizing — scales with viewport, capped at the old 1.5x size */
-  --minimap-w: clamp(150px, 18vw, 285px);
-  --minimap-bar-h: calc(var(--minimap-w) * 0.0632);  /* keeps the same ratio as 18px/285px */
+  /* CHANGED — 75% of the old size */
+  --minimap-w: clamp(112.5px, 13.5vw, 213.75px);
+  --minimap-bar-h: calc(var(--minimap-w) * 0.0632);
   --minimap-gap: clamp(4px, 0.5vw, 6px);
+}
+
+/* ADDED — expanded state: roughly 4x the ORIGINAL (pre-75%) size */
+#ui-minimap-wrap.expanded {
+  --minimap-w: clamp(600px, 72vw, 1140px);
 }
 
 #guards-video-toggle {
@@ -546,7 +551,7 @@ body.splash-done #app {
 
   border-radius: 0; /* flat, sharp edges — matches the real interaction menu */
   overflow: hidden;
-  z-index: 20;
+  z-index: 65;
   color: #fff;
   font-family: 'Pricedown', sans-serif;
 
@@ -1333,6 +1338,7 @@ body.splash-done #app {
   /* height = square (w) minus the bars row + gap, so map+bars together form a square */
   height: calc(var(--minimap-w) - var(--minimap-bar-h) - var(--minimap-gap));
   cursor: var(--hover-cursor);
+  transition: width 260ms ease, height 260ms ease;
 }
 
 #minimap-frame {
@@ -2494,6 +2500,7 @@ body.splash-done #app {
 ========================= */
 const mapButtons = document.querySelectorAll('.map-btn');
 const minimapEl = document.getElementById('minimap');
+const uiMinimapWrap = document.getElementById('ui-minimap-wrap');
 
 mapButtons.forEach(btn => {
   btn.addEventListener('click', (e) => {
@@ -2506,23 +2513,37 @@ mapButtons.forEach(btn => {
   });
 });
 
-  // Click (or keyboard) toggles the minimap's 2x2 map picker
-  if (minimapEl) {
+  // Click toggles the 2x2 map picker AND expands the minimap for a better view
+  if (minimapEl && uiMinimapWrap) {
     minimapEl.addEventListener('click', (e) => {
       e.stopPropagation();
       minimapEl.classList.toggle('open');
+      uiMinimapWrap.classList.toggle('expanded');
     });
 
     minimapEl.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
         minimapEl.classList.toggle('open');
+        uiMinimapWrap.classList.toggle('expanded');
       }
     });
 
-    // clicking elsewhere closes it
-    document.addEventListener('click', () => minimapEl.classList.remove('open'));
+    // clicking elsewhere closes both
+    document.addEventListener('click', () => {
+      minimapEl.classList.remove('open');
+      uiMinimapWrap.classList.remove('expanded');
+    });
   }
+
+  // "Y" toggles the expanded minimap on its own, without opening the picker grid
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'y' && e.key !== 'Y') return;
+    const ae = document.activeElement;
+    const typing = ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.tagName === 'SELECT' || ae.isContentEditable);
+    if (typing) return;
+    uiMinimapWrap?.classList.toggle('expanded');
+  });
 
  /* =========================================================
    ADDED: Click SFX (no files) for interactive elements only
@@ -3161,6 +3182,8 @@ let discordUser = null;
 async function refreshAuthUI() {
   const { data: { session } } = await sb.auth.getSession();
 
+  sb.realtime.setAuth(session?.access_token);
+
   if (session?.user) {
     const identity = session.user.user_metadata || {};
     discordUser = {
@@ -3215,6 +3238,7 @@ if (discordAuthBtn) {
 }
 
 sb.auth.onAuthStateChange((_event, _session) => {
+  sb.realtime.setAuth(session?.access_token);
   refreshAuthUI();
 
   // Clean the #access_token=... fragment out of the URL so it can't
