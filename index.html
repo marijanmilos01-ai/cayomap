@@ -1356,12 +1356,15 @@ body.splash-done #app {
 #minimap-outer {
   position: relative;
   width: var(--minimap-w);
+  box-sizing: content-box;   /* border adds ON TOP of the width — never eats into it */
   display: flex;
   flex-direction: column;
 
   border: 3px solid #000;
+  background: #000;          /* fallback fill so no gap can ever show through */
   box-shadow: 0 10px 22px rgba(0,0,0,0.6);
   transition: width 260ms ease, box-shadow 160ms ease;
+  z-index: 1;
 }
 
 #minimap-outer:has(#minimap:hover) {
@@ -1399,7 +1402,7 @@ body.splash-done #app {
   position: absolute;
   top: -13px;
   right: 16px;
-  z-index: 6;
+  z-index: 20;   /* sits above every sibling — never gets clipped */
 
   width: 26px;
   height: 26px;
