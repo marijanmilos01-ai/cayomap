@@ -352,7 +352,7 @@ body.splash-done #app {
   --minimap-gap: clamp(4px, 0.5vw, 6px);
 
   /* Bar HEIGHT — locked to the constant base width, ignores expand entirely */
-  --minimap-bar-h: calc(var(--minimap-w-base) * 0.0316);
+  --minimap-bar-h: calc(var(--minimap-w-base) * 0.0474);
 
   /* Map square height = 75% of normal, scales with the LIVE width */
   --minimap-map-h: calc((var(--minimap-w) - var(--minimap-bar-h) - var(--minimap-gap)) * 0.75);
@@ -2134,7 +2134,7 @@ body.splash-done #app {
   --minimap-map-h: calc((var(--minimap-w) - var(--minimap-full-bar-h) - var(--minimap-gap)) * 0.75);
 
   /* Health/Armor bar HEIGHT — locked to the constant base width, matches desktop's ratio exactly */
-  --minimap-bar-h: calc(var(--minimap-w-base) * 0.0316);
+  --minimap-bar-h: calc(var(--minimap-w-base) * 0.0474);
 }
 /* Expanded state — only the map square (and bar WIDTH) grow; bar height untouched */
 #ui-minimap-wrap.expanded {
