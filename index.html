@@ -1502,7 +1502,8 @@ body.splash-done #app {
   width: 100%;
   height: var(--minimap-bar-h);
 
-  box-sizing: border-box;
+  box-sizing: border-box;   /* border below eats into height, doesn't add to it */
+  border-top: 3px solid #000;
   overflow: hidden;
 }
 
@@ -2133,7 +2134,7 @@ body.splash-done #app {
   --minimap-map-h: calc((var(--minimap-w) - var(--minimap-full-bar-h) - var(--minimap-gap)) * 0.75);
 
   /* Health/Armor bar HEIGHT — locked to the constant base width, matches desktop's ratio exactly */
-  --minimap-bar-h: calc(var(--minimap-w-base) * 0.0632);
+  --minimap-bar-h: calc(var(--minimap-w-base) * 0.0316);
 }
 /* Expanded state — only the map square (and bar WIDTH) grow; bar height untouched */
 #ui-minimap-wrap.expanded {
