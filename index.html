@@ -1507,13 +1507,21 @@ body.splash-done #app {
   overflow: hidden;
 }
 
-.minimap-bar {
-  flex: 1 1 0;
+.minimap-bar-health {
+  flex: 2 1 0;   /* CHANGED — ~half of the total width */
   height: 100%;
+  border-right: 5px solid #000;   /* CHANGED — was 2px, now matches the outer 5px border */
 }
 
-.minimap-bar-health {
-  border-right: 2px solid #000;
+.minimap-bar-armor {
+  flex: 1 1 0;   /* ~quarter of the total width */
+  height: 100%;
+  border-right: 5px solid #000;   /* ADDED — divider before the new yellow segment */
+}
+
+.minimap-bar-stamina {
+  flex: 1 1 0;   /* ADDED — ~quarter of the total width */
+  height: 100%;
 }
 
 .minimap-bar-fill {
@@ -1528,6 +1536,10 @@ body.splash-done #app {
 
 .minimap-bar-armor .minimap-bar-fill {
   background: linear-gradient(180deg, #7fd4f0, #2f9dc9);
+}
+
+.minimap-bar-stamina .minimap-bar-fill {
+  background: linear-gradient(180deg, #ffe066, #d4a017);
 }
 
 /* =========================================================
@@ -2056,14 +2068,18 @@ body.splash-done #app {
   color: rgba(255,255,255,0.95);
 }
 
+#info-panel:not(.collapsed) .im-title-open{
+  font-size: clamp(26px, 2.6vw, 38px);   /* ADDED — bigger, fills the taller blue bar */
+}
+
 /* Full header (blue bar + titlebar) only when the panel is open */
 #info-panel:not(.collapsed) .im-bluebar{
-  height: 46px;
+  height: 72px;   /* CHANGED — now fills the space the black strip used to take */
   background: linear-gradient(180deg, rgba(35,120,205,0.95), rgba(10,55,110,0.92));
   border-bottom: 1px solid rgba(0,0,0,0.55);
   border-top: 1px solid rgba(255,255,255,0.18);
   position: relative;
-  display: flex;              /* ADDED: to align title text */
+  display: flex;
   align-items: center;
   padding: 0 12px;
 }
@@ -2072,8 +2088,7 @@ body.splash-done #app {
 #info-panel:not(.collapsed) .im-title-open{ display: block; }
 #info-panel:not(.collapsed) .im-titlebar .im-title-collapsed{ display: none; }
 #info-panel:not(.collapsed) .im-titlebar{
-  height: 30px;
-  background: rgba(0,0,0,0.88);
+  display: none;   /* CHANGED — the black strip is gone entirely when open */
 }
   
 #info-panel:not(.collapsed) .im-page{
@@ -2469,10 +2484,11 @@ body.splash-done #app {
     </div>
   </div>
 
-  <!-- Visual-only Health / Armor bars -->
+<!-- Visual-only Health / Armor / Stamina bars -->
   <div id="minimap-bars">
     <div class="minimap-bar minimap-bar-health"><div class="minimap-bar-fill"></div></div>
     <div class="minimap-bar minimap-bar-armor"><div class="minimap-bar-fill"></div></div>
+    <div class="minimap-bar minimap-bar-stamina"><div class="minimap-bar-fill"></div></div>
   </div>
 
   <!-- Compass "N" badge — lives on the outer wrapper now, so it's never clipped -->
